@@ -1,25 +1,25 @@
-from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import Any
 import numpy as np
 import cvxpy as cp
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from ..perceptron import MaxPerceptron
-
-def bin_classify_cvx_cost(k: int, value: cp.Variable, slack: cp.Variable,
-             y: np.ndarray) -> cp.Constraint | None:
-    if y == 0:
-        return value <= slack[k]
-    return None
-
-def bin_classify_ccv_cost(k: int, value: cp.Variable, slack: cp.Variable,
-             y: np.ndarray) -> cp.Constraint | None:
-    if y == 1:
-        return value >= -slack[k]
-    return None
+from ..perceptron import Perceptron
 
 def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
+    """
+    Get weights for the WDCCP method: for a given class, all its elements will
+    receive a weight that will determine how they impact the final cost,
+    decreasing linearly as their distance to their class centroid increases,
+    from 1 at the centroid to 0 for the farthest point of the class.
+
+    param X: The set of data points
+    param Y: The respective classes
+
+    return:  A tuple containing both the weights and a normalizing factor, to be
+             multiplied with the finally calculated cost so that it would be
+             comparable in value to one calculated without WDCCP weights.
+    """
+
     N = X[0].size
     K = X.shape[0]
 
@@ -49,92 +49,157 @@ def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
 
     return wdccp_weights, cost_normalizer
 
-def train_dccp(p: MaxPerceptron, X: np.ndarray, Y: np.ndarray,
-               weighted: bool, max_iterations: int, done_threshold = 0.001,
-               verbose: bool = False) -> float:
+class DccpTrainer(ABC):
     """
-    Train a perceptron for data classification.
-    Use DCCP: the cost function is the sum of the positive terms of a slack
-    obtained from a convex and concave part.
-    Approximate the concave part into a hyperplane at the weights for each
-    iteration.
-    Can stop early if the cost does not change enough between iterations.
-
-    param weight: whether to apply weights for each individual cost, so that
-                  outliers contribute less to the final cost.
-
-    return: the final cost, or -1 if no training happened.
+    Abstract class for defining a trainer for a list of perceptrons using DCCP.
     """
 
-    N = p.dim
-    K = X.shape[0]
-    p.weights = np.zeros(N)
-    p.bias = p.get_neutral_bias()
+    def __init__(self, perceptrons: list[Perceptron], weighted: bool,
+                 max_iterations: int = 100, done_threshold = 1e-6,
+                 verbose: bool = False) -> None:
+        """
+        Initialize the trainer.
 
-    if not K:
-        return 0
+        param perceptrons:    A list of perceptrons that will be trained later.
+        param weighted:       Whether to use WDCCP: apply weights to the cost
+                              contribution of each data point depending on how
+                              far they are from the class's centroid, so that
+                              outliers contribute less to the final cost.
+        param max_iterations: Upper bound for the number of training iterations.
+        param done_threshold: If the cost changes by a number smaller than this
+                              value in between operations, stop early.
+        param verbose:        Whether to log extra information.
+        """
 
-    # for WDCCP, compute the centroid of each one of the two regions
-    if weighted:
-        wdccp_weights, cost_normalizer = get_wdccp_weights(X, Y)
-    else:
-        # put all weights to 1 to ignore them but maintain code readability
-        wdccp_weights = np.ones(K)
-        cost_normalizer = 1
+        if max_iterations <= 0:
+            raise ValueError('max_iterations is too low, expected > 0 but got '
+                             f'{max_iterations}')
+        if done_threshold <= 0:
+            raise ValueError('done_threshold is too low, expected > 0 but got '
+                             f'{done_threshold}')
 
-    i = -1
-    done = False
-    prev_cost: float = np.inf
-    cost: float = np.inf
-    for i in range(max_iterations):
-        # formulate the cvxpy problem to solve
-        slack = cp.Variable(K)
-        optimized_weights = cp.Variable(N)
-        objective = cp.Minimize(
-                cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
-        constraints = []
+        self.perceptrons = perceptrons
+        self.weighted = weighted
+        self.max_iterations = max_iterations
+        self.done_threshold = done_threshold
+        self.verbose = verbose
 
-        for k, (x, y) in enumerate(zip(X, Y)):
-            # add the convex constraints
-            value = cp.max(optimized_weights + x)
-            cvx_constraint = bin_classify_cvx_cost(k, value, slack, y)
-            if cvx_constraint is not None:
-                constraints.append(cvx_constraint)
+    @abstractmethod
+    def initialize_perceptrons(self) -> None:
+        """
+        Initialize all perceptrons before training
+        """
 
-            # add the concave constraints:
-            # convexify the concave cost function by approximating it
-            # since we are working with a max perceptron, the approximation can
-            # be done by only using the weigth - input pair that maximizes the
-            # cost function for the given data point
-            index = np.argmax(p.weights + x)
-            value = optimized_weights[index] + x[index]
-            ccv_constraint = bin_classify_ccv_cost(k, value, slack, y)
-            if ccv_constraint is not None:
-                constraints.append(ccv_constraint)
+    @abstractmethod
+    def cvx_cost_function(self, weights: list[cp.Variable], x: cp.Variable,
+                          y: Any, slack: cp.Variable,
+                          k: int) -> cp.Constraint | None:
+        """
+        Compute the convex part of the full cost function for a specific input,
+        then optionally return a constraint.
 
-        # solve the problem
-        prob = cp.Problem(objective, constraints)
+        param weights: The weights that are currently being optimized
+        param x:       The current data point
+        param y:       The class of that particular data point
+        param slack:   The slack variable to use in the constraint
+        param k:       The index inside that slack variable
 
-        # update and normalize the cose in case using wdccp
-        cost = prob.solve() * cost_normalizer
+        return:        A constraint, or None if there is no constraint for this
+                       particular data point.
+        """
 
-        if abs(cost - prev_cost) < done_threshold:
-            done = True
-            break
+    @abstractmethod
+    def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
+                                      x: cp.Variable,
+                                      y: Any, slack: cp.Variable,
+                                      k: int) -> cp.Constraint | None:
+        """
+        Compute the concave part of the full cost function for a specific input,
+        then optionally return a constraint.
+        The calculated concave cost function must also be convex, i.e. it has to
+        be linearized, for example by calculating the plane tangent to the cost
+        function evaluated at x.
 
-        if verbose:
-            print(f'Iteration {i + 1}/{max_iterations}, cost: {cost:.2f}, '
-                  f'weights: {optimized_weights.value}')
+        See self.cvx_cost_function for similar parameters and return value.
+        """
 
-        # update the weights for sampling
-        p.weights = np.array(optimized_weights.value)
-        prev_cost = cost
+    def train(self, X: np.ndarray, Y: np.ndarray) -> float:
+        """
+        Train a list of perceptrons using DCCP.
+        This means this function can only solve problems where the cost function
+        can be separable in the given convex and concave parts.
 
-    if verbose:
-        if done:
-            print(f'{'W' if weighted else ''}DCCP done in {i} iterations, '
-                  f'final cost is {cost:.2f}')
+        param X: The set of data points to use for training.
+        param Y: The set of labels associated with elements of X.
+
+        return:  The final cost, or np.inf if no training happened.
+        """
+
+        K = X.shape[0]
+        self.initialize_perceptrons()
+
+        # for WDCCP, compute the centroid of each one of the two regions
+        if self.weighted:
+            wdccp_weights, cost_normalizer = get_wdccp_weights(X, Y)
         else:
-            print('Warning: reached max iterations for gradient descent')
+            # put all weights to 1 to ignore them but maintain code readability
+            wdccp_weights, cost_normalizer = np.ones(K), 1
 
-    return cost
+        i = -1
+        done = False
+        prev_cost: float = np.inf
+        cost: float = np.inf
+        for i in range(self.max_iterations):
+            # formulate the cvxpy problem to solve
+            slack = cp.Variable(K)
+            optimized_weights = [cp.Variable(perceptron.dim)
+                                 for perceptron in self.perceptrons]
+            objective = cp.Minimize(
+                    cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
+            constraints = []
+
+            for k, (x, y) in enumerate(zip(X, Y)):
+                # add the convex constraints
+                cvx_constraint = self.cvx_cost_function(
+                        optimized_weights, x, y, slack, k)
+                if cvx_constraint is not None:
+                    constraints.append(cvx_constraint)
+
+                # Add the concave constraints:
+                # Convexify the concave cost function by approximating it.
+                # Since we are working with a max perceptron, the approximation
+                # can be done by only using the weight - input pair that
+                # maximizes the cost function for the given data point.
+                ccv_constraint = self.ccv_cost_function_made_convex(
+                        optimized_weights, x, y, slack, k)
+                if ccv_constraint is not None:
+                    constraints.append(ccv_constraint)
+
+            # solve the problem
+            prob = cp.Problem(objective, constraints)
+
+            # update and normalize the cose in case using wdccp
+            cost = prob.solve() * cost_normalizer
+            cost_adjustment = abs(cost - prev_cost)
+
+            if cost_adjustment < self.done_threshold:
+                done = True
+                break
+
+            if self.verbose:
+                print(f'Iteration {i + 1}/{self.max_iterations}, '
+                      f'cost: {cost:.2f}, adjustment: {cost_adjustment}')
+
+            # update the weights for sampling
+            for perceptron, weights in zip(self.perceptrons, optimized_weights):
+                perceptron.weights = weights.value
+            prev_cost = cost
+
+        if self.verbose:
+            if done:
+                print(f'{'W' if self.weighted else ''}DCCP done in {i} '
+                      f'iterations, final cost is {cost:.2f}')
+            else:
+                print('Warning: reached max iterations for DCCP')
+
+        return cost
