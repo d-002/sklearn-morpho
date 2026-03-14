@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sklearn-morpho"
+version = "0.1.0"
+dependencies = [
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.envs.default]
+python = "3.14"
+dependencies = [
+    "cvxpy",
+    "pytest",
+    "pytest-cov",
+    "numpy",
+    "matplotlib",
+    "scikit-learn",
+    "pandas" # for scikit-learn's check_estimator
+]
+
+[tool.hatch.envs.default.scripts]
+main = "python -m sklearn_morpho"

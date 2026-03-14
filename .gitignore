@@ -1,0 +1,12 @@
+# python
+__pycache__
+venv
+*.pyc
+
+# vim
+*.swp
+*~
+
+# hatch
+dist
+.hatch

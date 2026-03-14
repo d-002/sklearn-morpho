@@ -1,0 +1,24 @@
+cache:
+  paths:
+    - .hatch-cache/
+
+variables:
+  HATCH_CACHE_DIR: "$CI_PROJECT_DIR/.hatch-cache"
+
+image: python:3.14
+
+before_script:
+  - pip install -U pip
+  - pip install -r requirements.txt
+
+test:
+  image: python:3.14-slim
+  stage: test
+  script:
+    - hatch run pytest
+
+main:
+  image: python:3.14-slim
+  stage: test
+  script:
+    - hatch run main
