@@ -1,4 +1,4 @@
-from . import MorphologicalClassifier as MC
+from .classifiers.temp_binary import TempBinaryClassifier as TBC
 
 if __name__ == '__main__':
     import numpy as np
@@ -6,8 +6,8 @@ if __name__ == '__main__':
     from matplotlib.path import Path
     from matplotlib.patches import PathPatch
 
-    from .binary.sample_data import SampleData
-    from .binary.training.dccp import get_wdccp_weights
+    from .datasets.gaussian_orthant import SampleData
+    from .training.dccp import get_wdccp_weights
 
     """
     Showcase of the features of this package.
@@ -25,9 +25,9 @@ if __name__ == '__main__':
     colorize = lambda class_: 'red' if class_ else 'blue'
 
     # create and train perceptrons
-    p_wdccp = MC('wdccp', verbose=True)
-    p_dccp = MC('dccp', verbose=True)
-    p_gradient = MC('gradient', verbose=True)
+    p_wdccp = TBC('wdccp', verbose=True)
+    p_dccp = TBC('dccp', verbose=True)
+    p_gradient = TBC('gradient', verbose=True)
     p_wdccp.fit(sample_data.X, sample_data.Y)
     p_dccp.fit(sample_data.X, sample_data.Y)
     p_gradient.fit(sample_data.X, sample_data.Y)

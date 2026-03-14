@@ -1,6 +1,6 @@
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn_morpho.binary import MorphologicalClassifier
+from sklearn_morpho import TempBinaryClassifier as TBC
 
 def test_dummy():
-    assert check_estimator(MorphologicalClassifier())
+    assert check_estimator(TBC())

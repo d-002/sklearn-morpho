@@ -5,10 +5,10 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from .perceptron import MaxPerceptron
-from .training import train_dccp, train_gradient
+from ..perceptron import MaxPerceptron
+from ..training import train_dccp, train_gradient
 
-class MorphologicalClassifier(ClassifierMixin, BaseEstimator):
+class TempBinaryClassifier(ClassifierMixin, BaseEstimator):
     """
     Scikit-learn estimator wrapper around a MaxPerceptron for binary data
     classification.
@@ -22,7 +22,7 @@ class MorphologicalClassifier(ClassifierMixin, BaseEstimator):
                 decision region less to improve accuracy on non-separable
                 datasets.
                 This is the default method.
-    - gradient: Use classic gradient descent techniques.
+    - gradient: Use classic gradient descent method.
                 This fitting method can be applied to more scenarios, but is
                 slower and only included here for demonstration purposes.
     """
@@ -36,7 +36,7 @@ class MorphologicalClassifier(ClassifierMixin, BaseEstimator):
         self.done_threshold = done_threshold
         self.verbose = verbose
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> MorphologicalClassifier:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> TempBinaryClassifier:
         # input data validation
         X, y = validate_data(self, X, y)
 

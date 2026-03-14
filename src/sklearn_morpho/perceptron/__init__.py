@@ -1,4 +1,3 @@
-import cvxpy as cp
 import numpy as np
 import numpy.typing as npt
 from abc import ABC, abstractmethod
