@@ -66,12 +66,12 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
             raise ValueError('Only binary classification is supported but '
                              f'got {len(classes_list)} class(es).')
 
-        # create or override perceptrons
+        # create and train perceptrons
         N = X[0].shape[0]
-
-        # train perceptrons
-        trainer = DepDccpTrainer(N, self.method == 'wdccp', self.max_iterations,
+        weighted = self.method == 'wdccp'
+        trainer = DepDccpTrainer(N, weighted, self.max_iterations,
                                  self.done_threshold, self.verbose)
+
         cost = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
@@ -87,10 +87,10 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         X = validate_data(self, X, reset=False)
 
         return np.array([
-            self.classes_[
-                (self.lambda_ * self.max_perceptron_.forward(x)) +
-                ((1 - self.lambda_) * self.min_perceptron_.forward(x))]
-            for x in X])
+            self.classes_[int(
+                (self.lambda_ * self.max_perceptron_.forward(x) +
+                 (1 - self.lambda_) * self.min_perceptron_.forward(x)) >= 0)]
+                for x in X])
 
     def __sklearn_tags__(self):
         """

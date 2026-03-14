@@ -18,7 +18,7 @@ class DepDccpTrainer(DccpTrainer):
 
         self.max_perceptron = MaxPerceptron(N)
         self.min_perceptron = MinPerceptron(N)
-        self.lambda_ = 0.5 # TODO, TEMPORARY
+        self.lambda_ = 0 # TODO, TEMPORARY
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
                          max_iterations, done_threshold, verbose)

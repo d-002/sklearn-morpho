@@ -192,6 +192,9 @@ class DccpTrainer(ABC):
 
             # update the weights for sampling
             for perceptron, weights in zip(self.perceptrons, optimized_weights):
+                continue # TODO
+                if weights.value is None:
+                    raise ValueError('CvxPy could not optimize')
                 perceptron.weights = weights.value
             prev_cost = cost
 

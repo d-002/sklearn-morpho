@@ -1,4 +1,4 @@
-from .classifiers.temp_binary import TempBinaryClassifier as TBC
+from .classifiers.dep import DilationErosionPerceptron as DEP
 
 if __name__ == '__main__':
     import numpy as np
@@ -6,7 +6,7 @@ if __name__ == '__main__':
     from matplotlib.path import Path
     from matplotlib.patches import PathPatch
 
-    from .datasets.gaussian_orthant import SampleData
+    from .datasets.gaussian import dataset_gaussians
     from .training.dccp import get_wdccp_weights
 
     """
@@ -18,49 +18,39 @@ if __name__ == '__main__':
     """
 
     # create sample data, assign colors
-    mean = np.array([0, 0])
-    deviation = np.array([5, 5])
-    quadrant_bound = np.multiply(np.random.random(2) - .5, deviation) + mean
-    sample_data = SampleData(mean, deviation, quadrant_bound, 500, .05)
-    colorize = lambda class_: 'red' if class_ else 'blue'
+    sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
+                                    np.array([[-3, 2], [4, -1]]),
+                                    np.array([3, 1.5]))
 
     # create and train perceptrons
-    p_wdccp = TBC('wdccp', verbose=True)
-    p_dccp = TBC('dccp', verbose=True)
-    p_gradient = TBC('gradient', verbose=True)
-    p_wdccp.fit(sample_data.X, sample_data.Y)
-    p_dccp.fit(sample_data.X, sample_data.Y)
-    p_gradient.fit(sample_data.X, sample_data.Y)
+    dep = DEP(verbose=True)
+    dep.fit(*sample_data)
 
     # display and compare results with matplotlib:
-    fig, axs = plt.subplots(ncols=2, nrows=2)
+    fig, ax = plt.subplots()
     names = ('Weighted DCCP with CvxPy', 'DCCP with CvxPy',
              'Naive gradient descent')
-    for p, name, ax in zip((p_wdccp, p_dccp, p_gradient), names, axs.flatten()):
-        ax.set_xlim(-10, 10)
-        ax.set_ylim(-10, 10)
+    ax.set_xlim(-10, 10)
+    ax.set_ylim(-10, 10)
 
-        # show stats
-        predicted = p.predict(sample_data.X)
-        accuracy = sum(int(y_predicted == y)
-                       for y_predicted, y in zip(predicted, sample_data.Y)) \
-                               / len(sample_data.X)
-        ax.title.set_text(f'{name}: cost {p.get_fit_cost():.2f}, '
-                          f'accuracy {accuracy * 100:.2f}%')
+    # show stats
+    predicted = dep.predict(sample_data[0])
+    fit_cost = -1 # TODO
+    accuracy = sum(int(y_predicted == y)
+                   for y_predicted, y in zip(predicted, sample_data[1])) \
+                           / len(sample_data[0])
+    ax.title.set_text(f'DEP with WDCCP: cost {fit_cost:.2f}, '
+                      f'accuracy {accuracy * 100:.2f}%')
 
-        if p.method == 'wdccp':
-            wdccp_weights, _ = get_wdccp_weights(sample_data.X, sample_data.Y)
-        else:
-            wdccp_weights = np.ones(sample_data.X.shape[0])
+    if dep.method == 'wdccp':
+        classes = list(set(sample_data[1]))
+        y_integers = np.array([classes.index(y) for y in sample_data[1]])
+        wdccp_weights, _ = get_wdccp_weights(sample_data[0], y_integers)
+    else:
+        wdccp_weights = np.ones(sample_data[0].shape[0])
 
-        # display target sample_data classification
-        for x, y, w in zip(sample_data.X, sample_data.Y, wdccp_weights):
-            ax.scatter(*x, color=colorize(y), alpha=np.sin(w * np.pi / 2))
-
-        # compute and display perceptron decision region
-        x, y = -p.perceptron_.weights
-        ax.add_patch(PathPatch(Path([(-10, y), (x, y), (x, -10)],
-                                    [Path.MOVETO, Path.LINETO, Path.LINETO]),
-                               fill=None))
+    # display target sample_data classification
+    for x, y, w in zip(*sample_data, wdccp_weights):
+        ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
     plt.show()
