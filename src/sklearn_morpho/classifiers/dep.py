@@ -48,6 +48,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         - self.min_perceptron_
         - self.lambda
         - self.classes_:        Unique labels generated from y
+        - self.fit_cost_:       Cached cost, fore use later by the user
 
         X and y must represent binary classifiable data.
         """
@@ -72,13 +73,13 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         trainer = DepDccpTrainer(N, weighted, self.max_iterations,
                                  self.done_threshold, self.verbose)
 
-        cost = trainer.train(X, y_integers)
+        self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
         self.lambda_ = trainer.lambda_
 
         if self.verbose:
-            print(f'Cost after fit(): {cost:.2f}')
+            print(f'Cost after fit(): {self.fit_cost_:.2f}')
 
         return self
 

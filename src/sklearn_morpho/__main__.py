@@ -19,11 +19,11 @@ if __name__ == '__main__':
 
     # create sample data, assign colors
     sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
-                                    np.array([[-3, 2], [4, -1]]),
+                                    np.array([[3, 2], [-4, -1]]),
                                     np.array([3, 1.5]))
 
     # create and train perceptrons
-    dep = DEP(verbose=True)
+    dep = DEP(method='dccp', verbose=True) # TODO add w back
     dep.fit(*sample_data)
 
     # display and compare results with matplotlib:
@@ -35,11 +35,10 @@ if __name__ == '__main__':
 
     # show stats
     predicted = dep.predict(sample_data[0])
-    fit_cost = -1 # TODO
     accuracy = sum(int(y_predicted == y)
                    for y_predicted, y in zip(predicted, sample_data[1])) \
                            / len(sample_data[0])
-    ax.title.set_text(f'DEP with WDCCP: cost {fit_cost:.2f}, '
+    ax.title.set_text(f'DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
                       f'accuracy {accuracy * 100:.2f}%')
 
     if dep.method == 'wdccp':
@@ -52,5 +51,11 @@ if __name__ == '__main__':
     # display target sample_data classification
     for x, y, w in zip(*sample_data, wdccp_weights):
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
+
+        # compute and display perceptron decision region
+        x, y = -dep.max_perceptron_.weights
+        ax.add_patch(PathPatch(Path([(-10, y), (x, y), (x, -10)],
+                                    [Path.MOVETO, Path.LINETO, Path.LINETO]),
+                               fill=None))
 
     plt.show()

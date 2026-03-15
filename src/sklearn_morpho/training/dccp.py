@@ -67,7 +67,8 @@ class DccpTrainer(ABC):
                               outliers contribute less to the final cost.
         param max_iterations: Upper bound for the number of training iterations.
         param done_threshold: If the cost changes by a number smaller than this
-                              value in between operations, stop early.
+                              value in between operations, or itself goes below
+                              this value, stop early.
         param verbose:        Whether to log extra information.
         """
 
@@ -175,27 +176,24 @@ class DccpTrainer(ABC):
                 if ccv_constraint is not None:
                     constraints.append(ccv_constraint)
 
-            # solve the problem
+            # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-
-            # update and normalize the cose in case using wdccp
             cost = prob.solve() * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
-
-            if cost_adjustment < self.done_threshold:
-                done = True
-                break
 
             if self.verbose:
                 print(f'Iteration {i + 1}/{self.max_iterations}, '
                       f'cost: {cost:.2f}, adjustment: {cost_adjustment}')
 
-            # update the weights for sampling
+            # update the weights early for argmax/argmin sampling
             for perceptron, weights in zip(self.perceptrons, optimized_weights):
-                continue # TODO
                 if weights.value is None:
                     raise ValueError('CvxPy could not optimize')
                 perceptron.weights = weights.value
+
+            if min(cost, cost_adjustment) < self.done_threshold:
+                done = True
+                break
             prev_cost = cost
 
         if self.verbose:
