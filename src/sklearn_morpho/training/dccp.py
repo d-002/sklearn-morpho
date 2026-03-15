@@ -85,10 +85,14 @@ class DccpTrainer(ABC):
         self.done_threshold = done_threshold
         self.verbose = verbose
 
-    @abstractmethod
-    def initialize_perceptrons(self) -> None:
+    def at_training_start(self) -> None:
         """
-        Initialize all perceptrons before training
+        Optional actions to take when the training starts.
+        """
+
+    def at_training_end(self) -> None:
+        """
+        Optional actions to take when the training ends.
         """
 
     @abstractmethod
@@ -137,7 +141,7 @@ class DccpTrainer(ABC):
         """
 
         K = X.shape[0]
-        self.initialize_perceptrons()
+        self.at_training_start()
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:

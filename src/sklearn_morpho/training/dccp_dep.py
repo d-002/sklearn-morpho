@@ -6,7 +6,7 @@ from .dccp import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 
 class DepDccpTrainer(DccpTrainer):
-    def __init__(self, N: int, weighted: bool,
+    def __init__(self, N: int, _lambda: float, weighted: bool,
                  max_iterations: int = 100, done_threshold = 1e-6,
                  verbose: bool = False) -> None:
         """
@@ -16,21 +16,27 @@ class DepDccpTrainer(DccpTrainer):
         param [others]: See base class.
         """
 
+        if _lambda < 0 or _lambda > 1:
+            raise ValueError(f'lambda must be between 0 and 1, got {_lambda}')
+
         self.max_perceptron = MaxPerceptron(N)
         self.min_perceptron = MinPerceptron(N)
-        self.lambda_ = .5 # TODO, TEMPORARY, also division by 0 errors if lambda in {0, 1}
-        # TODO fix lower / upper class to support all class types, then allow sklearn to classify again
+        self._lambda = _lambda
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
                          max_iterations, done_threshold, verbose)
 
-    def initialize_perceptrons(self) -> None:
+    def at_training_start(self) -> None:
+        """
+        Initialize all perceptrons before training.
+        """
+
         for perceptron in self.perceptrons:
             perceptron.weights = np.zeros(perceptron.dim)
             perceptron.bias = perceptron.get_neutral_bias()
 
     def _forward(self, x1: cp.Expression, x2: cp.Expression) -> cp.Expression:
-        return self.lambda_ * x1 + (1 - self.lambda_) * x2
+        return self._lambda * x1 + (1 - self._lambda) * x2
 
     def cvx_cost_function(self, weights: list[cp.Variable], x: cp.Variable,
                           y: Any, slack: cp.Variable,

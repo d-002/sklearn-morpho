@@ -12,6 +12,14 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     Scikit-learn estimator wrapper around a DEP (Dilation-Erosion morphological
     Perceptron) for binary data classification.
 
+    DEP forward pass equation:
+
+    \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
+
+    Where $\\tau$ refers to the activation of a (max, +) morphological
+    perceptron and $\\tau'$ to a (min, +) one.
+    $\\lambda$ must be a number between 0 and 1.
+
     Fitting can be done by setting the constructor parameter 'method' to either:
     - dccp:  Use Disciplined Programming and the Convex-Concave Procedure.
              Compared to gradient descent, DCCP seems to converge faster.
@@ -22,12 +30,14 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
              non-degenerate datasets.
     """
 
-    def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
+    def __init__(self, _lambda: float,
+                 method: Literal['wdccp', 'dccp'] = 'wdccp',
                  max_iterations: int = 100, done_threshold: float = 1e-6,
                  verbose: bool = False) -> None:
         """
-        Initialize the classifier, see help(self.__class__) for more.
+        Initialize the classifier, see class help for more.
 
+        param _lambda:          lambda parameter for the DEP, see class help
         param method:           Either 'dccp' or 'wcddp'
         param max_iterations:   Upper bound for the number of iterations to use
                                 during fitting
@@ -36,6 +46,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         param verbose:          Whether to log extra information
         """
 
+        self._lambda = _lambda
         self.method = method
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
@@ -70,13 +81,13 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         # create and train perceptrons
         N = X[0].shape[0]
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(N, weighted, self.max_iterations,
+        trainer = DepDccpTrainer(N, self._lambda, weighted, self.max_iterations,
                                  self.done_threshold, self.verbose)
 
         self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
-        self.lambda_ = trainer.lambda_
+        self._lambda = trainer._lambda
 
         if self.verbose:
             print(f'Cost after fit(): {self.fit_cost_:.2f}')
@@ -89,8 +100,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
         return np.array([
             self.classes_[int(
-                (self.lambda_ * self.max_perceptron_.forward(x) +
-                 (1 - self.lambda_) * self.min_perceptron_.forward(x)) >= 0)]
+                (self._lambda * self.max_perceptron_.forward(x) +
+                 (1 - self._lambda) * self.min_perceptron_.forward(x)) >= 0)]
                 for x in X])
 
     def get_decision_region_points(self
@@ -130,7 +141,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         # variable shortcuts for readability
-        l = self.lambda_
+        l = self._lambda
         w_max = self.max_perceptron_.weights
         w_min = self.min_perceptron_.weights
         N = self.max_perceptron_.dim

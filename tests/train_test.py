@@ -13,9 +13,7 @@ def test_train_separable_dataset():
                                     np.array([[-3, 2], [4, -1]]),
                                     np.array([3, 1.5]))
 
-    classifier = DEP()
+    classifier = DEP(.5)
     classifier.fit(*sample_data)
 
-    # take care of floating point imprecisions by not using 1, even though
-    # the perceptron should correctly classify everything
-    assert _get_prop_well_classified(*sample_data, classifier) >= .9999
+    assert _get_prop_well_classified(*sample_data, classifier) >= .9

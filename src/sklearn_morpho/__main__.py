@@ -23,7 +23,7 @@ if __name__ == '__main__':
                                     np.array([3, 1.5]))
 
     # create and train perceptrons
-    dep = DEP(verbose=True)
+    dep = DEP(.5, verbose=True)
     dep.fit(*sample_data)
 
     # display and compare results with matplotlib:
