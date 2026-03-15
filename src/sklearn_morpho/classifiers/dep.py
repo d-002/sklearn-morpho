@@ -164,13 +164,28 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         for ax in range(N):
             if ax == axis:
                 continue
-            A[ax] = -w_max[ax] - (1-l)/l * (ab_constant_coord + w_min[axis])
-            B[ax] = -w_min[ax] - l/(1-l) * (ab_constant_coord + w_max[axis])
-            A_[ax] = -w_max[ax] - (1-l)/l * (alternative_coord[0] + w_min[axis])
-            B_[ax] = -w_min[ax] - l/(1-l) * (alternative_coord[1] + w_max[axis])
+            if l:
+                A[ax] = -w_max[ax] - (1-l)/l * (
+                        ab_constant_coord + w_min[axis])
+                A_[ax] = -w_max[ax] - (1-l)/l * (
+                        alternative_coord[0] + w_min[axis])
+            if l < 1:
+                B[ax] = -w_min[ax] - l/(1-l) * (
+                        ab_constant_coord + w_max[axis])
+                B_[ax] = -w_min[ax] - l/(1-l) * (
+                        alternative_coord[1] + w_max[axis])
 
         u = A_ - A
         v = B_ - B
+        # special case for lambda 0 or 1, there is only one "corner"
+        if l == 0:
+            A = B
+            u = np.ones(N)
+            u[axis] = 0
+        elif l == 1:
+            B = A
+            v = -np.ones(N)
+            v[axis] = 0
 
         return ((A, u), (B, v))
 

@@ -59,8 +59,6 @@ class DepDccpTrainer(DccpTrainer):
         if y != 1:
             return None
 
-        # use weights from the perceptron, this makes dccp converge slower but
-        # argmax is not available directly in cvxpy
         index = np.argmax(self.max_perceptron.weights + x)
 
         max_weights, min_weights = weights

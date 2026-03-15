@@ -24,8 +24,3 @@ test:
   stage: test
   script:
     - hatch run pytest
-
-main:
-  stage: test
-  script:
-    - hatch run main
