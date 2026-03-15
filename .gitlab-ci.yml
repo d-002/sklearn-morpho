@@ -1,24 +1,31 @@
-cache:
-  paths:
-    - .hatch-cache/
-
 variables:
-  HATCH_CACHE_DIR: "$CI_PROJECT_DIR/.hatch-cache"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  HATCH_DATA_DIR: "$CI_PROJECT_DIR/.hatch-data"
+  PIP_ROOT_USER_ACTION: "ignore"
+  HATCH_ENV_TYPE_VIRTUAL_PATH: ".venv"
 
-image: python:3.14
+cache:
+  key:
+    files:
+      - pyproject.toml
+    prefix: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip
+    - .hatch-data
+    - .venv
+  policy: pull-push
+
+image: python:3.14-slim
 
 before_script:
-  - pip install -U pip
-  - pip install -r requirements.txt
+  - pip install --cache-dir .cache/pip hatch
 
 test:
-  image: python:3.14-slim
   stage: test
   script:
     - hatch run pytest
 
 main:
-  image: python:3.14-slim
   stage: test
   script:
     - hatch run main
