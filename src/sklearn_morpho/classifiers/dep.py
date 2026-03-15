@@ -93,6 +93,76 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
                  (1 - self.lambda_) * self.min_perceptron_.forward(x)) >= 0)]
                 for x in X])
 
+    def get_decision_region_points(self
+                                   ) -> tuple[tuple[np.ndarray, np.ndarray],
+                                              tuple[np.ndarray, np.ndarray]]:
+        """
+        Return points and vectors defining the decision region of the DEP.
+        The decision region can be described using the following diagram:
+
+        +------------+
+        |C_1     /v  |
+        |   A___/    |
+        |   /   B    |
+        | u/      C_0|
+        +------------+
+
+        C_0 and C_1 refer to the classes, although they may not be in this exact
+        configuration.
+        This function returns [[A, u], [B, v]], where A and B are the points at
+        which the decision region makes an angle and u/v are vectors for the
+        external semilines [A) and [B) respectively.
+
+        In the cases where lambda is either 0 or 1, only one point exists and
+        the other goes towards infinity.
+        In this case, A and B will refer to the same point and either u or v
+        will refer to the segment from the existing point and the one at
+        infinity, for an easier use.
+
+        For example:
+
+        +------------+
+        |C_1     /v  |
+        |_______/    |
+        | <-u   B    |
+        |         C_0|
+        +------------+
+        """
+
+        # variable shortcuts for readability
+        l = self.lambda_
+        w_max = self.max_perceptron_.weights
+        w_min = self.min_perceptron_.weights
+        N = self.max_perceptron_.dim
+
+        # calculate the coordinates for the line between A and B
+        axis = np.argmin(w_min - w_max)
+        ab_constant_coord = -l * w_max[axis] - (1 - l) * w_min[axis]
+        # alternative unchanging coords for later, using +/-1 this way because
+        # the regions are always lower for max and upper for min
+        alternative_coord = [ab_constant_coord - 1, ab_constant_coord + 1]
+
+        # Calculate the coordinates of A and B, knowing they have one in common
+        # being ab_constant_coord.
+        # Also compute A_ and B_, points also on these lines, to compute u and v
+        A, A_ = np.empty(N), np.empty(N)
+        B, B_ = np.empty(N), np.empty(N)
+        A[axis] = B[axis] = ab_constant_coord
+        A_[axis], B_[axis] = alternative_coord[0], alternative_coord[1]
+
+        for ax in range(N):
+            if ax == axis:
+                continue
+            A[ax] = -w_max[ax] - (1-l)/l * (ab_constant_coord + w_min[axis])
+            B[ax] = -w_min[ax] - l/(1-l) * (ab_constant_coord + w_max[axis])
+            A_[ax] = -w_max[ax] - (1-l)/l * (alternative_coord[0] + w_min[axis])
+            B_[ax] = -w_min[ax] - l/(1-l) * (alternative_coord[1] + w_max[axis])
+
+        u = A_ - A
+        v = B_ - B
+
+        return ((A, u), (B, v))
+
     def __sklearn_tags__(self):
         """
         Overriden method to allow check_estimator to not run accuracy tests.

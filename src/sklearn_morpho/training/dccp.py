@@ -133,7 +133,7 @@ class DccpTrainer(ABC):
         param X: The set of data points to use for training.
         param Y: The set of labels associated with elements of X.
 
-        return:  The final cost, or np.inf if no training happened.
+        return:  The final cost, or -1 if no training happened.
         """
 
         K = X.shape[0]
@@ -149,7 +149,7 @@ class DccpTrainer(ABC):
         i = -1
         done = False
         prev_cost: float = np.inf
-        cost: float = np.inf
+        cost: float = -1
         for i in range(self.max_iterations):
             # formulate the cvxpy problem to solve
             slack = cp.Variable(K)

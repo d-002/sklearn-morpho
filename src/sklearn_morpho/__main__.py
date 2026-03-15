@@ -18,12 +18,12 @@ if __name__ == '__main__':
     """
 
     # create sample data, assign colors
-    sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
+    sample_data = dataset_gaussians(500, 2, np.array(['red', 'blue']),
                                     np.array([[3, 2], [-4, -1]]),
                                     np.array([3, 1.5]))
 
     # create and train perceptrons
-    dep = DEP(method='dccp', verbose=True) # TODO add w back
+    dep = DEP(verbose=True)
     dep.fit(*sample_data)
 
     # display and compare results with matplotlib:
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     ax.title.set_text(f'DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
                       f'accuracy {accuracy * 100:.2f}%')
 
+    # display wdccp weights as points transparency, if applicable
     if dep.method == 'wdccp':
         classes = list(set(sample_data[1]))
         y_integers = np.array([classes.index(y) for y in sample_data[1]])
@@ -52,10 +53,11 @@ if __name__ == '__main__':
     for x, y, w in zip(*sample_data, wdccp_weights):
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
-        # compute and display perceptron decision region
-        x, y = -dep.max_perceptron_.weights
-        ax.add_patch(PathPatch(Path([(-10, y), (x, y), (x, -10)],
-                                    [Path.MOVETO, Path.LINETO, Path.LINETO]),
-                               fill=None))
+    # compute and display perceptron decision region
+    ((A, u), (B, v)) = dep.get_decision_region_points()
+    ax.add_patch(PathPatch(Path([A + 20 * u, A, B, B + 20 * v],
+                                [Path.MOVETO, Path.LINETO,
+                                 Path.LINETO, Path.LINETO]),
+                           fill=None))
 
     plt.show()

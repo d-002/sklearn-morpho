@@ -18,7 +18,7 @@ class DepDccpTrainer(DccpTrainer):
 
         self.max_perceptron = MaxPerceptron(N)
         self.min_perceptron = MinPerceptron(N)
-        self.lambda_ = 0.999 # TODO, TEMPORARY
+        self.lambda_ = .5 # TODO, TEMPORARY, also division by 0 errors if lambda in {0, 1}
         # TODO fix lower / upper class to support all class types, then allow sklearn to classify again
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
@@ -29,7 +29,7 @@ class DepDccpTrainer(DccpTrainer):
             perceptron.weights = np.zeros(perceptron.dim)
             perceptron.bias = perceptron.get_neutral_bias()
 
-    def _forward(self, x1: Any, x2: Any) -> Any:
+    def _forward(self, x1: cp.Expression, x2: cp.Expression) -> cp.Expression:
         return self.lambda_ * x1 + (1 - self.lambda_) * x2
 
     def cvx_cost_function(self, weights: list[cp.Variable], x: cp.Variable,
@@ -44,7 +44,7 @@ class DepDccpTrainer(DccpTrainer):
 
         max_weights, min_weights = weights
         value = self._forward(cp.max(max_weights + x), min_weights[index] + x)
-        return value <= slack[k]
+        return slack[k] >= value
 
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
                                       x: cp.Variable,
@@ -58,5 +58,5 @@ class DepDccpTrainer(DccpTrainer):
         index = np.argmax(self.max_perceptron.weights + x)
 
         max_weights, min_weights = weights
-        value = self._forward(max_weights[index] + x, cp.min(min_weights + x))
-        return value >= -slack[k]
+        value = -self._forward(max_weights[index] + x, cp.min(min_weights + x))
+        return slack[k] >= value
