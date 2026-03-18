@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 import numpy as np
 import cvxpy as cp
+import dccp
 
 from ..perceptron import Perceptron
 
@@ -182,7 +183,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = prob.solve() * cost_normalizer
+            cost = prob.solve(method='dccp')[0] * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
             if self.verbose:

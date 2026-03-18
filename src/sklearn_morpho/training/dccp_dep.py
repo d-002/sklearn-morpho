@@ -2,7 +2,7 @@ from typing import Any
 import numpy as np
 import cvxpy as cp
 
-from .dccp import DccpTrainer
+from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 
 class DepDccpTrainer(DccpTrainer):

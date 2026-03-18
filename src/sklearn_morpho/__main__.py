@@ -7,7 +7,7 @@ if __name__ == '__main__':
     from matplotlib.patches import PathPatch
 
     from .datasets.gaussian import dataset_gaussians
-    from .training.dccp import get_wdccp_weights
+    from .training.dccp_wrapper import get_wdccp_weights
 
     """
     Showcase of the features of this package.
@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     # create sample data, assign colors
     method = 'wdccp'
-    sample_data = dataset_gaussians(10, 2, np.array(['red', 'blue']),
+    sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
                                     np.array([[3, 2], [-4, -1]]),
                                     np.array([3, 1.5]))
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     for x, y, w in zip(*sample_data, wdccp_weights):
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
-    for _lambda in np.linspace(0, 1, 5):
+    for _lambda in [.5]:
         # create and train perceptrons
         dep = DEP(_lambda, method=method, verbose=True)
         dep.fit(*sample_data)

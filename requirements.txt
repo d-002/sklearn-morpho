@@ -1,8 +1,0 @@
-hatch
-pytest
-pytest-cov
-numpy
-matplotlib
-cvxpy
-scikit-learn
-pandas
