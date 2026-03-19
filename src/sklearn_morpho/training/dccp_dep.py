@@ -49,7 +49,8 @@ class DepDccpTrainer(DccpTrainer):
         index = np.argmin(self.min_perceptron.weights + x)
 
         max_weights, min_weights = weights
-        value = self._forward(cp.max(max_weights + x), min_weights[index] + x)
+        value = self._forward(cp.max(max_weights + x),
+                              (min_weights + x)[index])
         return slack[k] >= value
 
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
@@ -62,5 +63,6 @@ class DepDccpTrainer(DccpTrainer):
         index = np.argmax(self.max_perceptron.weights + x)
 
         max_weights, min_weights = weights
-        value = -self._forward(max_weights[index] + x, cp.min(min_weights + x))
+        value = -self._forward((max_weights + x)[index],
+                               cp.min(min_weights + x))
         return slack[k] >= value

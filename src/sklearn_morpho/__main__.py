@@ -42,7 +42,7 @@ if __name__ == '__main__':
     for x, y, w in zip(*sample_data, wdccp_weights):
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
-    for _lambda in [.5]:
+    for _lambda in np.linspace(0, 1, 10):
         # create and train perceptrons
         dep = DEP(_lambda, method=method, verbose=True)
         dep.fit(*sample_data)
