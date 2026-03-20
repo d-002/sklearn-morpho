@@ -155,13 +155,15 @@ class DccpTrainer(ABC):
         done = False
         prev_cost: float = np.inf
         cost: float = -1
+
+        # formulate the cvxpy problem to solve, common to all iterations
+        slack = cp.Variable(K)
+        optimized_weights = [cp.Variable(perceptron.dim)
+                             for perceptron in self.perceptrons]
+        objective = cp.Minimize(
+                cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
+
         for i in range(self.max_iterations):
-            # formulate the cvxpy problem to solve
-            slack = cp.Variable(K)
-            optimized_weights = [cp.Variable(perceptron.dim)
-                                 for perceptron in self.perceptrons]
-            objective = cp.Minimize(
-                    cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
             constraints = []
 
             for k, (x, y) in enumerate(zip(X, Y)):
