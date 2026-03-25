@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 import numpy as np
 import cvxpy as cp
-import dccp
+from time import time
 
 from ..perceptron import Perceptron
 
@@ -56,7 +56,7 @@ class DccpTrainer(ABC):
     """
 
     def __init__(self, perceptrons: list[Perceptron], weighted: bool,
-                 max_iterations: int = 100, done_threshold = 1e-6,
+                 max_iterations: int = 100, done_threshold = 0,
                  verbose: bool = False) -> None:
         """
         Initialize the trainer.
@@ -76,8 +76,8 @@ class DccpTrainer(ABC):
         if max_iterations <= 0:
             raise ValueError('max_iterations is too low, expected > 0 but got '
                              f'{max_iterations}')
-        if done_threshold <= 0:
-            raise ValueError('done_threshold is too low, expected > 0 but got '
+        if done_threshold < 0:
+            raise ValueError('done_threshold is too low, expected >= 0 but got '
                              f'{done_threshold}')
 
         self.perceptrons = perceptrons
@@ -141,6 +141,7 @@ class DccpTrainer(ABC):
         return:  The final cost, or -1 if no training happened.
         """
 
+        start = time()
         K = X.shape[0]
         self.at_training_start()
 
@@ -185,7 +186,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = prob.solve(method='dccp')[0] * cost_normalizer
+            cost = prob.solve() * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
             if self.verbose:
@@ -198,16 +199,19 @@ class DccpTrainer(ABC):
                     raise ValueError('CvxPy could not optimize')
                 perceptron.weights = weights.value
 
-            if min(cost, cost_adjustment) < self.done_threshold:
+            if min(cost, cost_adjustment) <= self.done_threshold:
                 done = True
                 break
             prev_cost = cost
 
         if self.verbose:
+            dt = time() - start
             if done:
-                print(f'{'W' if self.weighted else ''}DCCP done in {i} '
-                      f'iterations, final cost is {cost:.2f}')
+                print(f'{'W' if self.weighted else ''}DCCP done in '
+                      f'{i}/{self.max_iterations} iterations, '
+                      f'final cost is {cost:.2f} in {dt:.2f}s')
             else:
-                print('Warning: reached max iterations for DCCP')
+                print('Warning: reached max iterations for DCCP after '
+                        f'{dt:.2f}s')
 
         return cost
