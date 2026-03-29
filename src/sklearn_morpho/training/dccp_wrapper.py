@@ -56,7 +56,7 @@ class DccpTrainer(ABC):
     """
 
     def __init__(self, perceptrons: list[Perceptron], weighted: bool,
-                 max_iterations: int = 100, done_threshold = 0,
+                 max_iterations: int = 100, done_threshold = 1e-9,
                  verbose: bool = False) -> None:
         """
         Initialize the trainer.
@@ -76,8 +76,8 @@ class DccpTrainer(ABC):
         if max_iterations <= 0:
             raise ValueError('max_iterations is too low, expected > 0 but got '
                              f'{max_iterations}')
-        if done_threshold < 0:
-            raise ValueError('done_threshold is too low, expected >= 0 but got '
+        if done_threshold <= 0:
+            raise ValueError('done_threshold is too low, expected > 0 but got '
                              f'{done_threshold}')
 
         self.perceptrons = perceptrons

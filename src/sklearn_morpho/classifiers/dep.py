@@ -32,7 +32,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
     def __init__(self, _lambda: float,
                  method: Literal['wdccp', 'dccp'] = 'wdccp',
-                 max_iterations: int = 100, done_threshold: float = 0,
+                 max_iterations: int = 100, done_threshold: float = 1e-9,
                  verbose: bool = False) -> None:
         """
         Initialize the classifier, see class help for more.

@@ -33,7 +33,6 @@ class DepDccpTrainer(DccpTrainer):
 
         for perceptron in self.perceptrons:
             perceptron.weights = np.zeros(perceptron.dim)
-            perceptron.bias = perceptron.get_neutral_bias()
 
     def _forward(self, x1: cp.Expression, x2: cp.Expression) -> cp.Expression:
         return self._lambda * x1 + (1 - self._lambda) * x2
