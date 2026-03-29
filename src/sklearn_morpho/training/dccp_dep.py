@@ -23,14 +23,18 @@ class DepDccpTrainer(DccpTrainer):
                          margin, max_iterations, done_threshold, verbose)
 
     def at_training_start(self) -> list[cp.Constraint]:
+        # Create transformation matrices constraints, as well as original values
+        # for linearization.
+        # Use these to absorbe the final lambda parameter, restored at the end,
+        # inspired by arXiv:2011.06512v1.
+        self._max_training_matrix = cp.Variable((2, 2))
+        self._min_training_matrix = cp.Variable((2, 2))
+        self.max_matrix = np.random.rand(2, 2)
+        self.min_matrix = np.random.rand(2, 2)
+
         super().at_training_start()
-        self._training_lambda = cp.Variable()
 
-        # will be populated during training, but need an initial value for
-        # linearization
-        self.lambda_ = np.random.rand()
-
-        return [self._training_lambda >= 0, self._training_lambda <= 1]
+        return []
 
     def cvx_cost_function(self, weights: list[cp.Variable], x: np.ndarray,
                           y: Any, slack: cp.Variable,
@@ -40,15 +44,12 @@ class DepDccpTrainer(DccpTrainer):
 
         # manual linear approximation for speed, using previously calculated
         # perceptron weights and lambda, but it should still converge
-        index = np.argmin((1 - self.lambda_) *
-                          (self.min_perceptron.weights + x))
+        index = np.argmin(self.min_perceptron.weights + self.min_matrix @ x)
 
-        # use absorbed values max_weights = max_weights * lambda for cvxpy
-        # compliance, inspired by arXiv:2011.06512v1
         max_weights, min_weights = weights
-        value = cp.max(max_weights + self._training_lambda * x) + \
-                (min_weights + (1 - self._training_lambda) * x)[index]
-        return slack[k] - self.margin >= value
+        value = cp.max(max_weights + self._max_training_matrix @ x) + \
+                (min_weights + self._min_training_matrix @ x)[index]
+        return slack[k] >= self.margin + value
 
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
                                       x: np.ndarray, y: Any, slack: cp.Variable,
@@ -56,27 +57,34 @@ class DepDccpTrainer(DccpTrainer):
         if y != 1:
             return None
 
-        index = np.argmax(self.lambda_ * (self.max_perceptron.weights + x))
+        index = np.argmax(self.max_perceptron.weights + self.max_matrix @ x)
 
         max_weights, min_weights = weights
-        value = -(max_weights + self._training_lambda * x)[index] - \
-                cp.min(min_weights + (1 - self._training_lambda) * x)
-        return slack[k] - self.margin >= value
+        value = (max_weights + self._max_training_matrix @ x)[index] + \
+                cp.min(min_weights + self._min_training_matrix @ x)
+        return slack[k] >= self.margin - value
 
-    def after_training_iteration(self, optimized_weights: list[cp.Variable]
-                                 ) -> None:
+    def after_training_iteration(self,
+                                 optimized_weights: list[cp.Variable]) -> None:
         # update the perceptrons weights
         for perceptron, weights in zip(self.perceptrons, optimized_weights):
             if weights.value is None:
                 raise ValueError('CvxPy could not optimize a perceptron')
             perceptron.weights = weights.value
 
-        # also update lambda_ from its current value
-        if self._training_lambda.value is None:
-            raise ValueError('CvxPy could not optimize lambda')
-        self.lambda_ = self._training_lambda.value
+        # extract the matrices in a similar way
+        if self._max_training_matrix.value is None \
+                or self._min_training_matrix.value is None:
+            raise ValueError('CvxPy could not optimize transformation matrices')
+        self.max_matrix = self._max_training_matrix.value
+        self.min_matrix = self._min_training_matrix.value
 
     def at_training_end(self) -> None:
-        # recover the actual morphological weights from the absorbed values
+        max_matrix_norm = np.linalg.norm(self.max_matrix)
+        min_matrix_norm = np.linalg.norm(self.min_matrix)
+
+        self.lambda_ = max_matrix_norm / (max_matrix_norm + min_matrix_norm)
+        self.max_matrix /= self.lambda_
+        self.min_matrix /= 1 - self.lambda_
         self.max_perceptron.weights /= self.lambda_
-        self.min_perceptron.weights /= (1 - self.lambda_)
+        self.min_perceptron.weights /= 1 - self.lambda_

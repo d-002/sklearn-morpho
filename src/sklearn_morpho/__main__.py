@@ -26,9 +26,10 @@ if __name__ == '__main__':
 
     # create sample data, assign colors
     method = 'wdccp'
+    np.random.seed(1)
     sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
-                                    np.array([[3, 2], [-4, -1]]),
-                                    np.array([3, 1.5]))
+                                    np.random.rand(2, 2) * 10 - 5,
+                                    (np.random.rand(2) * 2 + 1.5)) ## remove .5
 
     # display wdccp weights as points transparency, if applicable
     if method == 'wdccp':
@@ -43,7 +44,7 @@ if __name__ == '__main__':
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
     # create and train perceptrons
-    dep = DEP(method=method, margin=0, verbose=True)
+    dep = DEP(method=method, margin=1, verbose=True)
     dep.fit(*sample_data)
 
     # show stats

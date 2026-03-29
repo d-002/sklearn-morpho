@@ -110,8 +110,8 @@ class DccpTrainer(ABC):
 
         return []
 
-    def after_training_iteration(self, optimized_weights: list[cp.Variable]
-                                 ) -> None:
+    def after_training_iteration(self,
+                                 optimized_weights: list[cp.Variable]) -> None:
         """
         Optional actions to take when the training ends.
         """

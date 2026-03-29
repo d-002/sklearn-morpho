@@ -9,16 +9,17 @@ from ..training.dccp_dep import DepDccpTrainer
 
 class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     """
-    Scikit-learn estimator wrapper around a DEP (Dilation-Erosion morphological
-    Perceptron) for binary data classification.
+    Scikit-learn estimator wrapper around a l-DEP (linear Dilation-Erosion
+    morphological Perceptron) for binary data classification.
 
     DEP forward pass equation:
 
-    \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
+    \\[ y = f(\\lambda \\tau_(\\rho(x)) + (1 - \\lambda) \\tau'_(\\rho(x))) \\]
 
     Where $\\tau$ refers to the activation of a (max, +) morphological
     perceptron and $\\tau'$ to a (min, +) one.
-    $\\lambda$ must be a number between 0 and 1.
+    $\\rho$ is a linear transformation to apply to the training data to be able
+    to classify any distribution of binary data.
 
     Fitting can be done by setting the constructor parameter 'method' to either:
     - dccp:  Use Disciplined Programming and the Convex-Concave Procedure.
@@ -36,13 +37,16 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
         Initialize the classifier, see class help for more.
 
-        param _lambda:          lambda parameter for the DEP, see class help
-        param method:           Either 'dccp' or 'wcddp'
-        param max_iterations:   Upper bound for the number of iterations to use
-                                during fitting
-        param done_threshold:   The cost delta at which training is considered
-                                finished
-        param verbose:          Whether to log extra information
+        param method:         Either 'dccp' or 'wcddp'
+        param margin:         Enforce a margin between the decision boundary and
+                              the data. May help with linearly separable
+                              datasets, but generally lower is more accurate.
+        param max_iterations: Upper bound for the number of iterations to use
+                              during fitting.
+        param done_threshold: The rate of change for the cost between
+                              consecutive iterations under which training is
+                              considered finished.
+        param verbose:        Whether to log extra information / time fit().
         """
 
         self.method = method
