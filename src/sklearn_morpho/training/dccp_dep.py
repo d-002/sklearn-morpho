@@ -8,7 +8,7 @@ from ..perceptron import MaxPerceptron, MinPerceptron
 class DepDccpTrainer(DccpTrainer):
     def __init__(self, N: int, weighted: bool, margin: float,
                  max_iterations: int, done_threshold: float,
-                 verbose: bool = False) -> None:
+                 verbose: bool, rs: np.random.RandomState) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
 
@@ -20,17 +20,18 @@ class DepDccpTrainer(DccpTrainer):
         self.min_perceptron = MinPerceptron(N)
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
-                         margin, max_iterations, done_threshold, verbose)
+                         margin, max_iterations, done_threshold, verbose, rs)
 
     def at_training_start(self) -> list[cp.Constraint]:
         # Create transformation matrices constraints, as well as original values
         # for linearization.
         # Use these to absorbe the final lambda parameter, restored at the end,
         # inspired by arXiv:2011.06512v1.
-        self._max_training_matrix = cp.Variable((2, 2))
-        self._min_training_matrix = cp.Variable((2, 2))
-        self.max_matrix = np.random.rand(2, 2)
-        self.min_matrix = np.random.rand(2, 2)
+        N = self.max_perceptron.dim
+        self._max_training_matrix = cp.Variable((N, N))
+        self._min_training_matrix = cp.Variable((N, N))
+        self.max_matrix = self.rs.rand(N, N)
+        self.min_matrix = self.rs.rand(N, N)
 
         super().at_training_start()
 

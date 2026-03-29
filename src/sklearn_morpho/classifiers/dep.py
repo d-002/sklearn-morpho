@@ -2,6 +2,7 @@ import numpy as np
 from typing import Literal
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
@@ -33,7 +34,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
     def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
                  margin: float = 0, max_iterations: int = 100,
-                 done_threshold: float = 1e-9, verbose: bool = False) -> None:
+                 done_threshold: float = 1e-9, verbose: bool = False,
+                 random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
 
@@ -47,6 +49,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
                               consecutive iterations under which training is
                               considered finished.
         param verbose:        Whether to log extra information / time fit().
+        param random_state:   A RandomState object for predictable randomness,
+                              or None
         """
 
         self.method = method
@@ -54,6 +58,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
         self.verbose = verbose
+        self.random_state = random_state
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> DilationErosionPerceptron:
         """
@@ -68,6 +73,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         # input data validation
+        rs = check_random_state(self.random_state)
         X, y = validate_data(self, X, y)
 
         # create classes and convert them to distinct integers for fitting
@@ -85,7 +91,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         N = X[0].shape[0]
         weighted = self.method == 'wdccp'
         trainer = DepDccpTrainer(N, weighted, self.margin, self.max_iterations,
-                                 self.done_threshold, self.verbose)
+                                 self.done_threshold, self.verbose, rs)
 
         self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
@@ -110,6 +116,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
             for x in X])
 
     def predict(self, X: np.ndarray) -> np.ndarray:
+        check_is_fitted(self)
         return self.classes_[(self.decision_function(X) >= 0).astype(int)]
 
     def __sklearn_tags__(self):
@@ -120,6 +127,5 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         tags = super().__sklearn_tags__()
-        tags.classifier_tags.poor_score = True
         tags.classifier_tags.multi_class = False
         return tags

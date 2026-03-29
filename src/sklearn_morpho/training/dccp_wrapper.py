@@ -57,7 +57,7 @@ class DccpTrainer(ABC):
 
     def __init__(self, perceptrons: list[Perceptron], weighted: bool,
                  margin: float, max_iterations: int, done_threshold: float,
-                 verbose: bool) -> None:
+                 verbose: bool, rs: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
@@ -89,6 +89,7 @@ class DccpTrainer(ABC):
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
         self.verbose = verbose
+        self.rs = rs
 
     def at_training_start(self) -> list[cp.Constraint]:
         """
@@ -206,7 +207,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = prob.solve() * cost_normalizer
+            cost = prob.solve(verbose=self.verbose) * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
             if self.verbose:
