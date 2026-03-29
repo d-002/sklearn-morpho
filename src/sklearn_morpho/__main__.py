@@ -9,6 +9,8 @@ if __name__ == '__main__':
     from .datasets.gaussian import dataset_gaussians
     from .training.dccp_wrapper import get_wdccp_weights
 
+    print('DEBUG:', np.random.get_state())
+
     """
     Showcase of the features of this package.
     - Create random sample data
@@ -42,24 +44,23 @@ if __name__ == '__main__':
     for x, y, w in zip(*sample_data, wdccp_weights):
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
-    for _lambda in np.linspace(0, 1, 10):
-        # create and train perceptrons
-        dep = DEP(_lambda, method=method, verbose=True)
-        dep.fit(*sample_data)
+    # create and train perceptrons
+    dep = DEP(method=method, verbose=True)
+    dep.fit(*sample_data)
 
-        # show stats
-        predicted = dep.predict(sample_data[0])
-        accuracy = sum(int(y_predicted == y)
-                       for y_predicted, y in zip(predicted, sample_data[1])) \
-                               / len(sample_data[0])
-        ax.title.set_text(f'DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
-                          f'accuracy {accuracy * 100:.2f}%')
+    # show stats
+    predicted = dep.predict(sample_data[0])
+    accuracy = sum(int(y_predicted == y)
+                   for y_predicted, y in zip(predicted, sample_data[1])) \
+                           / len(sample_data[0])
+    ax.title.set_text(f'DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
+                      f'accuracy {accuracy * 100:.2f}%')
 
-        # compute and display perceptron decision region
-        ((A, u), (B, v)) = dep.get_decision_region_points()
-        ax.add_patch(PathPatch(Path([A + 20 * u, A, B, B + 20 * v],
-                                    [Path.MOVETO, Path.LINETO,
-                                     Path.LINETO, Path.LINETO]),
-                               fill=None))
+    # compute and display perceptron decision region
+    ((A, u), (B, v)) = dep.get_decision_region_points()
+    ax.add_patch(PathPatch(Path([A + 20 * u, A, B, B + 20 * v],
+                                [Path.MOVETO, Path.LINETO,
+                                 Path.LINETO, Path.LINETO]),
+                           fill=None))
 
     plt.show()

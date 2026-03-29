@@ -30,8 +30,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
              non-degenerate datasets.
     """
 
-    def __init__(self, _lambda: float,
-                 method: Literal['wdccp', 'dccp'] = 'wdccp',
+    def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
                  max_iterations: int = 100, done_threshold: float = 1e-9,
                  verbose: bool = False) -> None:
         """
@@ -46,7 +45,6 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         param verbose:          Whether to log extra information
         """
 
-        self._lambda = _lambda
         self.method = method
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
@@ -81,13 +79,13 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         # create and train perceptrons
         N = X[0].shape[0]
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(N, self._lambda, weighted, self.max_iterations,
+        trainer = DepDccpTrainer(N, weighted, self.max_iterations,
                                  self.done_threshold, self.verbose)
 
         self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
-        self._lambda = trainer._lambda
+        self.lambda_ = trainer.lambda_
 
         if self.verbose:
             print(f'Cost after fit(): {self.fit_cost_:.2f}')
@@ -100,8 +98,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
         return np.array([
             self.classes_[int(
-                (self._lambda * self.max_perceptron_.forward(x) +
-                 (1 - self._lambda) * self.min_perceptron_.forward(x)) >= 0)]
+                (self.lambda_ * self.max_perceptron_.forward(x) +
+                 (1 - self.lambda_) * self.min_perceptron_.forward(x)) >= 0)]
                 for x in X])
 
     def get_decision_region_points(self
@@ -141,7 +139,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         # variable shortcuts for readability
-        l = self._lambda
+        l = self.lambda_
         w_max = self.max_perceptron_.weights
         w_min = self.min_perceptron_.weights
         N = self.max_perceptron_.dim

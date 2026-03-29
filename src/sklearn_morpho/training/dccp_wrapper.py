@@ -89,15 +89,31 @@ class DccpTrainer(ABC):
     def at_training_start(self) -> None:
         """
         Optional actions to take when the training starts.
+        For example, create and persist a list of additional variables to
+        optimize.
+
+        If overriden, must call this base class method to initialize the
+        perceptrons.
         """
 
-    def at_training_end(self) -> None:
+        # will be populated during training, but need an initial value for
+        # linearization
+        for perceptron in self.perceptrons:
+            perceptron.weights = np.zeros(perceptron.dim)
+
+    def after_training_iteration(self, optimized_weights: list[cp.Variable]
+                                 ) -> None:
         """
         Optional actions to take when the training ends.
         """
 
+    def at_training_end(self) -> None:
+        """
+        Optional actions to take when the training is over.
+        """
+
     @abstractmethod
-    def cvx_cost_function(self, weights: list[cp.Variable], x: cp.Variable,
+    def cvx_cost_function(self, weights: list[cp.Variable], x: np.ndarray,
                           y: Any, slack: cp.Variable,
                           k: int) -> cp.Constraint | None:
         """
@@ -116,7 +132,7 @@ class DccpTrainer(ABC):
 
     @abstractmethod
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
-                                      x: cp.Variable,
+                                      x: np.ndarray,
                                       y: Any, slack: cp.Variable,
                                       k: int) -> cp.Constraint | None:
         """
@@ -174,11 +190,7 @@ class DccpTrainer(ABC):
                 if cvx_constraint is not None:
                     constraints.append(cvx_constraint)
 
-                # Add the concave constraints:
-                # Convexify the concave cost function by approximating it.
-                # Since we are working with a max perceptron, the approximation
-                # can be done by only using the weight - input pair that
-                # maximizes the cost function for the given data point.
+                # add the linearized concave constraints
                 ccv_constraint = self.ccv_cost_function_made_convex(
                         optimized_weights, x, y, slack, k)
                 if ccv_constraint is not None:
@@ -194,10 +206,7 @@ class DccpTrainer(ABC):
                       f'cost: {cost:.2f}, adjustment: {cost_adjustment}')
 
             # update the weights early for argmax/argmin sampling
-            for perceptron, weights in zip(self.perceptrons, optimized_weights):
-                if weights.value is None:
-                    raise ValueError('CvxPy could not optimize')
-                perceptron.weights = weights.value
+            self.after_training_iteration(optimized_weights)
 
             if min(cost, cost_adjustment) <= self.done_threshold:
                 done = True
@@ -213,5 +222,7 @@ class DccpTrainer(ABC):
             else:
                 print('Warning: reached max iterations for DCCP after '
                         f'{dt:.2f}s')
+
+        self.at_training_end()
 
         return cost
