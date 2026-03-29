@@ -56,8 +56,8 @@ class DccpTrainer(ABC):
     """
 
     def __init__(self, perceptrons: list[Perceptron], weighted: bool,
-                 max_iterations: int = 100, done_threshold = 1e-9,
-                 verbose: bool = False) -> None:
+                 margin: float, max_iterations: int, done_threshold: float,
+                 verbose: bool) -> None:
         """
         Initialize the trainer.
 
@@ -73,6 +73,9 @@ class DccpTrainer(ABC):
         param verbose:        Whether to log extra information.
         """
 
+        if margin < 0:
+            raise ValueError('margin is too low, expected >= 0 but got '
+                             f'{margin}')
         if max_iterations <= 0:
             raise ValueError('max_iterations is too low, expected > 0 but got '
                              f'{max_iterations}')
@@ -82,6 +85,7 @@ class DccpTrainer(ABC):
 
         self.perceptrons = perceptrons
         self.weighted = weighted
+        self.margin = margin
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
         self.verbose = verbose
@@ -137,8 +141,7 @@ class DccpTrainer(ABC):
 
     @abstractmethod
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
-                                      x: np.ndarray,
-                                      y: Any, slack: cp.Variable,
+                                      x: np.ndarray, y: Any, slack: cp.Variable,
                                       k: int) -> cp.Constraint | None:
         """
         Compute the concave part of the full cost function for a specific input,

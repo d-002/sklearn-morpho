@@ -6,8 +6,8 @@ from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 
 class DepDccpTrainer(DccpTrainer):
-    def __init__(self, N: int, weighted: bool,
-                 max_iterations: int = 100, done_threshold = 1e-6,
+    def __init__(self, N: int, weighted: bool, margin: float,
+                 max_iterations: int, done_threshold: float,
                  verbose: bool = False) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
@@ -20,7 +20,7 @@ class DepDccpTrainer(DccpTrainer):
         self.min_perceptron = MinPerceptron(N)
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
-                         max_iterations, done_threshold, verbose)
+                         margin, max_iterations, done_threshold, verbose)
 
     def at_training_start(self) -> list[cp.Constraint]:
         super().at_training_start()
@@ -48,11 +48,10 @@ class DepDccpTrainer(DccpTrainer):
         max_weights, min_weights = weights
         value = cp.max(max_weights + self._training_lambda * x) + \
                 (min_weights + (1 - self._training_lambda) * x)[index]
-        return slack[k] >= value
+        return slack[k] - self.margin >= value
 
     def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
-                                      x: np.ndarray,
-                                      y: Any, slack: cp.Variable,
+                                      x: np.ndarray, y: Any, slack: cp.Variable,
                                       k: int) -> cp.Constraint | None:
         if y != 1:
             return None
@@ -62,7 +61,7 @@ class DepDccpTrainer(DccpTrainer):
         max_weights, min_weights = weights
         value = -(max_weights + self._training_lambda * x)[index] - \
                 cp.min(min_weights + (1 - self._training_lambda) * x)
-        return slack[k] >= value
+        return slack[k] - self.margin >= value
 
     def after_training_iteration(self, optimized_weights: list[cp.Variable]
                                  ) -> None:
@@ -79,6 +78,5 @@ class DepDccpTrainer(DccpTrainer):
 
     def at_training_end(self) -> None:
         # recover the actual morphological weights from the absorbed values
-        print(self.lambda_)
         self.max_perceptron.weights /= self.lambda_
         self.min_perceptron.weights /= (1 - self.lambda_)

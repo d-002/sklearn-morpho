@@ -43,7 +43,7 @@ if __name__ == '__main__':
         ax.scatter(*x, color=y, alpha=np.sin(w * np.pi / 2))
 
     # create and train perceptrons
-    dep = DEP(method=method, verbose=True)
+    dep = DEP(method=method, margin=0, verbose=True)
     dep.fit(*sample_data)
 
     # show stats

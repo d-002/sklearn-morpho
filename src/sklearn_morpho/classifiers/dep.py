@@ -31,8 +31,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
-                 max_iterations: int = 100, done_threshold: float = 1e-9,
-                 verbose: bool = False) -> None:
+                 margin: float = 0, max_iterations: int = 100,
+                 done_threshold: float = 1e-9, verbose: bool = False) -> None:
         """
         Initialize the classifier, see class help for more.
 
@@ -46,6 +46,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         self.method = method
+        self.margin = margin
         self.max_iterations = max_iterations
         self.done_threshold = done_threshold
         self.verbose = verbose
@@ -79,7 +80,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         # create and train perceptrons
         N = X[0].shape[0]
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(N, weighted, self.max_iterations,
+        trainer = DepDccpTrainer(N, weighted, self.margin, self.max_iterations,
                                  self.done_threshold, self.verbose)
 
         self.fit_cost_ = trainer.train(X, y_integers)
