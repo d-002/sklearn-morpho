@@ -22,13 +22,15 @@ class DepDccpTrainer(DccpTrainer):
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
                          max_iterations, done_threshold, verbose)
 
-    def at_training_start(self) -> None:
+    def at_training_start(self) -> list[cp.Constraint]:
         super().at_training_start()
         self._training_lambda = cp.Variable()
 
         # will be populated during training, but need an initial value for
         # linearization
         self.lambda_ = np.random.rand()
+
+        return [self._training_lambda >= 0, self._training_lambda <= 1]
 
     def cvx_cost_function(self, weights: list[cp.Variable], x: np.ndarray,
                           y: Any, slack: cp.Variable,

@@ -9,8 +9,6 @@ if __name__ == '__main__':
     from .datasets.gaussian import dataset_gaussians
     from .training.dccp_wrapper import get_wdccp_weights
 
-    print('DEBUG:', np.random.get_state())
-
     """
     Showcase of the features of this package.
     - Create random sample data

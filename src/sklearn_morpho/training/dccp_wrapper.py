@@ -86,20 +86,25 @@ class DccpTrainer(ABC):
         self.done_threshold = done_threshold
         self.verbose = verbose
 
-    def at_training_start(self) -> None:
+    def at_training_start(self) -> list[cp.Constraint]:
         """
         Optional actions to take when the training starts.
         For example, create and persist a list of additional variables to
         optimize.
 
-        If overriden, must call this base class method to initialize the
-        perceptrons.
+        Return a list of additional constraints, or an empty list if not
+        applicable.
+
+        If this method is overriden, the derived class must call this base
+        method to initialize the perceptrons.
         """
 
         # will be populated during training, but need an initial value for
         # linearization
         for perceptron in self.perceptrons:
             perceptron.weights = np.zeros(perceptron.dim)
+
+        return []
 
     def after_training_iteration(self, optimized_weights: list[cp.Variable]
                                  ) -> None:
@@ -159,7 +164,7 @@ class DccpTrainer(ABC):
 
         start = time()
         K = X.shape[0]
-        self.at_training_start()
+        additional_constraints = self.at_training_start()
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:
@@ -181,7 +186,7 @@ class DccpTrainer(ABC):
                 cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
 
         for i in range(self.max_iterations):
-            constraints = []
+            constraints = additional_constraints[:]
 
             for k, (x, y) in enumerate(zip(X, Y)):
                 # add the convex constraints
