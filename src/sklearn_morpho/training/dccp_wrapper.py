@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Literal
 import numpy as np
 import cvxpy as cp
 from time import time
@@ -56,8 +56,9 @@ class DccpTrainer(ABC):
     """
 
     def __init__(self, perceptrons: list[Perceptron], weighted: bool,
-                 margin: float, max_iterations: int, done_threshold: float,
-                 verbose: bool, rs: np.random.RandomState) -> None:
+                 margin: float, max_iterations: int, batch_size: int,
+                 done_threshold: float, verbose: Literal[0, 1, 2],
+                 rs: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
@@ -67,6 +68,8 @@ class DccpTrainer(ABC):
                               far they are from the class's centroid, so that
                               outliers contribute less to the final cost.
         param max_iterations: Upper bound for the number of training iterations.
+        param batch_size:     Batch size for mini batch fitting, or zero for
+                              no batching.
         param done_threshold: If the cost changes by a number smaller than this
                               value in between operations, or itself goes below
                               this value, stop early.
@@ -74,19 +77,22 @@ class DccpTrainer(ABC):
         """
 
         if margin < 0:
-            raise ValueError('margin is too low, expected >= 0 but got '
-                             f'{margin}')
+            raise ValueError('invalid margin, expected >= 0 but got {margin}')
         if max_iterations <= 0:
-            raise ValueError('max_iterations is too low, expected > 0 but got '
+            raise ValueError('invalid max_iterations, expected > 0 but got '
                              f'{max_iterations}')
+        if batch_size < 0:
+            raise ValueError('invalid batch_size, expected >= 0 but got '
+                             f'{batch_size}')
         if done_threshold <= 0:
-            raise ValueError('done_threshold is too low, expected > 0 but got '
+            raise ValueError('invalid done_threshold, expected > 0 but got '
                              f'{done_threshold}')
 
         self.perceptrons = perceptrons
         self.weighted = weighted
         self.margin = margin
         self.max_iterations = max_iterations
+        self.batch_size = batch_size
         self.done_threshold = done_threshold
         self.verbose = verbose
         self.rs = rs
@@ -207,7 +213,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = prob.solve(verbose=self.verbose) * cost_normalizer
+            cost = prob.solve(verbose=self.verbose == 2) * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
             if self.verbose:

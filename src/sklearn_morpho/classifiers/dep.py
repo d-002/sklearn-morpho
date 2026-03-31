@@ -33,8 +33,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
-                 margin: float = 0, max_iterations: int = 100,
-                 done_threshold: float = 1e-9, verbose: bool = False,
+                 margin = 0., max_iterations = 100, batch_size = 32,
+                 done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
@@ -45,10 +45,13 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
                               datasets, but generally lower is more accurate.
         param max_iterations: Upper bound for the number of iterations to use
                               during fitting.
+        param batch_size:     For mini batch fitting, define the batch size.
+                              If zero, don't use batching.
         param done_threshold: The rate of change for the cost between
                               consecutive iterations under which training is
                               considered finished.
-        param verbose:        Whether to log extra information / time fit().
+        param verbose:        Whether to log extra information. 0: no logging,
+                              1: basic logging / timing, 2: cvxpy solve verbose
         param random_state:   A RandomState object for predictable randomness,
                               or None
         """
@@ -56,6 +59,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         self.method = method
         self.margin = margin
         self.max_iterations = max_iterations
+        self.batch_size = batch_size
         self.done_threshold = done_threshold
         self.verbose = verbose
         self.random_state = random_state
@@ -91,7 +95,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         N = X[0].shape[0]
         weighted = self.method == 'wdccp'
         trainer = DepDccpTrainer(N, weighted, self.margin, self.max_iterations,
-                                 self.done_threshold, self.verbose, rs)
+                                 self.batch_size, self.done_threshold,
+                                 self.verbose, rs)
 
         self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

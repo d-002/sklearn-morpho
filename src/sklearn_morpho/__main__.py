@@ -23,7 +23,7 @@ if __name__ == '__main__':
     X, y = sample_data
 
     # create and train perceptrons
-    dep = DEP(method=method, margin=1, verbose=True)
+    dep = DEP(method=method, margin=1, verbose=1)
     dep.fit(X, y)
 
     # compute and display perceptron decision region

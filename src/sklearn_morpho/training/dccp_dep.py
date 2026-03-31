@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 import numpy as np
 import cvxpy as cp
 
@@ -7,8 +7,8 @@ from ..perceptron import MaxPerceptron, MinPerceptron
 
 class DepDccpTrainer(DccpTrainer):
     def __init__(self, N: int, weighted: bool, margin: float,
-                 max_iterations: int, done_threshold: float,
-                 verbose: bool, rs: np.random.RandomState) -> None:
+                 max_iterations: int, batch_size: int, done_threshold: float,
+                 verbose: Literal[0, 1, 2], rs: np.random.RandomState) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
 
@@ -20,7 +20,8 @@ class DepDccpTrainer(DccpTrainer):
         self.min_perceptron = MinPerceptron(N)
 
         super().__init__([self.max_perceptron, self.min_perceptron], weighted,
-                         margin, max_iterations, done_threshold, verbose, rs)
+                         margin, max_iterations, batch_size, done_threshold,
+                         verbose, rs)
 
     def at_training_start(self) -> list[cp.Constraint]:
         # Create transformation matrices constraints, as well as original values
@@ -84,7 +85,11 @@ class DepDccpTrainer(DccpTrainer):
         max_matrix_norm = np.linalg.norm(self.max_matrix)
         min_matrix_norm = np.linalg.norm(self.min_matrix)
 
-        self.lambda_ = max_matrix_norm / (max_matrix_norm + min_matrix_norm)
+        div = max_matrix_norm + min_matrix_norm
+        if not div:
+            raise ValueError('Transformation matrices are zero, cannot resolve')
+
+        self.lambda_ = max_matrix_norm / div
         self.max_matrix /= self.lambda_
         self.min_matrix /= 1 - self.lambda_
         self.max_perceptron.weights /= self.lambda_
