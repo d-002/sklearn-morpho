@@ -17,7 +17,8 @@ if __name__ == '__main__':
 
     # create sample data, assign colors
     method = 'wdccp'
-    sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
+    np.random.seed(8)
+    sample_data = dataset_gaussians(500, 2, np.array(['red', 'blue']),
                                     np.random.rand(2, 2) * 10 - 5,
                                     (np.random.rand(2) * 2 + 1))
     X, y = sample_data
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     accuracy = sum(int(y_predicted == y)
                    for y_predicted, y in zip(predicted, sample_data[1])) \
                            / len(sample_data[0])
-    disp.ax_.title.set_text(f'DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
+    disp.ax_.title.set_text(f'l-DEP with WDCCP: cost {dep.fit_cost_:.2f}, '
                       f'accuracy {accuracy * 100:.2f}%')
 
     plt.show()
