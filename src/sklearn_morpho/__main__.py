@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # create sample data, assign colors
     method = 'wdccp'
     np.random.seed(8)
-    sample_data = dataset_gaussians(50, 2, np.array(['red', 'blue']),
+    sample_data = dataset_gaussians(500, 2, np.array(['red', 'blue']),
                                     np.random.rand(2, 2) * 10 - 5,
                                     (np.random.rand(2) * 2 + 1))
     X, y = sample_data

@@ -23,7 +23,11 @@ class DepDccpTrainer(DccpTrainer):
                          margin, max_iterations, batch_size, done_threshold,
                          verbose, rs)
 
-    def at_training_start(self) -> list[cp.Constraint]:
+    def at_training_start(self) -> None:
+        super().at_training_start()
+
+        self._objective = None
+
         # Create transformation matrices constraints, as well as original values
         # for linearization.
         # Use these to absorbe the final lambda parameter, restored at the end,
@@ -34,37 +38,35 @@ class DepDccpTrainer(DccpTrainer):
         self.max_matrix = self.rs.rand(N, N)
         self.min_matrix = self.rs.rand(N, N)
 
-        super().at_training_start()
+    def get_problem(self, weights: list[cp.Variable], X: np.ndarray,
+                    Y: np.ndarray, wdccp_weights: np.ndarray) -> tuple[
+                            cp.Minimize | cp.Maximize, list[cp.Constraint]]:
+        K = X.shape[0]
 
-        return []
+        # the objective and the slack variables do not change, cache them
+        if self._objective is None:
+            self._slack = cp.Variable(K)
+            self._objective = cp.Minimize(
+                    cp.sum(cp.multiply(cp.pos(self._slack), wdccp_weights)))
 
-    def cvx_cost_function(self, weights: list[cp.Variable], x: np.ndarray,
-                          y: Any, slack: cp.Variable,
-                          k: int) -> cp.Constraint | None:
-        if y != 0:
-            return None
+        # Constraints: convex constraints are for data points in the first
+        # class, while concave ones are for points in the second class.
+        # Therefore, linearize things when needed
+        min_weights, max_weights = weights
+        constraints = [None] * K
+        for i, (x, y) in enumerate(zip(X, Y)):
+            if y == 0:
+                index = np.argmin(min_weights + self.min_matrix @ x)
+                value = cp.max(max_weights + self._max_training_matrix @ x) + \
+                        (min_weights + self._min_training_matrix @ x)[index]
+                constraints[i] = self._slack[i] >= self.margin + value
+            else:
+                index = np.argmax(max_weights + self.max_matrix @ x)
+                value = (max_weights + self._max_training_matrix @ x)[index] + \
+                        cp.min(min_weights + self._min_training_matrix @ x)
+                constraints[i] = self._slack[i] >= self.margin - value
 
-        # manual linear approximation for speed, using previously calculated
-        # perceptron weights and lambda, but it should still converge
-        index = np.argmin(self.min_perceptron.weights + self.min_matrix @ x)
-
-        max_weights, min_weights = weights
-        value = cp.max(max_weights + self._max_training_matrix @ x) + \
-                (min_weights + self._min_training_matrix @ x)[index]
-        return slack[k] >= self.margin + value
-
-    def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
-                                      x: np.ndarray, y: Any, slack: cp.Variable,
-                                      k: int) -> cp.Constraint | None:
-        if y != 1:
-            return None
-
-        index = np.argmax(self.max_perceptron.weights + self.max_matrix @ x)
-
-        max_weights, min_weights = weights
-        value = (max_weights + self._max_training_matrix @ x)[index] + \
-                cp.min(min_weights + self._min_training_matrix @ x)
-        return slack[k] >= self.margin - value
+        return self._objective, constraints
 
     def after_iteration(self) -> None:
         # extract the matrices

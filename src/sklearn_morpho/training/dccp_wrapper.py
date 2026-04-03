@@ -97,14 +97,11 @@ class DccpTrainer(ABC):
         self.verbose = verbose
         self.rs = rs
 
-    def at_training_start(self) -> list[cp.Constraint]:
+    def at_training_start(self) -> None:
         """
         Optional actions to take when the training starts.
         For example, create and persist a list of additional variables to
         optimize.
-
-        Return a list of additional constraints, or an empty list if not
-        applicable.
 
         If this method is overriden, the derived class must call this base
         method to initialize the perceptrons.
@@ -114,8 +111,6 @@ class DccpTrainer(ABC):
         # linearization
         for perceptron in self.perceptrons:
             perceptron.weights = np.random.random(perceptron.dim) * 2 - 1
-
-        return []
 
     def after_iteration(self) -> None:
         """
@@ -130,35 +125,26 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def cvx_cost_function(self, weights: list[cp.Variable], x: np.ndarray,
-                          y: Any, slack: cp.Variable,
-                          k: int) -> cp.Constraint | None:
+    def get_problem(self, weights: list[cp.Variable], X: np.ndarray,
+                    Y: np.ndarray, wdccp_weights: np.ndarray) -> tuple[
+                            cp.Minimize | cp.Maximize, list[cp.Constraint]]:
         """
-        Compute the convex part of the full cost function for a specific input,
-        then optionally return a constraint.
+        Compute a cvxpy Objective and a list of Constraints for use in DCCP.
+        The prlblem must be DCP, meaning the constraints must all be convex.
+        For concave constraints, they must be linearized beforehand, possibly
+        from constant values taken from the previous iteration result.
 
-        param weights: The weights that are currently being optimized
-        param x:       The current data point
-        param y:       The class of that particular data point
-        param slack:   The slack variable to use in the constraint
-        param k:       The index inside that slack variable
+        param weights:       The weights that are currently being optimized, as
+                             a list of arrays for each perceptron.
+        param X:             The data points
+        param Y:             The data points classes
+        param wdccp_weights: The wdccp weights, all 1 if not using wdccp, for
+                             use in computing the objective.
+                             This is an array with one element corresponding to
+                             an element in X.
 
-        return:        A constraint, or None if there is no constraint for this
-                       particular data point.
-        """
-
-    @abstractmethod
-    def ccv_cost_function_made_convex(self, weights: list[cp.Variable],
-                                      x: np.ndarray, y: Any, slack: cp.Variable,
-                                      k: int) -> cp.Constraint | None:
-        """
-        Compute the concave part of the full cost function for a specific input,
-        then optionally return a constraint.
-        The calculated concave cost function must also be convex, i.e. it has to
-        be linearized, for example by calculating the plane tangent to the cost
-        function evaluated at x.
-
-        See self.cvx_cost_function for similar parameters and return value.
+        return:              A tuple containing a cvxpy Objective and a list of
+                             Constraints.
         """
 
     def train(self, X: np.ndarray, Y: np.ndarray) -> float:
@@ -174,8 +160,7 @@ class DccpTrainer(ABC):
         """
 
         start = time()
-        K = X.shape[0]
-        additional_constraints = self.at_training_start()
+        K, N = X.shape[0], self.perceptrons[0].dim
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:
@@ -190,39 +175,24 @@ class DccpTrainer(ABC):
         cost: float = -1
 
         # formulate the cvxpy problem to solve, common to all iterations
-        slack = cp.Variable(K)
-        optimized_weights = [cp.Variable(perceptron.dim)
-                             for perceptron in self.perceptrons]
-        objective = cp.Minimize(
-                cp.sum(cp.multiply(cp.pos(slack), wdccp_weights)))
+        weights = [cp.Variable(N) for _ in range(len(self.perceptrons))]
+        self.at_training_start()
 
         for i in range(self.max_iterations):
-            constraints = additional_constraints[:]
-
-            for k, (x, y) in enumerate(zip(X, Y)):
-                # add the convex constraints
-                cvx_constraint = self.cvx_cost_function(
-                        optimized_weights, x, y, slack, k)
-                if cvx_constraint is not None:
-                    constraints.append(cvx_constraint)
-
-                # add the linearized concave constraints
-                ccv_constraint = self.ccv_cost_function_made_convex(
-                        optimized_weights, x, y, slack, k)
-                if ccv_constraint is not None:
-                    constraints.append(ccv_constraint)
+            objective, constraints = self.get_problem(weights, X, Y,
+                                                      wdccp_weights)
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = prob.solve(verbose=self.verbose == 2) * cost_normalizer
+            cost = cast(float, prob.solve(verbose=self.verbose == 2)) \
+                    * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
             # update the perceptrons weights from this iteration's results
-            for perceptron, weights in zip(self.perceptrons, optimized_weights):
-                if weights.value is None:
-                    raise ValueError(
-                            'CvxPy could not optimize a perceptron')
-                perceptron.weights = weights.value
+            for perceptron, w in zip(self.perceptrons, weights):
+                if w.value is None:
+                    raise ValueError('CvxPy could not optimize a perceptron')
+                perceptron.weights = w.value
             self.after_iteration()
 
             # logging and loop logic
