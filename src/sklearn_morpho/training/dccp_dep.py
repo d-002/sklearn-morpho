@@ -52,7 +52,7 @@ class DepDccpTrainer(DccpTrainer):
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
         # Therefore, linearize things when needed
-        min_weights, max_weights = weights
+        max_weights, min_weights = weights
         constraints = [None] * K
         for i, (x, y) in enumerate(zip(X, Y)):
             if y == 0:
