@@ -6,22 +6,24 @@ if __name__ == '__main__':
     from sklearn.inspection import DecisionBoundaryDisplay
 
     from .datasets.gaussian import dataset_gaussians
+    from .datasets.wdbc import dataset_wdbc
 
     """
     Showcase of the features of this package.
-    - Create random sample data
-    - Create and train a perceptron with cvxpy and dccp
-    #- Create and train another perceptron with naive gradient descent
-    - Display and compare the results with matplotlib
+    - Create random sample data or load a dataset
+    - Create and train a perceptron with cvxpy and DCCP
+    - Display the results
     """
 
     # create sample data, assign colors
     method = 'wdccp'
     np.random.seed(8)
-    sample_data = dataset_gaussians(500, 2, np.array(['red', 'blue']),
-                                    np.random.rand(2, 2) * 10 - 5,
-                                    (np.random.rand(2) * 2 + 1))
+    #sample_data = dataset_gaussians(500, 2, np.array(['red', 'blue']),
+    #                                np.random.rand(2, 2) * 10 - 5,
+    #                                (np.random.rand(2) * 2 + 1))
+    sample_data = dataset_wdbc('WDBC.dat.txt')
     X, y = sample_data
+    X, y = X[:20], y[:20]
 
     # create and train perceptrons
     dep = DEP(method=method, margin=1, verbose=1)

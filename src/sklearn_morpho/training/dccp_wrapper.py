@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Literal, cast
+from typing import Literal, cast
 import numpy as np
 import cvxpy as cp
 from time import time
@@ -158,6 +158,9 @@ class DccpTrainer(ABC):
 
         return:  The final cost, or -1 if no training happened.
         """
+
+        if self.verbose:
+            print('Starting fitting with DCCP')
 
         start = time()
         K, N = X.shape[0], self.perceptrons[0].dim
