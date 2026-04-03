@@ -35,7 +35,7 @@ def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
     # inverse distance from each data point to its respective class centroid
     temp_w = np.array([np.linalg.norm(x - centroids[y])
                        for x, y in zip(X, Y)])
-    temp_w = np.array([0 if not w else 1 / w for w in temp_w])
+    temp_w = np.array([1 if not w else 1 / w for w in temp_w])
 
     # normalization step to put all weights between 0 and 1 for each class
     max_centroid_w = np.array([max(d for y_, d in zip(Y, temp_w)
@@ -212,7 +212,7 @@ class DccpTrainer(ABC):
             dt = time() - start
             if done:
                 print(f'{'W' if self.weighted else ''}DCCP done in '
-                      f'{i}/{self.max_iterations} iterations, '
+                      f'{i + 1}/{self.max_iterations} iterations, '
                       f'final cost is {cost:.8f} in {dt:.2f}s')
             else:
                 print('Warning: reached max iterations for DCCP after '
