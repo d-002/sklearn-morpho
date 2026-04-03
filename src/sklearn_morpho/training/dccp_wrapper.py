@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Literal
+from typing import Any, Literal, cast
 import numpy as np
 import cvxpy as cp
 from time import time
@@ -113,14 +113,15 @@ class DccpTrainer(ABC):
         # will be populated during training, but need an initial value for
         # linearization
         for perceptron in self.perceptrons:
-            perceptron.weights = np.zeros(perceptron.dim)
+            perceptron.weights = np.random.random(perceptron.dim) * 2 - 1
 
         return []
 
-    def after_training_iteration(self,
-                                 optimized_weights: list[cp.Variable]) -> None:
+    def after_iteration(self) -> None:
         """
-        Optional actions to take when the training ends.
+        Optional additional actions to take after each training iteration.
+        Before calling this method, the perceptron weights will have been
+        updated.
         """
 
     def at_training_end(self) -> None:
@@ -216,12 +217,18 @@ class DccpTrainer(ABC):
             cost = prob.solve(verbose=self.verbose == 2) * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
+            # update the perceptrons weights from this iteration's results
+            for perceptron, weights in zip(self.perceptrons, optimized_weights):
+                if weights.value is None:
+                    raise ValueError(
+                            'CvxPy could not optimize a perceptron')
+                perceptron.weights = weights.value
+            self.after_iteration()
+
+            # logging and loop logic
             if self.verbose:
                 print(f'Iteration {i + 1}/{self.max_iterations}, '
-                      f'cost: {cost:.2f}, adjustment: {cost_adjustment}')
-
-            # update the weights early for argmax/argmin sampling
-            self.after_training_iteration(optimized_weights)
+                      f'cost: {cost:.8f}, adjustment: {cost_adjustment}')
 
             if min(cost, cost_adjustment) <= self.done_threshold:
                 done = True
@@ -233,7 +240,7 @@ class DccpTrainer(ABC):
             if done:
                 print(f'{'W' if self.weighted else ''}DCCP done in '
                       f'{i}/{self.max_iterations} iterations, '
-                      f'final cost is {cost:.2f} in {dt:.2f}s')
+                      f'final cost is {cost:.8f} in {dt:.2f}s')
             else:
                 print('Warning: reached max iterations for DCCP after '
                         f'{dt:.2f}s')

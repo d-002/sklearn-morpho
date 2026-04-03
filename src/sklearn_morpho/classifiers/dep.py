@@ -61,7 +61,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         self.max_iterations = max_iterations
         self.batch_size = batch_size
         self.done_threshold = done_threshold
-        self.verbose = verbose
+        self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> DilationErosionPerceptron:
@@ -106,7 +106,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         self.min_matrix_ = trainer.min_matrix
 
         if self.verbose:
-            print(f'Cost after fit(): {self.fit_cost_:.2f}')
+            print(f'Cost after fit(): {self.fit_cost_:.8f}')
 
         return self
 

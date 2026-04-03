@@ -20,17 +20,18 @@ def dataset_gaussians(K: int, N: int, classes: np.ndarray, pos: np.ndarray,
                    points and Y is their associated labels
     """
 
-    X = []
-    Y = []
-
     k, rest = divmod(K, len(classes))
     if rest != 0:
         raise ValueError(f'Imbalanced number of samples ({K} over ' \
                          f'{len(classes)} classes) means biased dataset')
 
-    for y, d, p in zip(classes, deviation, pos):
-        points = np.multiply(np.random.randn(k, N), d) + p
-        X += list(points)
-        Y += [y.copy() for _ in range(k)]
+    X = np.empty((0, N))
+    Y = np.repeat(classes, k).flatten()
 
-    return np.array(X), np.array(Y)
+    for d, p in zip(deviation, pos):
+        x = np.multiply(np.random.randn(k, N), d) + p
+        X = np.concatenate((X, x))
+
+    I = np.arange(K)
+    np.random.shuffle(I)
+    return X[I], Y[I]

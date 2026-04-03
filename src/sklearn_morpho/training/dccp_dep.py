@@ -66,15 +66,8 @@ class DepDccpTrainer(DccpTrainer):
                 cp.min(min_weights + self._min_training_matrix @ x)
         return slack[k] >= self.margin - value
 
-    def after_training_iteration(self,
-                                 optimized_weights: list[cp.Variable]) -> None:
-        # update the perceptrons weights
-        for perceptron, weights in zip(self.perceptrons, optimized_weights):
-            if weights.value is None:
-                raise ValueError('CvxPy could not optimize a perceptron')
-            perceptron.weights = weights.value
-
-        # extract the matrices in a similar way
+    def after_iteration(self) -> None:
+        # extract the matrices
         if self._max_training_matrix.value is None \
                 or self._min_training_matrix.value is None:
             raise ValueError('CvxPy could not optimize transformation matrices')
