@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 import numpy as np
 import cvxpy as cp
 
@@ -19,28 +19,33 @@ class DepDccpTrainer(DccpTrainer):
         self.max_perceptron = MaxPerceptron(N)
         self.min_perceptron = MinPerceptron(N)
 
-        super().__init__([self.max_perceptron, self.min_perceptron], weighted,
-                         margin, max_iterations, batch_size, done_threshold,
-                         verbose, rs)
+        super().__init__(weighted, margin, max_iterations, batch_size,
+                         done_threshold, verbose, rs)
 
     def at_training_start(self) -> None:
-        super().at_training_start()
+        # will be populated during training, but need an initial value for
+        # linearization
+        for perceptron in (self.max_perceptron, self.min_perceptron):
+            perceptron.weights = np.random.random(perceptron.dim) * 2 - 1
 
         self._objective = None
+
+        N = self.max_perceptron.dim
+        self.max_weights = cp.Variable(N)
+        self.min_weights = cp.Variable(N)
 
         # Create transformation matrices constraints, as well as original values
         # for linearization.
         # Use these to absorbe the final lambda parameter, restored at the end,
         # inspired by arXiv:2011.06512v1.
-        N = self.max_perceptron.dim
         self._max_training_matrix = cp.Variable((N, N))
         self._min_training_matrix = cp.Variable((N, N))
         self.max_matrix = self.rs.rand(N, N)
         self.min_matrix = self.rs.rand(N, N)
 
-    def get_problem(self, weights: list[cp.Variable], X: np.ndarray,
-                    Y: np.ndarray, wdccp_weights: np.ndarray) -> tuple[
-                            cp.Minimize | cp.Maximize, list[cp.Constraint]]:
+    def get_problem(self, X: np.ndarray, Y: np.ndarray,
+                    wdccp_weights: np.ndarray
+                    ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
         K = X.shape[0]
 
         # the objective and the slack variables do not change, cache them
@@ -52,23 +57,29 @@ class DepDccpTrainer(DccpTrainer):
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
         # Therefore, linearize things when needed
-        max_weights, min_weights = weights
         constraints = [None] * K
         for i, (x, y) in enumerate(zip(X, Y)):
             if y == 0:
-                index = np.argmin(min_weights + self.min_matrix @ x)
-                value = cp.max(max_weights + self._max_training_matrix @ x) + \
-                        (min_weights + self._min_training_matrix @ x)[index]
+                index = np.argmin(self.min_perceptron.weights + self.min_matrix @ x)
+                value = cp.max(self.max_weights + self._max_training_matrix @ x) + \
+                        (self.min_weights + self._min_training_matrix @ x)[index]
                 constraints[i] = self._slack[i] >= self.margin + value
             else:
-                index = np.argmax(max_weights + self.max_matrix @ x)
-                value = (max_weights + self._max_training_matrix @ x)[index] + \
-                        cp.min(min_weights + self._min_training_matrix @ x)
+                index = np.argmax(self.max_perceptron.weights + self.max_matrix @ x)
+                value = (self.max_weights + self._max_training_matrix @ x)[index] + \
+                        cp.min(self.min_weights + self._min_training_matrix @ x)
                 constraints[i] = self._slack[i] >= self.margin - value
 
         return self._objective, constraints
 
     def after_iteration(self) -> None:
+        # update the perceptrons weights from this iteration's results
+        for perceptron, w in zip((self.max_perceptron, self.min_perceptron),
+                                 (self.max_weights, self.min_weights)):
+            if w.value is None:
+                raise ValueError('CvxPy could not optimize a perceptron')
+            perceptron.weights = w.value
+
         # extract the matrices
         if self._max_training_matrix.value is None \
                 or self._min_training_matrix.value is None:

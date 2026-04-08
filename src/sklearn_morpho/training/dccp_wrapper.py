@@ -4,8 +4,6 @@ import numpy as np
 import cvxpy as cp
 from time import time
 
-from ..perceptron import Perceptron
-
 def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
     """
     Get weights for the WDCCP method: for a given class, all its elements will
@@ -52,17 +50,15 @@ def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
 
 class DccpTrainer(ABC):
     """
-    Abstract class for defining a trainer for a list of perceptrons using DCCP.
+    Abstract class for optimization using cvxpy
     """
 
-    def __init__(self, perceptrons: list[Perceptron], weighted: bool,
-                 margin: float, max_iterations: int, batch_size: int,
-                 done_threshold: float, verbose: Literal[0, 1, 2],
-                 rs: np.random.RandomState) -> None:
+    def __init__(self, weighted: bool, margin: float, max_iterations: int,
+                 batch_size: int, done_threshold: float,
+                 verbose: Literal[0, 1, 2], rs: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
-        param perceptrons:    A list of perceptrons that will be trained later.
         param weighted:       Whether to use WDCCP: apply weights to the cost
                               contribution of each data point depending on how
                               far they are from the class's centroid, so that
@@ -88,7 +84,6 @@ class DccpTrainer(ABC):
             raise ValueError('invalid done_threshold, expected > 0 but got '
                              f'{done_threshold}')
 
-        self.perceptrons = perceptrons
         self.weighted = weighted
         self.margin = margin
         self.max_iterations = max_iterations
@@ -102,21 +97,11 @@ class DccpTrainer(ABC):
         Optional actions to take when the training starts.
         For example, create and persist a list of additional variables to
         optimize.
-
-        If this method is overriden, the derived class must call this base
-        method to initialize the perceptrons.
         """
-
-        # will be populated during training, but need an initial value for
-        # linearization
-        for perceptron in self.perceptrons:
-            perceptron.weights = np.random.random(perceptron.dim) * 2 - 1
 
     def after_iteration(self) -> None:
         """
         Optional additional actions to take after each training iteration.
-        Before calling this method, the perceptron weights will have been
-        updated.
         """
 
     def at_training_end(self) -> None:
@@ -125,17 +110,15 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def get_problem(self, weights: list[cp.Variable], X: np.ndarray,
-                    Y: np.ndarray, wdccp_weights: np.ndarray) -> tuple[
-                            cp.Minimize | cp.Maximize, list[cp.Constraint]]:
+    def get_problem(self, X: np.ndarray, Y: np.ndarray,
+                    wdccp_weights: np.ndarray
+                    ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
         """
         Compute a cvxpy Objective and a list of Constraints for use in DCCP.
         The prlblem must be DCP, meaning the constraints must all be convex.
         For concave constraints, they must be linearized beforehand, possibly
         from constant values taken from the previous iteration result.
 
-        param weights:       The weights that are currently being optimized, as
-                             a list of arrays for each perceptron.
         param X:             The data points
         param Y:             The data points classes
         param wdccp_weights: The wdccp weights, all 1 if not using wdccp, for
@@ -149,7 +132,7 @@ class DccpTrainer(ABC):
 
     def train(self, X: np.ndarray, Y: np.ndarray) -> float:
         """
-        Train a list of perceptrons using DCCP.
+        Train using DCCP.
         This means this function can only solve problems where the cost function
         can be separable in the given convex and concave parts.
 
@@ -163,7 +146,7 @@ class DccpTrainer(ABC):
             print('Starting fitting with DCCP')
 
         start = time()
-        K, N = X.shape[0], self.perceptrons[0].dim
+        K, N = X.shape
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:
@@ -178,12 +161,10 @@ class DccpTrainer(ABC):
         cost: float = -1
 
         # formulate the cvxpy problem to solve, common to all iterations
-        weights = [cp.Variable(N) for _ in range(len(self.perceptrons))]
         self.at_training_start()
 
         for i in range(self.max_iterations):
-            objective, constraints = self.get_problem(weights, X, Y,
-                                                      wdccp_weights)
+            objective, constraints = self.get_problem(X, Y, wdccp_weights)
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
@@ -191,11 +172,6 @@ class DccpTrainer(ABC):
                     * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
-            # update the perceptrons weights from this iteration's results
-            for perceptron, w in zip(self.perceptrons, weights):
-                if w.value is None:
-                    raise ValueError('CvxPy could not optimize a perceptron')
-                perceptron.weights = w.value
             self.after_iteration()
 
             # logging and loop logic
