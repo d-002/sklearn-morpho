@@ -15,11 +15,10 @@ testpaths = ["tests"]
 python = "3.14"
 dependencies = [
     "cvxpy",
-    "dccp",
     "matplotlib",
     "numpy",
-    "pandas" # for scikit-learn's check_estimator
-    "pyqt6",
+    "pandas", # for scikit-learn's check_estimator
+    "pyqt6", # for matplotlib display
     "pytest",
     "pytest-cov",
     "scikit-learn",
