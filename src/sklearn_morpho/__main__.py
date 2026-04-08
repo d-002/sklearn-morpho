@@ -43,7 +43,7 @@ if __name__ == '__main__':
             colors='black'
         )
         ax = disp.ax_
-        ax.scatter(X_test[:, 0], X_test[:, 1], color=y_test)
+        ax.scatter(*X_test.T, color=y_test)
     else:
         _, ax = plt.subplots()
 

@@ -31,16 +31,13 @@ def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
                           for centroid, count in zip(centroids, counts)])
 
     # inverse distance from each data point to its respective class centroid
-    temp_w = np.array([np.linalg.norm(x - centroids[y])
-                       for x, y in zip(X, Y)])
+    temp_w = np.array([np.linalg.norm(x - centroids[y]) for x, y in zip(X, Y)])
     temp_w = np.array([1 if not w else 1 / w for w in temp_w])
 
     # normalization step to put all weights between 0 and 1 for each class
-    max_centroid_w = np.array([max(d for y_, d in zip(Y, temp_w)
-                                   if y_ == y)
+    max_centroid_w = np.array([max(d for y_, d in zip(Y, temp_w) if y_ == y)
                                for y in range(2)])
-    wdccp_weights = np.array([d / max_centroid_w[y]
-                              for y, d in zip(Y, temp_w)])
+    wdccp_weights = np.array([d / max_centroid_w[y] for y, d in zip(Y, temp_w)])
 
     # since the cost can be lower than 1, compensate final cost calculation
     cost_normalizer = sum(wdccp_weights)
@@ -146,7 +143,7 @@ class DccpTrainer(ABC):
             print('Starting fitting with DCCP')
 
         start = time()
-        K, N = X.shape
+        K = X.shape[0]
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:
