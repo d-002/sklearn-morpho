@@ -16,12 +16,13 @@ python = "3.14"
 dependencies = [
     "cvxpy",
     "dccp",
+    "matplotlib",
+    "numpy",
+    "pandas" # for scikit-learn's check_estimator
+    "pyqt6",
     "pytest",
     "pytest-cov",
-    "numpy",
-    "matplotlib",
     "scikit-learn",
-    "pandas" # for scikit-learn's check_estimator
 ]
 
 [tool.hatch.envs.default.scripts]
