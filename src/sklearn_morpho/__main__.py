@@ -6,7 +6,6 @@ if __name__ == '__main__':
     from typing import cast
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import DecisionBoundaryDisplay
-    from sklearn.datasets import make_moons
 
     from .datasets.gaussian import dataset_gaussians
     from .datasets.wdbc import dataset_wdbc
@@ -24,8 +23,6 @@ if __name__ == '__main__':
                                     np.random.randn(2, 2) * 10 - 5,
                                     (np.random.randn(2) * 2 + 1))
     X, y = dataset_wdbc('WDBC.dat.txt')
-    #X, y = make_moons(n_samples=500, noise=.2, random_state=random_state)
-    #y = np.array(['red', 'blue'])[y]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
 
     # for LSPs
@@ -49,7 +46,7 @@ if __name__ == '__main__':
         )
         ax = disp.ax_
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP with WDCCP: cost {dep.fit_cost_:.8f}, '
+        ax.title.set_text(f'l-DEP with {dep.method}: cost {dep.fit_cost_:.8f}, '
                           f'accuracy {accuracy_test * 100:.3f}%')
         plt.show()
 

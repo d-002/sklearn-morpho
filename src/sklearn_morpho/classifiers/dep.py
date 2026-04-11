@@ -2,6 +2,7 @@ import numpy as np
 from typing import Literal
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
@@ -86,6 +87,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         # input data validation
         random_state = check_random_state(self.random_state)
         X, y = validate_data(self, X, y)
+        X_scaled = StandardScaler().fit_transform(X)
 
         # create classes and convert them to distinct integers for fitting
         # the classes are persisted inside the object for use in predict
@@ -100,12 +102,12 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
         # create and train perceptrons
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(X.shape[1], self.latent_dims, weighted,
+        trainer = DepDccpTrainer(X_scaled.shape[1], self.latent_dims, weighted,
                                  self.margin, self.max_iterations,
                                  self.batch_size, self.done_threshold,
                                  self.verbose, random_state)
 
-        self.fit_cost_ = trainer.train(X, y_integers)
+        self.fit_cost_ = trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
         self.lambda_ = trainer.lambda_
@@ -120,12 +122,13 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
+        X_scaled = StandardScaler().fit_transform(X)
 
         a, b = self.lambda_, 1 - self.lambda_
         return np.array([
             a * self.max_perceptron_.forward(self.max_matrix_ @ x) +
             b * self.min_perceptron_.forward(self.min_matrix_ @ x)
-            for x in X])
+            for x in X_scaled])
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
