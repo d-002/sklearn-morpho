@@ -103,8 +103,7 @@ class DccpTrainer(ABC):
 
     @abstractmethod
     def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    wdccp_weights: np.ndarray
-                    ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
+                    wdccp_weights: np.ndarray) -> cp.Problem:
         """
         Compute a cvxpy Objective and a list of Constraints for use in DCCP.
         The prlblem must be DCP, meaning the constraints must all be convex.
@@ -156,11 +155,10 @@ class DccpTrainer(ABC):
         self.at_training_start()
 
         for i in range(self.max_iterations):
-            objective, constraints = self.get_problem(X, y, wdccp_weights)
+            problem = self.get_problem(X, y, wdccp_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            prob = cp.Problem(objective, constraints)
-            cost = cast(float, prob.solve(verbose=self.verbose == 2)) \
+            cost = cast(float, problem.solve(verbose=self.verbose == 2)) \
                     * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
@@ -179,7 +177,7 @@ class DccpTrainer(ABC):
         if self.verbose:
             dt = time() - start
             if done:
-                print(f'{'W' if self.weighted else ''}DCCP done in '
+                print(f'{"W" if self.weighted else ""}DCCP done in '
                       f'{i + 1}/{self.max_iterations} iterations, '
                       f'final cost is {cost:.8f} in {dt:.2f}s')
             else:

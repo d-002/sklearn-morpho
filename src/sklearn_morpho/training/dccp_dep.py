@@ -1,4 +1,4 @@
-from typing import Literal, cast
+from typing import Literal
 import numpy as np
 import cvxpy as cp
 
@@ -48,8 +48,7 @@ class DepDccpTrainer(DccpTrainer):
         self._min_training_matrix = cp.Variable((N_min, N_data))
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    wdccp_weights: np.ndarray
-                    ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
+                    wdccp_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
 
         # the objective and the slack variables do not change, cache them
@@ -68,19 +67,33 @@ class DepDccpTrainer(DccpTrainer):
         idx_min = np.argmin(self.min_perceptron.weights + X @ self.min_matrix.T,
                             axis=1)
 
-        constraints = [None] * K
-        for i in range(K):
-            expr_max = self._max_training_weights \
-                    + self._max_training_matrix @ X[i]
-            expr_min = self._min_training_weights \
-                    + self._min_training_matrix @ X[i]
-            if y[i] == 0:
-                value = cp.max(expr_max) + expr_min[idx_min[i]]
-                constraints[i] = self._slack[i] >= self.margin + value
-            else:
-                value = expr_max[idx_max[i]] + cp.min(expr_min)
-                constraints[i] = self._slack[i] >= self.margin - value
-        return self._objective, constraints
+        # Create one-hot encoding matrices for the active indices
+        # create encoding matrices for the active indices to apply constraints
+        # all at once and use AST optimization inside cvxpy
+        M_max = np.zeros((K, self.max_perceptron.dim))
+        M_min = np.zeros((K, self.min_perceptron.dim))
+        M_max[np.arange(K), idx_max] = 1
+        M_min[np.arange(K), idx_min] = 1
+
+        expr_max = self._max_training_weights + X @ self._max_training_matrix.T
+        expr_min = self._min_training_weights + X @ self._min_training_matrix.T
+
+        active_max_vals = cp.sum(cp.multiply(M_max, expr_max), axis=1)
+        active_min_vals = cp.sum(cp.multiply(M_min, expr_min), axis=1)
+
+        y_0_mask = (y == 0)
+        y_1_mask = (y == 1)
+
+        constraints = []
+        if np.any(y_0_mask):
+            constraints.append(self._slack[y_0_mask] >= self.margin
+                               + cp.max(expr_max[y_0_mask], axis=1)
+                               + active_min_vals[y_0_mask])
+        if np.any(y_1_mask):
+            constraints.append(self._slack[y_1_mask] >= self.margin
+                               - active_max_vals[y_1_mask]
+                               - cp.min(expr_min[y_1_mask], axis=1))
+        return cp.Problem(self._objective, constraints)
 
     def after_iteration(self) -> None:
         # update the perceptrons weights from this iteration's results
@@ -103,8 +116,8 @@ class DepDccpTrainer(DccpTrainer):
         min_matrix_norm = np.linalg.norm(self.min_matrix)
 
         div = max_matrix_norm + min_matrix_norm
-        if not div:
-            raise ValueError('Transformation matrices are zero, cannot resolve')
+        if np.isclose(div, 0):
+            raise ValueError('Transformation matrices are zero, cannot solve')
 
         self.lambda_ = max_matrix_norm / div
         self.max_matrix /= self.lambda_
