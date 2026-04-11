@@ -87,7 +87,8 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         # input data validation
         random_state = check_random_state(self.random_state)
         X, y = validate_data(self, X, y)
-        X_scaled = StandardScaler().fit_transform(X)
+        self.scaler_ = StandardScaler()
+        X_scaled = self.scaler_.fit_transform(X)
 
         # create classes and convert them to distinct integers for fitting
         # the classes are persisted inside the object for use in predict
@@ -122,7 +123,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
-        X_scaled = StandardScaler().fit_transform(X)
+        X_scaled = self.scaler_.transform(X)
 
         a, b = self.lambda_, 1 - self.lambda_
         return np.array([
