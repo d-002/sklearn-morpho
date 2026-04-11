@@ -22,7 +22,7 @@ if __name__ == '__main__':
     X, y = dataset_gaussians(500, 2, np.array(['red', 'blue']),
                                     np.random.rand(2, 2) * 10 - 5,
                                     (np.random.rand(2) * 2 + 1))
-    #X, y = dataset_wdbc('WDBC.dat.txt')
+    X, y = dataset_wdbc('WDBC.dat.txt')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
 
     # for LSPs
@@ -32,6 +32,8 @@ if __name__ == '__main__':
     # create and train perceptrons
     dep = DEP(method=method, margin=1, verbose=1)
     dep.fit(X_train, y_train)
+    accuracy_train = np.sum(dep.predict(X_train) == y_train) / len(X_train)
+    accuracy_test = np.sum(dep.predict(X_test) == y_test) / len(X_test)
 
     # compute and display perceptron decision region
     if X.shape[1] == 2:
@@ -44,15 +46,9 @@ if __name__ == '__main__':
         )
         ax = disp.ax_
         ax.scatter(*X_test.T, color=y_test)
-    else:
-        _, ax = plt.subplots()
+        ax.title.set_text(f'l-DEP with WDCCP: cost {dep.fit_cost_:.8f}, '
+                          f'accuracy {accuracy_test * 100:.3f}%')
+        plt.show()
 
-    # show stats
-    accuracy_train = np.sum(dep.predict(X_train) == y_train) / len(X_train)
-    accuracy_test = np.sum(dep.predict(X_test) == y_test) / len(X_test)
-    ax.title.set_text(f'l-DEP with WDCCP: cost {dep.fit_cost_:.8f}, '
-                      f'accuracy {accuracy_test * 100:.3f}%')
     print(f'Accuracy on training set: {accuracy_train * 100:.3f}%, '
           f'testing set: {accuracy_test * 100:.3f}%')
-
-    plt.show()

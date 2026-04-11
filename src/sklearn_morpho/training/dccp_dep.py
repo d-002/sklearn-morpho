@@ -41,7 +41,7 @@ class DepDccpTrainer(DccpTrainer):
         self._max_training_matrix = cp.Variable((N, N))
         self._min_training_matrix = cp.Variable((N, N))
 
-    def get_problem(self, X: np.ndarray, Y: np.ndarray,
+    def get_problem(self, X: np.ndarray, y: np.ndarray,
                     wdccp_weights: np.ndarray
                     ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
         K = X.shape[0]
@@ -56,37 +56,24 @@ class DepDccpTrainer(DccpTrainer):
         # class, while concave ones are for points in the second class.
         # Therefore, linearize things when needed to make the problem convex,
         # sometimes using values from the previous iteration.
-        index_max = np.argmax(self.max_perceptron.weights
-                              + X @ self.max_matrix.T, axis=1)
-        index_min = np.argmin(self.min_perceptron.weights
-                              + X @ self.min_matrix.T, axis=1)
 
-        expr_max = self._max_training_weights + X @ self._max_training_matrix.T
-        expr_min = self._min_training_weights + X @ self._min_training_matrix.T
+        idx_max = np.argmax(self.max_perceptron.weights + X @ self.max_matrix.T,
+                            axis=1)
+        idx_min = np.argmin(self.min_perceptron.weights + X @ self.min_matrix.T,
+                            axis=1)
 
-        # use masks and matrix multiplications/sums for efficiency, to avoid
-        # using for loops or dimension mismatches
-        mask_max = np.zeros(expr_max.shape)
-        mask_min = np.zeros(expr_min.shape)
-        mask_max[np.arange(K), index_max] = 1
-        mask_min[np.arange(K), index_min] = 1
-
-        lin_max = cast(cp.Variable, cp.sum(cp.multiply(expr_max, mask_max),
-                                           axis=1))
-        lin_min = cast(cp.Variable, cp.sum(cp.multiply(expr_min, mask_min),
-                                           axis=1))
-
-        cp_max = cp.max(expr_max, axis=1)
-        cp_min = cp.min(expr_min, axis=1)
-
-        constraints = []
-        if np.any(Y == 0):
-            value = cp_max[Y == 0] + lin_min[Y == 0]
-            constraints.append(self._slack[Y == 0] >= self.margin + value)
-        if np.any(Y == 1):
-            value = cp_min[Y == 1] + lin_max[Y == 1]
-            constraints.append(self._slack[Y == 1] >= self.margin - value)
-
+        constraints = [None] * K
+        for i in range(K):
+            expr_max = self._max_training_weights \
+                    + self._max_training_matrix @ X[i]
+            expr_min = self._min_training_weights \
+                    + self._min_training_matrix @ X[i]
+            if y[i] == 0:
+                value = cp.max(expr_max) + expr_min[idx_min[i]]
+                constraints[i] = self._slack[i] >= self.margin + value
+            else:
+                value = expr_max[idx_max[i]] + cp.min(expr_min)
+                constraints[i] = self._slack[i] >= self.margin - value
         return self._objective, constraints
 
     def after_iteration(self) -> None:

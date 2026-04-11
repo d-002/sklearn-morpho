@@ -4,7 +4,7 @@ import numpy as np
 import cvxpy as cp
 from time import time
 
-def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
+def get_wdccp_weights(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, float]:
     """
     Get weights for the WDCCP method: for a given class, all its elements will
     receive a weight that will determine how they impact the final cost,
@@ -12,35 +12,29 @@ def get_wdccp_weights(X: np.ndarray, Y: np.ndarray) -> tuple[np.ndarray, float]:
     from 1 at the centroid to 0 for the farthest point of the class.
 
     param X: The set of data points
-    param Y: The respective classes
+    param y: The respective classes
 
     return:  A tuple containing both the weights and a normalizing factor, to be
              multiplied with the finally calculated cost so that it would be
              comparable in value to one calculated without WDCCP weights.
     """
 
-    N = X[0].size
     K = X.shape[0]
 
-    centroids = np.zeros((2, N))
-    counts = np.zeros(2)
-    for x, y in zip(X, Y):
-        centroids[y] += x
-        counts[y] += 1
-    centroids = np.array([np.zeros(N) if not count else centroid / count
-                          for centroid, count in zip(centroids, counts)])
+    # compute centroids, there should be no classes with no elements thanks to
+    # sklearn checks
+    labels, inv, counts = np.unique(y, return_inverse=True, return_counts=True)
+    sums = np.zeros((len(labels), X.shape[1]))
+    np.add.at(sums, inv, X)
+    centroids = sums / counts[:, np.newaxis]
 
     # inverse distance from each data point to its respective class centroid
-    temp_w = np.array([np.linalg.norm(x - centroids[y]) for x, y in zip(X, Y)])
-    temp_w = np.array([1 if not w else 1 / w for w in temp_w])
-
-    # normalization step to put all weights between 0 and 1 for each class
-    max_centroid_w = np.array([max(d for y_, d in zip(Y, temp_w) if y_ == y)
-                               for y in range(2)])
-    wdccp_weights = np.array([d / max_centroid_w[y] for y, d in zip(Y, temp_w)])
+    wdccp_weights = 1 / (1e-6 + np.linalg.norm(X - centroids[y], axis=1))
+    max_centroid_w = np.array([wdccp_weights[y == y_].max() for y_ in range(2)])
+    wdccp_weights /= max_centroid_w[y]
 
     # since the cost can be lower than 1, compensate final cost calculation
-    cost_normalizer = sum(wdccp_weights)
+    cost_normalizer = wdccp_weights.sum()
     cost_normalizer = 1 if cost_normalizer == 0 else K / cost_normalizer
 
     return wdccp_weights, cost_normalizer
@@ -107,7 +101,7 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def get_problem(self, X: np.ndarray, Y: np.ndarray,
+    def get_problem(self, X: np.ndarray, y: np.ndarray,
                     wdccp_weights: np.ndarray
                     ) -> tuple[cp.Minimize | cp.Maximize, list[cp.Constraint]]:
         """
@@ -117,7 +111,7 @@ class DccpTrainer(ABC):
         from constant values taken from the previous iteration result.
 
         param X:             The data points
-        param Y:             The data points classes
+        param y:             The data points classes
         param wdccp_weights: The wdccp weights, all 1 if not using wdccp, for
                              use in computing the objective.
                              This is an array with one element corresponding to
@@ -127,14 +121,14 @@ class DccpTrainer(ABC):
                              Constraints.
         """
 
-    def train(self, X: np.ndarray, Y: np.ndarray) -> float:
+    def train(self, X: np.ndarray, y: np.ndarray) -> float:
         """
         Train using DCCP.
         This means this function can only solve problems where the cost function
         can be separable in the given convex and concave parts.
 
         param X: The set of data points to use for training.
-        param Y: The set of labels associated with elements of X.
+        param y: The set of labels associated with elements of X.
 
         return:  The final cost, or -1 if no training happened.
         """
@@ -147,7 +141,7 @@ class DccpTrainer(ABC):
 
         # for WDCCP, compute the centroid of each one of the two regions
         if self.weighted:
-            wdccp_weights, cost_normalizer = get_wdccp_weights(X, Y)
+            wdccp_weights, cost_normalizer = get_wdccp_weights(X, y)
         else:
             # put all weights to 1 to ignore them but maintain code readability
             wdccp_weights, cost_normalizer = np.ones(K), 1
@@ -161,7 +155,7 @@ class DccpTrainer(ABC):
         self.at_training_start()
 
         for i in range(self.max_iterations):
-            objective, constraints = self.get_problem(X, Y, wdccp_weights)
+            objective, constraints = self.get_problem(X, y, wdccp_weights)
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
