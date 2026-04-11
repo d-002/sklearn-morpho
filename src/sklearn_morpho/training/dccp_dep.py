@@ -35,10 +35,9 @@ class DepDccpTrainer(DccpTrainer):
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
         for perceptron in (self.max_perceptron, self.min_perceptron):
-            perceptron.weights = \
-                    self.random_state.random(perceptron.dim) * 2 - 1
-        self.max_matrix = self.random_state.rand(N_max, N_data)
-        self.min_matrix = self.random_state.rand(N_min, N_data)
+            perceptron.weights = self.random_state.randn(perceptron.dim)
+        self.max_matrix = self.random_state.randn(N_max, N_data)
+        self.min_matrix = self.random_state.randn(N_min, N_data)
 
         # Create constraints for linearization derived from real parameters,
         # used to absorbe non-convex parameters that are restored at the end.

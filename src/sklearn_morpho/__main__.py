@@ -6,6 +6,7 @@ if __name__ == '__main__':
     from typing import cast
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import DecisionBoundaryDisplay
+    from sklearn.datasets import make_moons
 
     from .datasets.gaussian import dataset_gaussians
     from .datasets.wdbc import dataset_wdbc
@@ -18,19 +19,21 @@ if __name__ == '__main__':
     """
 
     # create sample data, assign colors
-    method = 'wdccp'
+    random_state = np.random.RandomState(0)
     X, y = dataset_gaussians(500, 2, np.array(['red', 'blue']),
-                                    np.random.rand(2, 2) * 10 - 5,
-                                    (np.random.rand(2) * 2 + 1))
+                                    np.random.randn(2, 2) * 10 - 5,
+                                    (np.random.randn(2) * 2 + 1))
     X, y = dataset_wdbc('WDBC.dat.txt')
+    X, y = make_moons(n_samples=500, random_state=random_state)
+    y = np.array(['red', 'blue'])[y]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
 
     # for LSPs
     X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
-    # create and train perceptrons
-    dep = DEP(method=method, margin=1, verbose=1)
+    # create and train estimator
+    dep = DEP(method='dccp', margin=1, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     accuracy_train = np.sum(dep.predict(X_train) == y_train) / len(X_train)
     accuracy_test = np.sum(dep.predict(X_test) == y_test) / len(X_test)
