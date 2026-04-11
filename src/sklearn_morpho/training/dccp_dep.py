@@ -67,32 +67,45 @@ class DepDccpTrainer(DccpTrainer):
         idx_min = np.argmin(self.min_perceptron.weights + X @ self.min_matrix.T,
                             axis=1)
 
-        # Create one-hot encoding matrices for the active indices
-        # create encoding matrices for the active indices to apply constraints
-        # all at once and use AST optimization inside cvxpy
+        # create encoding matrices for the active indices using numpy, to then
+        # apply constraints all at once and use AST optimizations inside cvxpy
         M_max = np.zeros((K, self.max_perceptron.dim))
         M_min = np.zeros((K, self.min_perceptron.dim))
         M_max[np.arange(K), idx_max] = 1
         M_min[np.arange(K), idx_min] = 1
 
-        expr_max = self._max_training_weights + X @ self._max_training_matrix.T
-        expr_min = self._min_training_weights + X @ self._min_training_matrix.T
-
-        active_max_vals = cp.sum(cp.multiply(M_max, expr_max), axis=1)
-        active_min_vals = cp.sum(cp.multiply(M_min, expr_min), axis=1)
-
-        y_0_mask = (y == 0)
-        y_1_mask = (y == 1)
-
         constraints = []
-        if np.any(y_0_mask):
-            constraints.append(self._slack[y_0_mask] >= self.margin
-                               + cp.max(expr_max[y_0_mask], axis=1)
-                               + active_min_vals[y_0_mask])
-        if np.any(y_1_mask):
-            constraints.append(self._slack[y_1_mask] >= self.margin
-                               - active_max_vals[y_1_mask]
-                               - cp.min(expr_min[y_1_mask], axis=1))
+        for label in [0, 1]:
+            mask = y == label
+            if not np.any(mask):
+                continue
+
+            X_ = X[mask]
+            K_ = X_.shape[0]
+
+            # start building the perceptron's outputs before the min/max
+            expr_max = X_ @ self._max_training_matrix.T
+            expr_min = X_ @ self._min_training_matrix.T
+
+            # add weights to every row of (X @ matrix.T) using np.ones to create
+            # a matrix safely for cvxpy's cpp backend
+            ones = np.ones((K_, 1))
+            expr_max += ones @ cp.reshape(self._max_training_weights,
+                                          (1, self.max_perceptron.dim),
+                                          order='C')
+            expr_min += ones @ cp.reshape(self._min_training_weights,
+                                          (1, self.min_perceptron.dim),
+                                          order='C')
+
+            active_max = cp.sum(cp.multiply(M_max[mask], expr_max), axis=1)
+            active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
+
+            if label == 0:
+                constraints.append(self._slack[mask] >= self.margin
+                                   + cp.max(expr_max, axis=1) + active_min)
+            else:
+                constraints.append(self._slack[mask] >= self.margin
+                                   - active_max - cp.min(expr_min, axis=1))
         return cp.Problem(self._objective, constraints)
 
     def after_iteration(self) -> None:
