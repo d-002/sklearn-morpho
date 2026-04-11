@@ -6,25 +6,30 @@ from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 
 class DepDccpTrainer(DccpTrainer):
-    def __init__(self, N: int, weighted: bool, margin: float,
-                 max_iterations: int, batch_size: int, done_threshold: float,
+    def __init__(self, data_dim: int, latent_dims: tuple[int, int],
+                 weighted: bool, margin: float, max_iterations: int,
+                 batch_size: int, done_threshold: float,
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
 
-        param N:        The dimension of the data.
-        param [others]: See base class.
+        param data_dim:    the dimensionality of the input data
+        param latent_dims: the latent dimensions for the max and min perceptrons
+        param [others]:    see base class
         """
 
-        self.max_perceptron = MaxPerceptron(N)
-        self.min_perceptron = MinPerceptron(N)
+        self.data_dim = data_dim
+        self.max_perceptron = MaxPerceptron(latent_dims[0])
+        self.min_perceptron = MinPerceptron(latent_dims[1])
 
         super().__init__(weighted, margin, max_iterations, batch_size,
                          done_threshold, verbose, random_state)
 
     def at_training_start(self) -> None:
-        N = self.max_perceptron.dim
+        N_max, N_min = self.max_perceptron.dim, self.min_perceptron.dim
+        N_data = self.data_dim
+
         self._objective = None
 
         # Extracted parameters that will be populated during training but need
@@ -32,16 +37,16 @@ class DepDccpTrainer(DccpTrainer):
         for perceptron in (self.max_perceptron, self.min_perceptron):
             perceptron.weights = \
                     self.random_state.random(perceptron.dim) * 2 - 1
-        self.max_matrix = self.random_state.rand(N, N)
-        self.min_matrix = self.random_state.rand(N, N)
+        self.max_matrix = self.random_state.rand(N_max, N_data)
+        self.min_matrix = self.random_state.rand(N_min, N_data)
 
         # Create constraints for linearization derived from real parameters,
         # used to absorbe non-convex parameters that are restored at the end.
         # Method inspired by arXiv:2011.06512v1.
-        self._max_training_weights = cp.Variable(N)
-        self._min_training_weights = cp.Variable(N)
-        self._max_training_matrix = cp.Variable((N, N))
-        self._min_training_matrix = cp.Variable((N, N))
+        self._max_training_weights = cp.Variable(N_max)
+        self._min_training_weights = cp.Variable(N_min)
+        self._max_training_matrix = cp.Variable((N_max, N_data))
+        self._min_training_matrix = cp.Variable((N_min, N_data))
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
                     wdccp_weights: np.ndarray

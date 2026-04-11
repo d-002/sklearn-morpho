@@ -160,7 +160,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = cast(float, prob.solve(verbose=self.verbose != 2)) \
+            cost = cast(float, prob.solve(verbose=self.verbose == 2)) \
                     * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 

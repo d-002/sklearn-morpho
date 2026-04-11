@@ -15,12 +15,15 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
 
     DEP forward pass equation:
 
-    \\[ y = f(\\lambda \\tau_(\\rho(x)) + (1 - \\lambda) \\tau'_(\\rho(x))) \\]
+    \\[ y = f(\\lambda \\tau_(R_1(x)) + (1 - \\lambda) \\tau'_(R_2(x))) \\]
 
     Where $\\tau$ refers to the activation of a (max, +) morphological
     perceptron and $\\tau'$ to a (min, +) one.
-    $\\rho$ is a linear transformation to apply to the training data to be able
-    to classify any distribution of binary data.
+    $R_1, R_2$ are linear transformations to apply to the training data.
+    They convert it into a latent space with possibly different dimensions,
+    also allowing classification of arbitrarily distributed data.
+    A higher dimension for the latent space will result in slower training
+    times, but will allow the decision boundary to be more complex.
 
     Fitting can be done by setting the constructor parameter 'method' to either:
     - dccp:  Use Disciplined Programming and the Convex-Concave Procedure.
@@ -33,12 +36,15 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
+                 latent_dims: tuple[int, int] = (10, 10),
                  margin = 0., max_iterations = 100, batch_size = 32,
                  done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
 
+        param latent_dims:    The dimensions of the latent spaces used for the
+                              linear transformations output
         param method:         Either 'dccp' or 'wcddp'
         param margin:         Enforce a margin between the decision boundary and
                               the data. May help with linearly separable
@@ -56,6 +62,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
                               or None
         """
 
+        self.latent_dims = latent_dims
         self.method = method
         self.margin = margin
         self.max_iterations = max_iterations
@@ -92,9 +99,9 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        N = X[0].shape[0]
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(N, weighted, self.margin, self.max_iterations,
+        trainer = DepDccpTrainer(X.shape[1], self.latent_dims, weighted,
+                                 self.margin, self.max_iterations,
                                  self.batch_size, self.done_threshold,
                                  self.verbose, random_state)
 
