@@ -77,7 +77,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         """
 
         # input data validation
-        rs = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X, y = validate_data(self, X, y)
 
         # create classes and convert them to distinct integers for fitting
@@ -96,7 +96,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         weighted = self.method == 'wdccp'
         trainer = DepDccpTrainer(N, weighted, self.margin, self.max_iterations,
                                  self.batch_size, self.done_threshold,
-                                 self.verbose, rs)
+                                 self.verbose, random_state)
 
         self.fit_cost_ = trainer.train(X, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

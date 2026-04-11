@@ -8,7 +8,8 @@ from ..perceptron import MaxPerceptron, MinPerceptron
 class DepDccpTrainer(DccpTrainer):
     def __init__(self, N: int, weighted: bool, margin: float,
                  max_iterations: int, batch_size: int, done_threshold: float,
-                 verbose: Literal[0, 1, 2], rs: np.random.RandomState) -> None:
+                 verbose: Literal[0, 1, 2],
+                 random_state: np.random.RandomState) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
 
@@ -20,7 +21,7 @@ class DepDccpTrainer(DccpTrainer):
         self.min_perceptron = MinPerceptron(N)
 
         super().__init__(weighted, margin, max_iterations, batch_size,
-                         done_threshold, verbose, rs)
+                         done_threshold, verbose, random_state)
 
     def at_training_start(self) -> None:
         N = self.max_perceptron.dim
@@ -29,9 +30,10 @@ class DepDccpTrainer(DccpTrainer):
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
         for perceptron in (self.max_perceptron, self.min_perceptron):
-            perceptron.weights = np.random.random(perceptron.dim) * 2 - 1
-        self.max_matrix = self.rs.rand(N, N)
-        self.min_matrix = self.rs.rand(N, N)
+            perceptron.weights = \
+                    self.random_state.random(perceptron.dim) * 2 - 1
+        self.max_matrix = self.random_state.rand(N, N)
+        self.min_matrix = self.random_state.rand(N, N)
 
         # Create constraints for linearization derived from real parameters,
         # used to absorbe non-convex parameters that are restored at the end.

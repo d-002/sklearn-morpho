@@ -46,7 +46,8 @@ class DccpTrainer(ABC):
 
     def __init__(self, weighted: bool, margin: float, max_iterations: int,
                  batch_size: int, done_threshold: float,
-                 verbose: Literal[0, 1, 2], rs: np.random.RandomState) -> None:
+                 verbose: Literal[0, 1, 2],
+                 random_state: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
@@ -81,7 +82,7 @@ class DccpTrainer(ABC):
         self.batch_size = batch_size
         self.done_threshold = done_threshold
         self.verbose = verbose
-        self.rs = rs
+        self.random_state = random_state
 
     def at_training_start(self) -> None:
         """
@@ -159,7 +160,7 @@ class DccpTrainer(ABC):
 
             # solve the problem, normalize the cost when using wdccp
             prob = cp.Problem(objective, constraints)
-            cost = cast(float, prob.solve(verbose=self.verbose == 2)) \
+            cost = cast(float, prob.solve(verbose=self.verbose != 2)) \
                     * cost_normalizer
             cost_adjustment = abs(cost - prev_cost)
 
