@@ -6,8 +6,8 @@ if __name__ == '__main__':
     from typing import cast
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import DecisionBoundaryDisplay
+    from sklearn.datasets import make_moons, make_classification
 
-    from .datasets.gaussian import dataset_gaussians
     from .datasets.wdbc import dataset_wdbc
 
     """
@@ -18,11 +18,13 @@ if __name__ == '__main__':
     """
 
     # create sample data, assign colors
-    random_state = np.random.RandomState(0)
-    X, y = dataset_gaussians(500, 2, np.array(['red', 'blue']),
-                                    np.random.randn(2, 2) * 10 - 5,
-                                    (np.random.randn(2) * 2 + 1))
-    X, y = dataset_wdbc('WDBC.dat.txt')
+    random_state = None
+    X, y = make_classification(n_samples=500, n_features=2, n_redundant=0,
+                               n_classes=2, n_clusters_per_class=1,
+                               random_state=random_state)
+    #X, y = dataset_wdbc('WDBC.dat.txt')
+    #X, y = make_moons(n_samples=500)
+    y = np.array(['red', 'blue'])[y]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
 
     # for LSPs
