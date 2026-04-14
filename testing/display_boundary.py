@@ -22,8 +22,9 @@ if __name__ == '__main__':
             n_samples=500, n_features=2, n_redundant=0, n_classes=2,
             n_clusters_per_class=1, random_state=random_state),
         'breast cancer': load_breast_cancer(return_X_y=True),
-        'non noisy moons': make_moons(n_samples=500),
-        'noisy moons': make_moons(n_samples=500, noise=.2),
+        'non noisy moons': make_moons(n_samples=500, random_state=random_state),
+        'noisy moons': make_moons(n_samples=500, noise=.2,
+                                  random_state=random_state),
     }
     methods: dict[str, Literal['dccp', 'wdccp']] = {
         'normal classification': 'wdccp',

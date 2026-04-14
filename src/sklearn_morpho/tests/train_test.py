@@ -15,7 +15,7 @@ def test_train_separable_dataset():
                                n_classes=2, n_clusters_per_class=1,
                                random_state=random_state)
 
-    classifier = DEP()
+    classifier = DEP(random_state=random_state)
     classifier.fit(X, y)
 
     assert np.allclose(_get_prop_well_classified(X, y, classifier), 1.)

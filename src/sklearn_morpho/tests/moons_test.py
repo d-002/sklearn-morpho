@@ -4,8 +4,9 @@ from sklearn_morpho.classifiers.dep import DilationErosionPerceptron as DEP
 from sklearn.datasets import make_moons
 
 def test_separable_moons(runs=10):
+    random_state = None
     ok = 0
-    dep = DEP(method='dccp', margin=1)
+    dep = DEP(method='dccp', margin=1, random_state=random_state)
 
     for _ in range(runs):
         X, y = make_moons(n_samples=500)
