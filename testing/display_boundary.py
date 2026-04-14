@@ -15,7 +15,7 @@ if __name__ == '__main__':
             load_breast_cancer
 
     # create sample data, assign colors
-    random_state = None
+    random_state = np.random.RandomState(11)
 
     datasets = {
         'normal classification': make_classification(

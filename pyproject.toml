@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src/sklearn_morpho/tests"]
 
 [tool.hatch.envs.default]
 python = "3.14"
