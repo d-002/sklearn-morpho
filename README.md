@@ -6,11 +6,15 @@ Work in progress, meaning no complete documentation is currently available.
 Currently supported:
 
 - DCCP, Weighted DCCP with cvxpy
-- Dilation-Erosion Perceptron
-- Basic sample data generator
+- Linear Dilation-Erosion Perceptron
+
+File tree:
+- `src/sklearn_morpho`: contains the source code and a testsuite in `.../tests`
+- `testing`: standalone files that use this library, may contain tests but they
+  are not designed to be run as a CI testsuite for example.
 
 ## Running the project
 
 - Install Python 3 and hatch
 - `hatch run pytest` for tests
-- `hatch run main` to run a main file
+- `hatch run main` to run the display_boundary showcase file

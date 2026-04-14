@@ -25,4 +25,4 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-main = "python -m sklearn_morpho"
+main = "python testing/display_boundary.py"
