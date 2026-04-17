@@ -3,11 +3,6 @@ import numpy as np
 from sklearn_morpho.classifiers.dep import DilationErosionPerceptron as DEP
 from sklearn.datasets import make_classification
 
-def _get_prop_well_classified(X: np.ndarray, y: np.ndarray,
-                              classifier: DEP) -> float:
-    predicted = classifier.predict(X)
-    return 1 - sum(predicted ^ y) / X.size
-
 def test_train_separable_dataset():
     # use a random state to guarantee a separable dataset
     random_state = np.random.RandomState(11)
@@ -18,4 +13,5 @@ def test_train_separable_dataset():
     classifier = DEP(random_state=random_state)
     classifier.fit(X, y)
 
-    assert np.allclose(_get_prop_well_classified(X, y, classifier), 1.)
+    fails = X.shape[0] - np.sum(classifier.predict(X) == y)
+    assert fails == 0

@@ -9,6 +9,7 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
     from typing import Literal, cast
+    from sklearn.metrics import f1_score
     from sklearn.model_selection import train_test_split
     from sklearn.inspection import DecisionBoundaryDisplay
     from sklearn.datasets import make_classification, make_moons, \
@@ -33,13 +34,13 @@ if __name__ == '__main__':
         'noisy moons': 'dccp',
     }
 
-    total_test_accuracy = 0
+    total_test_score = 0
     for name, (X, y) in datasets.items():
         print(f'Training with "{name}" dataset...')
         method = methods[name]
 
-        print(np.unique(y))
         y = np.array(['red', 'blue'])[y]
+        pos_label = np.unique(y)[1]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.33)
 
         # for LSPs
@@ -49,8 +50,9 @@ if __name__ == '__main__':
         # create and train estimator
         dep = DEP(method=method, margin=1, verbose=1, random_state=random_state)
         dep.fit(X_train, y_train)
-        accuracy_train = np.sum(dep.predict(X_train) == y_train) / len(X_train)
-        accuracy_test = np.sum(dep.predict(X_test) == y_test) / len(X_test)
+        score_train = f1_score(y_train, dep.predict(X_train),
+                               pos_label=pos_label)
+        score_test = f1_score(y_test, dep.predict(X_test), pos_label=pos_label)
 
         # compute and display perceptron decision region
         if X.shape[1] == 2:
@@ -66,14 +68,14 @@ if __name__ == '__main__':
             ax.scatter(*X_test.T, color=y_test)
             ax.title.set_text(f'l-DEP with {method}: '
                               f'training cost {dep.fit_cost_:.8f}, '
-                              f'test accuracy {accuracy_test * 100:.3f}%')
+                              f'F1 score {score_test * 100:.3f}%')
             plt.show()
 
-        print(f'Accuracy on training set: {accuracy_train * 100:.3f}%, '
-              f'testing set: {accuracy_test * 100:.3f}%')
+        print(f'F1 score on training set: {score_train * 100:.3f}%, '
+              f'on testing set: {score_test * 100:.3f}%')
 
-        total_test_accuracy += accuracy_test
+        total_test_score += score_test
 
     n_datasets = len(datasets)
-    print(f'Done with all {n_datasets} datasets, average test accuracy: '
-          f'{total_test_accuracy / n_datasets * 100:.3f}')
+    print(f'Done with all {n_datasets} datasets, average test score: '
+          f'{total_test_score / n_datasets * 100:.3f}')

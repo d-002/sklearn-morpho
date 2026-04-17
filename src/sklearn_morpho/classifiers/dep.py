@@ -36,7 +36,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
              non-degenerate datasets.
     """
 
-    def __init__(self, method: Literal['wdccp', 'dccp'] = 'wdccp',
+    def __init__(self, method: Literal['dccp', 'wdccp'] = 'dccp',
                  latent_dims: tuple[int, int] = (10, 10),
                  margin = 0., max_iterations = 100, batch_size = 32,
                  done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
