@@ -9,7 +9,7 @@ from sklearn.utils.multiclass import unique_labels
 
 from ..training.dccp_dep import DepDccpTrainer
 
-class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
+class LDEP(ClassifierMixin, BaseEstimator):
     """
     Scikit-learn estimator wrapper around a l-DEP (linear Dilation-Erosion
     morphological Perceptron) for binary data classification.
@@ -72,7 +72,7 @@ class DilationErosionPerceptron(ClassifierMixin, BaseEstimator):
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> DilationErosionPerceptron:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> LDEP:
         """
         Fit the classifier, create attributes:
         - self.max_perceptron_

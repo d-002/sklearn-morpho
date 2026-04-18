@@ -26,3 +26,4 @@ dependencies = [
 
 [tool.hatch.envs.default.scripts]
 main = "python testing/display_boundary.py"
+compare = "python testing/compare_estimators.py"
