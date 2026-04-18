@@ -1,4 +1,4 @@
-from sklearn_morpho.classifiers.dep import DilationErosionPerceptron as DEP
+from sklearn_morpho.classifiers.ldep import LDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
         # create and train estimator
-        dep = DEP(method=method, margin=1, verbose=1, random_state=random_state)
+        dep = LDEP(method=method, margin=1, verbose=1, random_state=random_state)
         dep.fit(X_train, y_train)
         score_train = f1_score(y_train, dep.predict(X_train),
                                pos_label=pos_label)

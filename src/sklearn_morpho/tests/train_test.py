@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn_morpho.classifiers.dep import DilationErosionPerceptron as DEP
+from sklearn_morpho.classifiers.ldep import LDEP
 from sklearn.datasets import make_classification
 
 def test_train_separable_dataset():
@@ -10,7 +10,7 @@ def test_train_separable_dataset():
                                n_classes=2, n_clusters_per_class=1,
                                random_state=random_state)
 
-    classifier = DEP(random_state=random_state)
+    classifier = LDEP(random_state=random_state)
     classifier.fit(X, y)
 
     fails = X.shape[0] - np.sum(classifier.predict(X) == y)
