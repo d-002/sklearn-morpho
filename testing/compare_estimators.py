@@ -6,44 +6,25 @@ Estimators selection inspired by arxiv/2011.06512
 
 import numpy as np
 import matplotlib.pyplot as plt
-from abc import ABC, abstractmethod
-from typing import Literal, cast
 from time import time
-from sklearn.base import BaseEstimator
 from sklearn.metrics import f1_score
+from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.datasets import make_classification, make_moons, \
         load_breast_cancer
 
 from sklearn_morpho.classifiers.ldep import LDEP
 
-# helper classes because different classifiers have different needs depending
-# on the dataset
-class EstimatorWrapper(ABC):
-    def __init__(self, name: str):
-        self.name = name
-
-    @abstractmethod
-    def setup(self, dataset_name: str) -> BaseEstimator:
-        pass
-
-class LDEPWrapper(EstimatorWrapper):
-    methods: dict[str, Literal['dccp', 'wdccp']] = {
-        'normal classification': 'wdccp',
-        'breast cancer': 'wdccp',
-        'non noisy moons': 'dccp',
-        'noisy moons': 'dccp',
-    }
-
-    def __init__(self) -> None:
-        super().__init__('l_DEP')
-
-    def setup(self, dataset_name: str) -> BaseEstimator:
-        return LDEP(method=self.methods[dataset_name], margin=1)
-
 # set up estimators and datasets
 random_state = np.random.RandomState(11)
-estimators: list[EstimatorWrapper] = [LDEPWrapper()]
+estimators = {
+    'l_DEP': LDEP(),
+    'RBF SVC': SVC(kernel='rbf'),
+    'Poly SVC': SVC(kernel='poly'),
+    'Linear SVC': SVC(kernel='linear'),
+    'MLP': MLPClassifier(),
+}
 
 datasets = {
     'normal classification': make_classification(
@@ -56,17 +37,16 @@ datasets = {
 }
 
 # evaluate estimators
-scores = {estimator_wrapper.name: [] for estimator_wrapper in estimators}
-times = {estimator_wrapper.name: [] for estimator_wrapper in estimators}
+scores = {estimator_name: [] for estimator_name in estimators}
+times = {estimator_name: [] for estimator_name in estimators}
 
 skf = StratifiedKFold(n_splits=5)
 for dataset_name, (X, y) in datasets.items():
     print(f"Training with dataset '{dataset_name}'...")
     pos_label = np.unique(y)[1]
 
-    for estimator_wrapper in estimators:
-        print(f'  - Estimator {estimator_wrapper.name}...')
-        estimator = estimator_wrapper.setup(dataset_name)
+    for estimator_name, estimator in estimators.items():
+        print(f'  - Estimator {estimator_name}...')
 
         for X_fold, y_fold in skf.split(X, y):
             X_train, X_test, y_train, y_test = train_test_split(
@@ -78,8 +58,8 @@ for dataset_name, (X, y) in datasets.items():
 
             score = f1_score(y_train, estimator.predict(X_train),
                              pos_label=pos_label)
-            scores[estimator_wrapper.name].append(score)
-            times[estimator_wrapper.name].append(t1 - t0)
+            scores[estimator_name].append(score)
+            times[estimator_name].append(t1 - t0)
 print('Done.')
 
 # display results
@@ -87,6 +67,8 @@ scores = {name: np.array(score) for name, score in scores.items()}
 times = {name: np.array(time) for name, time in times.items()}
 
 fig, axs = plt.subplots(ncols=2, nrows=1)
+# log scale for times
+axs[1].set_yscale('log')
 
 for data, name, ax in zip((scores, times),
                           ('average F1 score', 'Training time (s)'), axs):
