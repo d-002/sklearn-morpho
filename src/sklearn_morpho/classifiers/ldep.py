@@ -7,7 +7,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from ..training.dccp_dep import DepDccpTrainer
+from ..training.dccp_ldep import LDEPDccpTrainer
 
 class LDEP(ClassifierMixin, BaseEstimator):
     """
@@ -103,10 +103,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         # create and train perceptrons
         weighted = self.method == 'wdccp'
-        trainer = DepDccpTrainer(X_scaled.shape[1], self.latent_dims, weighted,
-                                 self.margin, self.max_iterations,
-                                 self.batch_size, self.done_threshold,
-                                 self.verbose, random_state)
+        trainer = LDEPDccpTrainer(X_scaled.shape[1], self.latent_dims, weighted,
+                                  self.margin, self.max_iterations,
+                                  self.batch_size, self.done_threshold,
+                                  self.verbose, random_state)
 
         self.fit_cost_ = trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

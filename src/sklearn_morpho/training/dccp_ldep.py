@@ -5,7 +5,7 @@ import cvxpy as cp
 from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 
-class DepDccpTrainer(DccpTrainer):
+class LDEPDccpTrainer(DccpTrainer):
     def __init__(self, data_dim: int, latent_dims: tuple[int, int],
                  weighted: bool, margin: float, max_iterations: int,
                  batch_size: int, done_threshold: float,
