@@ -56,7 +56,7 @@ datasets = {
 }
 
 # evaluate estimators
-results = {estimator_wrapper.name: [] for estimator_wrapper in estimators}
+scores = {estimator_wrapper.name: [] for estimator_wrapper in estimators}
 times = {estimator_wrapper.name: [] for estimator_wrapper in estimators}
 
 skf = StratifiedKFold(n_splits=5)
@@ -78,13 +78,19 @@ for dataset_name, (X, y) in datasets.items():
 
             score = f1_score(y_train, estimator.predict(X_train),
                              pos_label=pos_label)
-            results[estimator_wrapper.name].append(score)
+            scores[estimator_wrapper.name].append(score)
             times[estimator_wrapper.name].append(t1 - t0)
 print('Done.')
 
 # display results
-results = {name: np.array(result) for name, result in results.items()}
+scores = {name: np.array(score) for name, score in scores.items()}
 times = {name: np.array(time) for name, time in times.items()}
 
-print(results)
-print(times)
+fig, axs = plt.subplots(ncols=2, nrows=1)
+
+for data, name, ax in zip((scores, times),
+                          ('average F1 score', 'Training time (s)'), axs):
+    ax.set_title(name)
+    ax.boxplot(data.values(), patch_artist=True, tick_labels=data.keys())
+
+plt.show()
