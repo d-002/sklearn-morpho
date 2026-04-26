@@ -4,64 +4,31 @@ import numpy as np
 import cvxpy as cp
 from time import time
 
-def get_wdccp_weights(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, float]:
-    """
-    Get weights for the WDCCP method: for a given class, all its elements will
-    receive a weight that will determine how they impact the final cost,
-    decreasing linearly as their distance to their class centroid increases,
-    from 1 at the centroid to 0 for the farthest point of the class.
-
-    param X: The set of data points
-    param y: The respective classes
-
-    return:  A tuple containing both the weights and a normalizing factor, to be
-             multiplied with the finally calculated cost so that it would be
-             comparable in value to one calculated without WDCCP weights.
-    """
-
-    K = X.shape[0]
-
-    # compute centroids, there should be no classes with no elements thanks to
-    # sklearn checks
-    labels, inv, counts = np.unique(y, return_inverse=True, return_counts=True)
-    sums = np.zeros((len(labels), X.shape[1]))
-    np.add.at(sums, inv, X)
-    centroids = sums / counts[:, np.newaxis]
-
-    # inverse distance from each data point to its respective class centroid
-    wdccp_weights = 1 / (1e-6 + np.linalg.norm(X - centroids[y], axis=1))
-    max_centroid_w = np.array([wdccp_weights[y == y_].max() for y_ in range(2)])
-    wdccp_weights /= max_centroid_w[y]
-
-    # since the cost can be lower than 1, compensate final cost calculation
-    cost_normalizer = wdccp_weights.sum()
-    cost_normalizer = 1 if cost_normalizer == 0 else K / cost_normalizer
-
-    return wdccp_weights, cost_normalizer
+from ..weighting.weighting_base import SampleWeighting
 
 class DccpTrainer(ABC):
     """
     Abstract class for optimization using cvxpy
     """
 
-    def __init__(self, weighted: bool, margin: float, max_iterations: int,
-                 batch_size: int, done_threshold: float,
+    def __init__(self, weighting_method: SampleWeighting, margin: float,
+                 max_iterations: int, batch_size: int, done_threshold: float,
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
-        param weighted:       Whether to use WDCCP: apply weights to the cost
-                              contribution of each data point depending on how
-                              far they are from the class's centroid, so that
-                              outliers contribute less to the final cost.
-        param max_iterations: Upper bound for the number of training iterations.
-        param batch_size:     Batch size for mini batch fitting, or zero for
-                              no batching.
-        param done_threshold: If the cost changes by a number smaller than this
-                              value in between operations, or itself goes below
-                              this value, stop early.
-        param verbose:        Whether to log extra information.
+        param weighting_method: The weighting method to use: apply weights to
+                                the cost contribution of each data point to help
+                                avoid outliers.
+        param max_iterations:   Upper bound for the number of training
+                                iterations.
+        param batch_size:       Batch size for mini batch fitting, or zero for
+                                no batching.
+        param done_threshold:   If the cost changes by a number smaller than
+                                this value in between operations, or itself goes
+                                below this value, stop early.
+        param verbose:          Whether to log extra information.
         """
 
         if margin < 0:
@@ -76,7 +43,7 @@ class DccpTrainer(ABC):
             raise ValueError('invalid done_threshold, expected > 0 but got '
                              f'{done_threshold}')
 
-        self.weighted = weighted
+        self.weighting_method = weighting_method
         self.margin = margin
         self.max_iterations = max_iterations
         self.batch_size = batch_size
@@ -137,14 +104,8 @@ class DccpTrainer(ABC):
             print('Starting fitting with DCCP')
 
         start = time()
-        K = X.shape[0]
-
-        # for WDCCP, compute the centroid of each one of the two regions
-        if self.weighted:
-            wdccp_weights, cost_normalizer = get_wdccp_weights(X, y)
-        else:
-            # put all weights to 1 to ignore them but maintain code readability
-            wdccp_weights, cost_normalizer = np.ones(K), 1
+        wdccp_weights, cost_normalizer = \
+                self.weighting_method.fit_transform(X, y)
 
         i = -1
         done = False
@@ -177,8 +138,7 @@ class DccpTrainer(ABC):
         if self.verbose:
             dt = time() - start
             if done:
-                print(f'{"W" if self.weighted else ""}DCCP done in '
-                      f'{i + 1}/{self.max_iterations} iterations, '
+                print(f'DCCP done in {i + 1}/{self.max_iterations} iterations, '
                       f'final cost is {cost:.8f} in {dt:.2f}s')
             else:
                 print('Warning: reached max iterations for DCCP after '

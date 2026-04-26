@@ -26,17 +26,10 @@ datasets = {
     'noisy moons': make_moons(n_samples=500, noise=.2,
                               random_state=random_state),
 }
-methods: dict[str, Literal['dccp', 'wdccp']] = {
-    'normal classification': 'wdccp',
-    'breast cancer': 'wdccp',
-    'non noisy moons': 'dccp',
-    'noisy moons': 'dccp',
-}
 
 total_test_score = 0
 for name, (X, y) in datasets.items():
     print(f'Training with "{name}" dataset...')
-    method = methods[name]
 
     y = np.array(['red', 'blue'])[y]
     pos_label = np.unique(y)[1]
@@ -47,7 +40,7 @@ for name, (X, y) in datasets.items():
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = LDEP(method=method, margin=1, verbose=1, random_state=random_state)
+    dep = LDEP(margin=1, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     score_train = f1_score(y_train, dep.predict(X_train),
                            pos_label=pos_label)
@@ -65,8 +58,7 @@ for name, (X, y) in datasets.items():
         ax = disp.ax_
         ax.scatter(*X_train.T, color=y_train, alpha=.2)
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP with {method}: '
-                          f'training cost {dep.fit_cost_:.8f}, '
+        ax.title.set_text(f'l-DEP: training cost {dep.fit_cost_:.8f}, '
                           f'F1 score {score_test * 100:.3f}%')
         plt.show()
 
