@@ -12,7 +12,7 @@ class DccpTrainer(ABC):
     """
 
     def __init__(self, weighting_method: SampleWeighting, margin: float,
-                 max_iterations: int, batch_size: int, done_threshold: float,
+                 max_iterations: int, done_threshold: float,
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
@@ -23,8 +23,6 @@ class DccpTrainer(ABC):
                                 avoid outliers.
         param max_iterations:   Upper bound for the number of training
                                 iterations.
-        param batch_size:       Batch size for mini batch fitting, or zero for
-                                no batching.
         param done_threshold:   If the cost changes by a number smaller than
                                 this value in between operations, or itself goes
                                 below this value, stop early.
@@ -36,9 +34,6 @@ class DccpTrainer(ABC):
         if max_iterations <= 0:
             raise ValueError('invalid max_iterations, expected > 0 but got '
                              f'{max_iterations}')
-        if batch_size < 0:
-            raise ValueError('invalid batch_size, expected >= 0 but got '
-                             f'{batch_size}')
         if done_threshold <= 0:
             raise ValueError('invalid done_threshold, expected > 0 but got '
                              f'{done_threshold}')
@@ -46,7 +41,6 @@ class DccpTrainer(ABC):
         self.weighting_method = weighting_method
         self.margin = margin
         self.max_iterations = max_iterations
-        self.batch_size = batch_size
         self.done_threshold = done_threshold
         self.verbose = verbose
         self.random_state = random_state

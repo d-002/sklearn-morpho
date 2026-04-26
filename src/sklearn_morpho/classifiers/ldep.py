@@ -31,7 +31,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
     def __init__(self, weighting_method: SampleWeighting | None = None,
                  latent_dims: tuple[int, int] = (10, 10),
-                 margin = 0., max_iterations = 100, batch_size = 32,
+                 margin = 0., max_iterations = 100,
                  done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
@@ -47,8 +47,6 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 datasets, but generally lower is more accurate.
         param max_iterations:   Upper bound for the number of iterations to use
                                 during fitting.
-        param batch_size:       For mini batch fitting, define the batch size.
-                                If zero, don't use batching.
         param done_threshold:   The rate of change for the cost between
                                 consecutive iterations under which training is
                                 considered finished.
@@ -63,7 +61,6 @@ class LDEP(ClassifierMixin, BaseEstimator):
         self.weighting_method = weighting_method
         self.margin = margin
         self.max_iterations = max_iterations
-        self.batch_size = batch_size
         self.done_threshold = done_threshold
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
@@ -104,9 +101,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
             weighting_method = self.weighting_method
         trainer = LDEPDccpTrainer(X_scaled.shape[1], self.latent_dims,
                                   weighting_method, self.margin,
-                                  self.max_iterations, self.batch_size,
-                                  self.done_threshold, self.verbose,
-                                  random_state)
+                                  self.max_iterations, self.done_threshold,
+                                  self.verbose, random_state)
 
         self.fit_cost_ = trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

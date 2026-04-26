@@ -4,11 +4,12 @@ import cvxpy as cp
 
 from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
+from ..weighting.weighting_base import SampleWeighting
 
 class LDEPDccpTrainer(DccpTrainer):
     def __init__(self, data_dim: int, latent_dims: tuple[int, int],
-                 weighted: bool, margin: float, max_iterations: int,
-                 batch_size: int, done_threshold: float,
+                 weighting_method: SampleWeighting, margin: float,
+                 max_iterations: int, done_threshold: float,
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
@@ -23,7 +24,7 @@ class LDEPDccpTrainer(DccpTrainer):
         self.max_perceptron = MaxPerceptron(latent_dims[0])
         self.min_perceptron = MinPerceptron(latent_dims[1])
 
-        super().__init__(weighted, margin, max_iterations, batch_size,
+        super().__init__(weighting_method, margin, max_iterations,
                          done_threshold, verbose, random_state)
 
     def at_training_start(self) -> None:
