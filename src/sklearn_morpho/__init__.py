@@ -1,1 +1,1 @@
-from .perceptron import MaxPerceptron, MinPerceptron
+from .classifiers.ldep import LDEP

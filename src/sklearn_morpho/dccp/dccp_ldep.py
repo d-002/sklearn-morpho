@@ -3,7 +3,6 @@ import numpy as np
 import cvxpy as cp
 
 from .dccp_wrapper import DccpTrainer
-from ..perceptron import MaxPerceptron, MinPerceptron
 from ..weighting.weighting_base import SampleWeighting
 from ..stopping.stopping_base import StoppingMethod
 
@@ -21,21 +20,20 @@ class LDEPDccpTrainer(DccpTrainer):
         param [others]:    see base class
         """
 
-        self.max_perceptron = MaxPerceptron(latent_dims[0])
-        self.min_perceptron = MinPerceptron(latent_dims[1])
+        self.latent_dims = latent_dims
 
         super().__init__(margin, validation_ratio, weighting_method,
                          stopping_methods, verbose, random_state)
 
     def at_training_start(self, data_dim: int) -> None:
-        N_max, N_min = self.max_perceptron.dim, self.min_perceptron.dim
+        N_max, N_min = self.latent_dims
 
         self._objective = None
 
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
-        for perceptron in (self.max_perceptron, self.min_perceptron):
-            perceptron.weights = self.random_state.randn(perceptron.dim)
+        self.max_perceptron = self.random_state.randn(N_max)
+        self.min_perceptron = self.random_state.randn(N_min)
         self.max_matrix = self.random_state.randn(N_max, data_dim)
         self.min_matrix = self.random_state.randn(N_min, data_dim)
 
@@ -62,16 +60,15 @@ class LDEPDccpTrainer(DccpTrainer):
         # Therefore, linearize things when needed to make the problem convex,
         # sometimes using values from the previous iteration.
 
-        print(self.max_perceptron.weights.shape, X.shape, self.max_matrix.T.shape)
-        idx_max = np.argmax(self.max_perceptron.weights + X @ self.max_matrix.T,
+        idx_max = np.argmax(self.max_perceptron + X @ self.max_matrix.T,
                             axis=1)
-        idx_min = np.argmin(self.min_perceptron.weights + X @ self.min_matrix.T,
+        idx_min = np.argmin(self.min_perceptron + X @ self.min_matrix.T,
                             axis=1)
 
         # create encoding matrices for the active indices using numpy, to then
         # apply constraints all at once and use AST optimizations inside cvxpy
-        M_max = np.zeros((K, self.max_perceptron.dim))
-        M_min = np.zeros((K, self.min_perceptron.dim))
+        M_max = np.zeros((K, self.max_perceptron.size))
+        M_min = np.zeros((K, self.min_perceptron.size))
         M_max[np.arange(K), idx_max] = 1
         M_min[np.arange(K), idx_min] = 1
 
@@ -92,10 +89,10 @@ class LDEPDccpTrainer(DccpTrainer):
             # a matrix safely for cvxpy's cpp backend
             ones = np.ones((K_, 1))
             expr_max += ones @ cp.reshape(self._max_training_weights,
-                                          (1, self.max_perceptron.dim),
+                                          (1, self.max_perceptron.size),
                                           order='C')
             expr_min += ones @ cp.reshape(self._min_training_weights,
-                                          (1, self.min_perceptron.dim),
+                                          (1, self.min_perceptron.size),
                                           order='C')
 
             active_max = cp.sum(cp.multiply(M_max[mask], expr_max), axis=1)
@@ -111,12 +108,12 @@ class LDEPDccpTrainer(DccpTrainer):
 
     def after_iteration(self) -> None:
         # update the perceptrons weights from this iteration's results
-        for perceptron, w in zip((self.max_perceptron, self.min_perceptron),
-                                 (self._max_training_weights,
-                                  self._min_training_weights)):
-            if w.value is None:
-                raise ValueError('CvxPy could not optimize a perceptron')
-            perceptron.weights = w.value
+        if self._max_training_weights.value is None or \
+                self._min_training_weights.value is None:
+            raise ValueError('CvxPy could not optimize a perceptron')
+
+        self.max_perceptron = self._max_training_weights.value
+        self.min_perceptron = self._min_training_weights.value
 
         # extract the matrices
         if self._max_training_matrix.value is None \
@@ -136,5 +133,5 @@ class LDEPDccpTrainer(DccpTrainer):
         self.lambda_ = max_matrix_norm / div
         self.max_matrix /= self.lambda_
         self.min_matrix /= 1 - self.lambda_
-        self.max_perceptron.weights /= self.lambda_
-        self.min_perceptron.weights /= 1 - self.lambda_
+        self.max_perceptron /= self.lambda_
+        self.min_perceptron /= 1 - self.lambda_

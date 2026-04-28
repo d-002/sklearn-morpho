@@ -130,8 +130,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         a, b = self.lambda_, 1 - self.lambda_
         return np.array([
-            a * self.max_perceptron_.forward(self.max_matrix_ @ x) +
-            b * self.min_perceptron_.forward(self.min_matrix_ @ x)
+            a * np.max(self.max_perceptron_ + self.max_matrix_ @ x) +
+            b * np.min(self.min_perceptron_ + self.min_matrix_ @ x)
             for x in X_scaled])
 
     def predict(self, X: np.ndarray) -> np.ndarray:
