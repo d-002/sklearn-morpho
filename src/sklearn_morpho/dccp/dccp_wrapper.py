@@ -40,10 +40,13 @@ class DccpTrainer(ABC):
         """
 
         if margin < 0:
-            raise ValueError(f'invalid margin, expected >= 0 but got {margin}')
+            raise ValueError(f'Invalid margin, expected >= 0 but got {margin}')
         if not 0 < validation_ratio < 1:
-            raise ValueError('invalid validation ratio, expected > 0 and < 1 '
+            raise ValueError('Invalid validation ratio, expected > 0 and < 1 '
                              f'but got {validation_ratio}')
+        if not len(stopping_methods):
+            raise ValueError('Empty list of stopping methods, training would '
+                             'run indefinitely')
 
         self.margin = margin
         self.validation_ratio = validation_ratio

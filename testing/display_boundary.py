@@ -15,6 +15,7 @@ display the results and show the decision region if possible for each of them
 """
 
 # create sample data, assign colors
+# 1
 random_state = np.random.RandomState(11)
 
 datasets = {

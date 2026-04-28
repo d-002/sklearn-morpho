@@ -35,11 +35,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
     def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
                  validation_ratio = .3,
-                 weighting_method: SampleWeighting = NoneSampleWeighting(),
-                 stopping_methods: list[StoppingMethod] = [
-                     CostStoppingMethod(1e-6),
-                     HoldoutStoppingMethod(5),
-                     IterStoppingMethod(100)],
+                 weighting_method: SampleWeighting | None = None,
+                 stopping_methods: list[StoppingMethod] | None = None,
                  verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
@@ -55,12 +52,18 @@ class LDEP(ClassifierMixin, BaseEstimator):
         param weighting_method: The weighting method to use: apply weights to
                                 the cost contribution of each data point to help
                                 avoid outliers.
+                                If left to None, will use NoneWeightingMethod()
         param stopping_methods: A list of stopping methods, must not be empty.
                                 At each iteration, these methods will be
                                 sequentially asked whether the training should
                                 stop. In this case, training ends by rolling
                                 back to the iteration with the best validation
-                                cost.
+                                cost. If left to None, will use
+            [
+                    CostStoppingMethod(1e-6),
+                    HoldoutStoppingMethod(5),
+                    IterStoppingMethod(100),
+            ]
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
@@ -94,6 +97,20 @@ class LDEP(ClassifierMixin, BaseEstimator):
         self.scaler_ = StandardScaler()
         X_scaled = self.scaler_.fit_transform(X)
 
+        # set unset parameters to their default values
+        if self.weighting_method is None:
+            weighting_method = NoneSampleWeighting()
+        else:
+            weighting_method = self.weighting_method
+        if self.stopping_methods is None:
+            stopping_methods = [
+                    CostStoppingMethod(1e-6),
+                    HoldoutStoppingMethod(5),
+                    IterStoppingMethod(100),
+            ]
+        else:
+            stopping_methods = self.stopping_methods
+
         # create classes and convert them to distinct integers for fitting
         # the classes are persisted inside the object for use in predict
         self.classes_ = unique_labels(y)
@@ -107,8 +124,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         # create and train perceptrons
         trainer = LDEPDccpTrainer(self.latent_dims, self.margin,
-                                  self.validation_ratio, self.weighting_method,
-                                  self.stopping_methods, self.verbose,
+                                  self.validation_ratio, weighting_method,
+                                  stopping_methods, self.verbose,
                                   random_state)
 
         self.fit_cost_ = trainer.train(X_scaled, y_integers)
