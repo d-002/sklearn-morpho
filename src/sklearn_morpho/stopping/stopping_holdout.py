@@ -14,24 +14,22 @@ class HoldoutStoppingMethod(StoppingMethod):
         self.delay = delay
         self.count = 0
 
-        self.prev_train_cost: float | None = None
-        self.prev_validation_cost: float | None = None
+        self.best_validation_cost: float | None = None
 
     def requires_validation(self) -> bool:
         return True
 
     def should_stop(self, n_iterations: int, train_cost: float,
                     validation_cost: float) -> bool:
-        if self.prev_train_cost is None or self.prev_validation_cost is None:
-            self.prev_train_cost = train_cost
-            self.prev_validation_cost = validation_cost
+        if self.best_validation_cost is None:
+            self.best_validation_cost = validation_cost
         else:
-            if train_cost < self.prev_train_cost and \
-                    validation_cost > self.prev_validation_cost:
+            if validation_cost >= self.best_validation_cost:
                 self.count += 1
                 if self.count >= self.delay:
                     return True
             else:
                 self.count = 0
+                self.best_validation_cost = validation_cost
 
         return False

@@ -46,14 +46,14 @@ class LDEPDccpTrainer(DccpTrainer):
         self._min_training_matrix = cp.Variable((N_min, data_dim))
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    wdccp_weights: np.ndarray) -> cp.Problem:
+                    cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
 
         # the objective and the slack variables do not change, cache them
         if self._objective is None:
             self._slack = cp.Variable(K)
             self._objective = cp.Minimize(
-                    cp.sum(cp.multiply(cp.pos(self._slack), wdccp_weights)))
+                    cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
 
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
@@ -65,8 +65,8 @@ class LDEPDccpTrainer(DccpTrainer):
         idx_min = np.argmin(self.min_perceptron + X @ self.min_matrix.T,
                             axis=1)
 
-        # create encoding matrices for the active indices using numpy, to then
-        # apply constraints all at once and use AST optimizations inside cvxpy
+        # create arrays to regroup the active indices using numpy, to then apply
+        # constraints all at once and use AST optimizations inside cvxpy
         M_max = np.zeros((K, self.max_perceptron.size))
         M_min = np.zeros((K, self.min_perceptron.size))
         M_max[np.arange(K), idx_max] = 1
@@ -105,6 +105,15 @@ class LDEPDccpTrainer(DccpTrainer):
                 constraints.append(self._slack[mask] >= self.margin
                                    - active_max - cp.min(expr_min, axis=1))
         return cp.Problem(self._objective, constraints)
+
+    def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
+        expr_max = np.max(self.max_perceptron + X @ self.max_matrix.T, axis=1)
+        expr_min = np.min(self.min_perceptron + X @ self.min_matrix.T, axis=1)
+
+        # can use the expressions directly without needing to multiply by lambda
+        # since still in the training phase
+        cost = self.margin + (expr_max + expr_min) * (1 - 2 * y)
+        return np.maximum(0, cost).sum()
 
     def after_iteration(self) -> None:
         # update the perceptrons weights from this iteration's results

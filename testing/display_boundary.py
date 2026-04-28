@@ -59,8 +59,7 @@ for name, (X, y) in datasets.items():
         ax = disp.ax_
         ax.scatter(*X_train.T, color=y_train, alpha=.2)
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP: training cost {dep.fit_cost_:.8f}, '
-                          f'F1 score {score_test * 100:.3f}%')
+        ax.title.set_text(f'l-DEP: F1 score {score_test * 100:.3f}%')
         plt.show()
 
     print(f'F1 score on training set: {score_train * 100:.3f}%, '

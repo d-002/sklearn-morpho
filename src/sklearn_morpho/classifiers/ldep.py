@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Literal
+from typing import Literal, cast
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import StandardScaler
@@ -13,6 +13,7 @@ from ..stopping import (
         CostStoppingMethod,
         HoldoutStoppingMethod,
         IterStoppingMethod,
+        TrainStopStoppingMethod,
 )
 from ..weighting import SampleWeighting, NoneSampleWeighting
 
@@ -64,9 +65,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 back to the iteration with the best validation
                                 cost. If left to None, will use
             [
+                    TrainStopStoppingMethod(),
                     CostStoppingMethod(1e-6),
                     HoldoutStoppingMethod(5),
-                    IterStoppingMethod(100),
+                    IterStoppingMethod(20),
             ]
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
@@ -90,7 +92,6 @@ class LDEP(ClassifierMixin, BaseEstimator):
         - self.min_perceptron_
         - self.lambda
         - self.classes_:        Unique labels generated from y
-        - self.fit_cost_:       Cached cost, fore use later by the user
 
         X and y must represent binary classifiable data.
         """
@@ -108,9 +109,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
             weighting_method = self.weighting_method
         if self.stopping_methods is None:
             stopping_methods = [
+                    TrainStopStoppingMethod(),
                     CostStoppingMethod(1e-6),
                     HoldoutStoppingMethod(5),
-                    IterStoppingMethod(100),
+                    IterStoppingMethod(20),
             ]
         else:
             stopping_methods = self.stopping_methods
@@ -132,28 +134,25 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                   stopping_methods, self.verbose,
                                   random_state)
 
-        self.fit_cost_ = trainer.train(X_scaled, y_integers)
+        trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
         self.lambda_ = trainer.lambda_
         self.max_matrix_ = trainer.max_matrix
         self.min_matrix_ = trainer.min_matrix
 
-        if self.verbose:
-            print(f'Cost after fit(): {self.fit_cost_:.8f}')
-
         return self
 
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
-        X_scaled = self.scaler_.transform(X)
+        X_scaled = cast(np.ndarray, self.scaler_.transform(X))
 
-        a, b = self.lambda_, 1 - self.lambda_
-        return np.array([
-            a * np.max(self.max_perceptron_ + self.max_matrix_ @ x) +
-            b * np.min(self.min_perceptron_ + self.min_matrix_ @ x)
-            for x in X_scaled])
+        expr_max = np.max(self.max_perceptron_ + X_scaled @ self.max_matrix_.T,
+                          axis=1)
+        expr_min = np.min(self.min_perceptron_ + X_scaled @ self.min_matrix_.T,
+                          axis=1)
+        return expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)

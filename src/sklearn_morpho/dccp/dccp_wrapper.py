@@ -64,7 +64,8 @@ class DccpTrainer(ABC):
 
     def after_iteration(self) -> None:
         """
-        Optional additional actions to take after each training iteration.
+        Optional additional actions to take after each training iteration, that
+        is after cvxpy solve() and during wrapping code.
         """
 
     def at_training_end(self) -> None:
@@ -74,7 +75,7 @@ class DccpTrainer(ABC):
 
     @abstractmethod
     def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    wdccp_weights: np.ndarray) -> cp.Problem:
+                    cost_weights: np.ndarray) -> cp.Problem:
         """
         Compute a cvxpy Objective and a list of Constraints for use in DCCP.
         The prlblem must be DCP, meaning the constraints must all be convex.
@@ -83,7 +84,7 @@ class DccpTrainer(ABC):
 
         param X:             The data points
         param y:             The data points classes
-        param wdccp_weights: The wdccp weights, all 1 if not using wdccp, for
+        param cost_weights: The wdccp weights, all 1 if not using wdccp, for
                              use in computing the objective.
                              This is an array with one element corresponding to
                              an element in X.
@@ -92,7 +93,17 @@ class DccpTrainer(ABC):
                              Constraints.
         """
 
-    def train(self, X: np.ndarray, y: np.ndarray) -> float:
+    @abstractmethod
+    def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
+        """
+        Compute the cost for a set of sample points in the same way as the cost
+        defined in get_problem, used in train/validation training.
+
+        Can use the weights computed in this iteration's after_iteration call,
+        made right before this call.
+        """
+
+    def train(self, X: np.ndarray, y: np.ndarray) -> None:
         """
         Train using DCCP.
         This means this function can only solve problems where the cost function
@@ -131,33 +142,38 @@ class DccpTrainer(ABC):
                              + str(self.validation_ratio))
 
         start = time()
-        wdccp_weights, cost_normalizer = \
+        cost_weights, cost_normalizer = \
                 self.weighting_method.fit_transform(X_train, y_train)
 
         iteration = 1
-        cost: float = -1
+        validation_cost: float = -1
 
         # formulate the cvxpy problem to solve, common to all iterations
         self.at_training_start(X_train.shape[1])
 
         while True:
-            problem = self.get_problem(X_train, y_train, wdccp_weights)
+            problem = self.get_problem(X_train, y_train, cost_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            cost = cast(float, problem.solve(verbose=self.verbose == 2)) \
+            cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2)) \
                     * cost_normalizer
+
+            if self.verbose:
+                print(f'Iteration {iteration}, cost: {cvxpy_cost:.8f}')
 
             self.after_iteration()
 
-            # logging and loop logic
-            if self.verbose:
-                print(f'Iteration {iteration}, cost: {cost:.8f}')
-
+            # loop end logic
             done = False
-            validation_cost = 0 # TODO
+            if no_validation:
+                train_cost = cvxpy_cost
+                validation_cost = cvxpy_cost
+            else:
+                train_cost = self.get_cost(X_train, y_train)
+                validation_cost = self.get_cost(X_validation, y_validation)
             for stopping_method in self.stopping_methods:
                 if stopping_method.should_stop(
-                        iteration, cost, validation_cost):
+                        iteration, train_cost, validation_cost):
                     done = True
                     break
 
@@ -169,8 +185,6 @@ class DccpTrainer(ABC):
         if self.verbose:
             dt = time() - start
             print(f'DCCP done in {iteration} iterations, '
-                  f'final cost is {cost:.8f} in {dt:.2f}s')
+                  f'final cost is {validation_cost:.8f} in {dt:.2f}s')
 
         self.at_training_end()
-
-        return cost
