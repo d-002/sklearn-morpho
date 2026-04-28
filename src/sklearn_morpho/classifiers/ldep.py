@@ -65,10 +65,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 back to the iteration with the best validation
                                 cost. If left to None, will use
             [
-                    TrainStopStoppingMethod(),
                     CostStoppingMethod(1e-6),
                     HoldoutStoppingMethod(5),
                     IterStoppingMethod(20),
+                    TrainStopStoppingMethod(),
             ]
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
@@ -109,10 +109,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
             weighting_method = self.weighting_method
         if self.stopping_methods is None:
             stopping_methods = [
-                    TrainStopStoppingMethod(),
                     CostStoppingMethod(1e-6),
                     HoldoutStoppingMethod(5),
                     IterStoppingMethod(20),
+                    TrainStopStoppingMethod(),
             ]
         else:
             stopping_methods = self.stopping_methods

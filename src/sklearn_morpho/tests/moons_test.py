@@ -3,12 +3,17 @@ import numpy as np
 from sklearn_morpho.classifiers.ldep import LDEP
 from sklearn.datasets import make_moons
 
-from sklearn_morpho.stopping import CostStoppingMethod, IterStoppingMethod
+from sklearn_morpho.stopping import (
+        CostStoppingMethod,
+        IterStoppingMethod,
+        TrainStopStoppingMethod,
+)
 
 def test_moons(runs=10, n_samples=500):
     dep = LDEP(validation_ratio=0, stopping_methods=[
         CostStoppingMethod(1e-6),
-        IterStoppingMethod(100),
+        IterStoppingMethod(20),
+        TrainStopStoppingMethod(),
     ])
 
     for _ in range(runs):
