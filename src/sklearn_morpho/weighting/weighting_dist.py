@@ -1,14 +1,14 @@
 import numpy as np
 
-from .weighting_base import SampleWeighting
+from . import SampleWeighting
 
-class SampleWeightingDist(SampleWeighting):
+class DistSampleWeighting(SampleWeighting):
     """
     Weighting method that weights its inputs inversely proportionally to the
     distance to their class' centroid.
     """
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> SampleWeightingDist:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> DistSampleWeighting:
         # compute centroids, there should be no classes with no elements thanks
         # to sklearn checks if used in the intended way with a compatible
         # estimator

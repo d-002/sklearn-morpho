@@ -1,6 +1,6 @@
 import numpy as np
 
-from .weighting_base import SampleWeighting
+from . import SampleWeighting
 
 class NoneSampleWeighting(SampleWeighting):
     """

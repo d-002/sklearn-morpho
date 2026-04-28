@@ -3,8 +3,8 @@ import numpy as np
 import cvxpy as cp
 
 from .dccp_wrapper import DccpTrainer
-from ..weighting.weighting_base import SampleWeighting
-from ..stopping.stopping_base import StoppingMethod
+from ..weighting import SampleWeighting
+from ..stopping import StoppingMethod
 
 class LDEPDccpTrainer(DccpTrainer):
     def __init__(self, latent_dims: tuple[int, int],

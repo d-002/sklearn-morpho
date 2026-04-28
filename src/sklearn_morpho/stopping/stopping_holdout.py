@@ -1,4 +1,4 @@
-from .stopping_base import StoppingMethod
+from . import StoppingMethod
 
 class HoldoutStoppingMethod(StoppingMethod):
     """

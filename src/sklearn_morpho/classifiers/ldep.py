@@ -8,12 +8,13 @@ from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
 from ..dccp.dccp_ldep import LDEPDccpTrainer
-from ..stopping.stopping_base import StoppingMethod
-from ..stopping.stopping_cost import CostStoppingMethod
-from ..stopping.stopping_holdout import HoldoutStoppingMethod
-from ..stopping.stopping_iter import IterStoppingMethod
-from ..weighting.weighting_base import SampleWeighting
-from ..weighting.weighting_none import NoneSampleWeighting
+from ..stopping import (
+        StoppingMethod,
+        CostStoppingMethod,
+        HoldoutStoppingMethod,
+        IterStoppingMethod,
+)
+from ..weighting import SampleWeighting, NoneSampleWeighting
 
 class LDEP(ClassifierMixin, BaseEstimator):
     """

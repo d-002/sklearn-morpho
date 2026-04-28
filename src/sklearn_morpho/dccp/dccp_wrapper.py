@@ -5,8 +5,8 @@ import cvxpy as cp
 from time import time
 
 from sklearn.model_selection import train_test_split
-from ..weighting.weighting_base import SampleWeighting
-from ..stopping.stopping_base import StoppingMethod
+from ..weighting import SampleWeighting
+from ..stopping import StoppingMethod
 
 class DccpTrainer(ABC):
     """
