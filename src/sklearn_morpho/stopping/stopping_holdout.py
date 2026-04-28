@@ -17,6 +17,9 @@ class HoldoutStoppingMethod(StoppingMethod):
         self.prev_train_cost: float | None = None
         self.prev_validation_cost: float | None = None
 
+    def requires_validation(self) -> bool:
+        return True
+
     def should_stop(self, n_iterations: int, train_cost: float,
                     validation_cost: float) -> bool:
         if self.prev_train_cost is None or self.prev_validation_cost is None:

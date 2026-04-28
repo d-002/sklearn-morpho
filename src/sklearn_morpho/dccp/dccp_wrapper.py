@@ -41,8 +41,8 @@ class DccpTrainer(ABC):
 
         if margin < 0:
             raise ValueError(f'Invalid margin, expected >= 0 but got {margin}')
-        if not 0 < validation_ratio < 1:
-            raise ValueError('Invalid validation ratio, expected > 0 and < 1 '
+        if not 0 <= validation_ratio < 1:
+            raise ValueError('Invalid validation ratio, expected >= 0 and < 1 '
                              f'but got {validation_ratio}')
         if not len(stopping_methods):
             raise ValueError('Empty list of stopping methods, training would '
@@ -107,16 +107,27 @@ class DccpTrainer(ABC):
         if self.verbose:
             print('Starting fitting with DCCP')
 
-        X_train, X_validation, y_train, y_validation = train_test_split(
-                X, y, test_size=self.validation_ratio)
-        X_train = cast(np.ndarray, X_train)
-        X_validation = cast(np.ndarray, X_validation)
-        y_train = cast(np.ndarray, y_train)
-        y_validation = cast(np.ndarray, y_validation)
+        no_validation = self.validation_ratio == 0
+        if no_validation:
+            for stopping_method in self.stopping_methods:
+                if stopping_method.requires_validation():
+                    raise ValueError('Cannot train, at least one stopping '
+                                     'method requires validation which is '
+                                     'disabled by the user')
 
-        if not X_train.size or not X_validation.size:
-            raise ValueError('Current validation ratio makes degenerate '
-                             'train/validation split: '
+            X_train, X_validation = X, np.empty(X.shape)
+            y_train, y_validation = y, np.empty(y.shape)
+        else:
+            X_train, X_validation, y_train, y_validation = train_test_split(
+                    X, y, test_size=self.validation_ratio)
+            X_train = cast(np.ndarray, X_train)
+            X_validation = cast(np.ndarray, X_validation)
+            y_train = cast(np.ndarray, y_train)
+            y_validation = cast(np.ndarray, y_validation)
+
+        if not X_train.size or (not X_validation.size and not no_validation):
+            raise ValueError('Current validation ratio makes unwanted '
+                             'degenerate train/validation split: '
                              + str(self.validation_ratio))
 
         start = time()

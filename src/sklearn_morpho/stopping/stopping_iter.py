@@ -13,6 +13,9 @@ class IterStoppingMethod(StoppingMethod):
 
         self.max_iterations = max_iterations
 
+    def requires_validation(self) -> bool:
+        return False
+
     def should_stop(self, n_iterations: int, train_cost: float,
                     validation_cost: float) -> bool:
         return n_iterations > self.max_iterations

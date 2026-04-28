@@ -49,6 +49,9 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 datasets, but generally lower is more accurate.
         param validation_radio: How much of the training set to dedicate to use
                                 as validation during fitting.
+                                Must be between 0 and 1 (inclusive, exclusive),
+                                if set to exactly 0 then incompatible stopping
+                                methods cannot be used (e.g. holdout).
         param weighting_method: The weighting method to use: apply weights to
                                 the cost contribution of each data point to help
                                 avoid outliers.
