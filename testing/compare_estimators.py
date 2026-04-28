@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.datasets import load_breast_cancer, load_diabetes, load_wine, \
         make_classification, make_moons, fetch_openml
 
-from sklearn_morpho.classifiers.ldep import LDEP
+from sklearn_morpho import LDEP
 
 # set up estimators and datasets
 random_state = np.random.RandomState(11)
