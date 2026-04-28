@@ -2,12 +2,12 @@ import numpy as np
 
 from .weighting_base import SampleWeighting
 
-class NoSampleWeighting(SampleWeighting):
+class NoneSampleWeighting(SampleWeighting):
     """
     Weighting method that does not weight its inputs.
     """
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> NoSampleWeighting:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> NoneSampleWeighting:
         self.weights_ = np.ones(len(X))
         self.cost_normalizer_ = 1
 

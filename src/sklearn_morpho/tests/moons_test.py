@@ -6,7 +6,7 @@ from sklearn.datasets import make_moons
 def test_separable_moons(runs=10):
     random_state = None
     ok = 0
-    dep = LDEP(weighting_method=None, margin=1, random_state=random_state)
+    dep = LDEP(margin=1, random_state=random_state)
 
     for _ in range(runs):
         X, y = make_moons(n_samples=500)

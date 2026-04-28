@@ -7,9 +7,13 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from ..training.dccp_ldep import LDEPDccpTrainer
+from ..dccp.dccp_ldep import LDEPDccpTrainer
+from ..stopping.stopping_base import StoppingMethod
+from ..stopping.stopping_cost import CostStoppingMethod
+from ..stopping.stopping_holdout import HoldoutStoppingMethod
+from ..stopping.stopping_iter import IterStoppingMethod
 from ..weighting.weighting_base import SampleWeighting
-from ..weighting.not_weighted import NoSampleWeighting
+from ..weighting.weighting_none import NoneSampleWeighting
 
 class LDEP(ClassifierMixin, BaseEstimator):
     """
@@ -29,27 +33,34 @@ class LDEP(ClassifierMixin, BaseEstimator):
     times, but will allow the decision boundary to be more complex.
     """
 
-    def __init__(self, weighting_method: SampleWeighting | None = None,
-                 latent_dims: tuple[int, int] = (10, 10),
-                 margin = 0., max_iterations = 100,
-                 done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
+    def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
+                 validation_ratio = .3,
+                 weighting_method: SampleWeighting = NoneSampleWeighting(),
+                 stopping_methods: list[StoppingMethod] = [
+                     CostStoppingMethod(1e-6),
+                     HoldoutStoppingMethod(5),
+                     IterStoppingMethod(100)],
+                 verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
 
         param latent_dims:      The dimensions of the latent spaces used for the
                                 linear transformations output
-        param weighting_method: The weighting method to use: apply weights to
-                                the cost contribution of each data point to help
-                                avoid outliers.
         param margin:           Enforce a margin between the decision boundary
                                 and the data. May help with linearly separable
                                 datasets, but generally lower is more accurate.
-        param max_iterations:   Upper bound for the number of iterations to use
-                                during fitting.
-        param done_threshold:   The rate of change for the cost between
-                                consecutive iterations under which training is
-                                considered finished.
+        param validation_radio: How much of the training set to dedicate to use
+                                as validation during fitting.
+        param weighting_method: The weighting method to use: apply weights to
+                                the cost contribution of each data point to help
+                                avoid outliers.
+        param stopping_methods: A list of stopping methods, must not be empty.
+                                At each iteration, these methods will be
+                                sequentially asked whether the training should
+                                stop. In this case, training ends by rolling
+                                back to the iteration with the best validation
+                                cost.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
@@ -58,10 +69,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
         """
 
         self.latent_dims = latent_dims
-        self.weighting_method = weighting_method
         self.margin = margin
-        self.max_iterations = max_iterations
-        self.done_threshold = done_threshold
+        self.validation_ratio = validation_ratio
+        self.weighting_method = weighting_method
+        self.stopping_methods = stopping_methods
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
@@ -95,14 +106,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        if self.weighting_method is None:
-            weighting_method = NoSampleWeighting()
-        else:
-            weighting_method = self.weighting_method
-        trainer = LDEPDccpTrainer(X_scaled.shape[1], self.latent_dims,
-                                  weighting_method, self.margin,
-                                  self.max_iterations, self.done_threshold,
-                                  self.verbose, random_state)
+        trainer = LDEPDccpTrainer(self.latent_dims, self.margin,
+                                  self.validation_ratio, self.weighting_method,
+                                  self.stopping_methods, self.verbose,
+                                  random_state)
 
         self.fit_cost_ = trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

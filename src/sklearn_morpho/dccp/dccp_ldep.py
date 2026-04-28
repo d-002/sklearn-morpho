@@ -5,31 +5,30 @@ import cvxpy as cp
 from .dccp_wrapper import DccpTrainer
 from ..perceptron import MaxPerceptron, MinPerceptron
 from ..weighting.weighting_base import SampleWeighting
+from ..stopping.stopping_base import StoppingMethod
 
 class LDEPDccpTrainer(DccpTrainer):
-    def __init__(self, data_dim: int, latent_dims: tuple[int, int],
-                 weighting_method: SampleWeighting, margin: float,
-                 max_iterations: int, done_threshold: float,
+    def __init__(self, latent_dims: tuple[int, int],
+                 margin: float, validation_ratio: float,
+                 weighting_method: SampleWeighting,
+                 stopping_methods: list[StoppingMethod],
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the dilation-erosion perceptron trainer.
 
-        param data_dim:    the dimensionality of the input data
         param latent_dims: the latent dimensions for the max and min perceptrons
         param [others]:    see base class
         """
 
-        self.data_dim = data_dim
         self.max_perceptron = MaxPerceptron(latent_dims[0])
         self.min_perceptron = MinPerceptron(latent_dims[1])
 
-        super().__init__(weighting_method, margin, max_iterations,
-                         done_threshold, verbose, random_state)
+        super().__init__(margin, validation_ratio, weighting_method,
+                         stopping_methods, verbose, random_state)
 
-    def at_training_start(self) -> None:
+    def at_training_start(self, data_dim: int) -> None:
         N_max, N_min = self.max_perceptron.dim, self.min_perceptron.dim
-        N_data = self.data_dim
 
         self._objective = None
 
@@ -37,16 +36,16 @@ class LDEPDccpTrainer(DccpTrainer):
         # initial values for linearization
         for perceptron in (self.max_perceptron, self.min_perceptron):
             perceptron.weights = self.random_state.randn(perceptron.dim)
-        self.max_matrix = self.random_state.randn(N_max, N_data)
-        self.min_matrix = self.random_state.randn(N_min, N_data)
+        self.max_matrix = self.random_state.randn(N_max, data_dim)
+        self.min_matrix = self.random_state.randn(N_min, data_dim)
 
         # Create constraints for linearization derived from real parameters,
         # used to absorbe non-convex parameters that are restored at the end.
         # Method inspired by arXiv:2011.06512v1.
         self._max_training_weights = cp.Variable(N_max)
         self._min_training_weights = cp.Variable(N_min)
-        self._max_training_matrix = cp.Variable((N_max, N_data))
-        self._min_training_matrix = cp.Variable((N_min, N_data))
+        self._max_training_matrix = cp.Variable((N_max, data_dim))
+        self._min_training_matrix = cp.Variable((N_min, data_dim))
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
                     wdccp_weights: np.ndarray) -> cp.Problem:
@@ -63,6 +62,7 @@ class LDEPDccpTrainer(DccpTrainer):
         # Therefore, linearize things when needed to make the problem convex,
         # sometimes using values from the previous iteration.
 
+        print(self.max_perceptron.weights.shape, X.shape, self.max_matrix.T.shape)
         idx_max = np.argmax(self.max_perceptron.weights + X @ self.max_matrix.T,
                             axis=1)
         idx_min = np.argmin(self.min_perceptron.weights + X @ self.min_matrix.T,
