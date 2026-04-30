@@ -10,6 +10,7 @@ venv
 # hatch
 dist
 .hatch
+.venv
 
 # dccp
 dccp.log

@@ -4,8 +4,7 @@ from typing import Literal, cast
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.datasets import make_classification, make_moons, \
-        load_breast_cancer
+from sklearn.datasets import make_classification, make_moons
 
 from sklearn_morpho.classifiers.ldep import LDEP
 
@@ -22,7 +21,6 @@ datasets = {
     'normal classification': make_classification(
         n_samples=500, n_features=2, n_redundant=0, n_classes=2,
         n_clusters_per_class=1, random_state=random_state),
-    'breast cancer': load_breast_cancer(return_X_y=True),
     'non noisy moons': make_moons(n_samples=500, random_state=random_state),
     'noisy moons': make_moons(n_samples=500, noise=.2,
                               random_state=random_state),
