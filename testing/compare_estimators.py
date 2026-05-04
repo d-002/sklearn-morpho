@@ -4,16 +4,15 @@ averaged from multiple datasets.
 Estimators selection inspired by arxiv/2011.06512
 """
 
+import json
 import numpy as np
 from scipy.sparse._csr import csr_matrix
-import matplotlib.pyplot as plt
 from time import time
-from typing import cast
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -21,14 +20,17 @@ from sklearn.datasets import load_breast_cancer, fetch_openml
 
 from sklearn_morpho import LDEP
 
+FILE = 'comparison_data.json'
+n_splits = 5
+
 # set up estimators and datasets
 random_state = np.random.RandomState(11)
 estimators = {
     'l_DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    'Linear SVC': SVC(kernel='linear', random_state=random_state),
+    'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
-    'Poly SVC': SVC(kernel='poly', random_state=random_state),
     'MLP': MLPClassifier(max_iter=1000, random_state=random_state),
+    'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
 def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
@@ -77,12 +79,18 @@ datasets_options = {
 }
 
 # evaluate estimators
-scores = {estimator_name: [] for estimator_name in estimators}
-times = {estimator_name: [] for estimator_name in estimators}
+scores = {}
+times = {}
 
-skf = StratifiedKFold(n_splits=5)
+def save_data():
+    with open(FILE, 'w') as f:
+        json.dump({ 'n_splits': n_splits, 'scores': scores, 'times': times }, f)
+
+skf = StratifiedKFold(n_splits=n_splits)
 for dataset_name in datasets_names:
     print(f"Training with dataset '{dataset_name}'...")
+    scores[dataset_name] = {}
+    times[dataset_name] = {}
 
     # trying to factorize the code but some datasets must be loaded differently
     match dataset_name:
@@ -94,6 +102,8 @@ for dataset_name in datasets_names:
 
     for estimator_name, estimator in estimators.items():
         print(f'  - Estimator {estimator_name}...')
+        scores[dataset_name][estimator_name] = []
+        times[dataset_name][estimator_name] = []
 
         estimator = make_pipeline(
             SimpleImputer(strategy='mean'), # remove NaNs
@@ -110,21 +120,9 @@ for dataset_name in datasets_names:
 
             score = f1_score(y_train, estimator.predict(X_train),
                              average='micro')
-            scores[estimator_name].append(score)
-            times[estimator_name].append(t1 - t0)
+            scores[dataset_name][estimator_name].append(score)
+            times[dataset_name][estimator_name].append(t1 - t0)
+
+    save_data()
+
 print('Done.')
-
-# display results
-scores = {name: np.array(score) for name, score in scores.items()}
-times = {name: np.array(time) for name, time in times.items()}
-
-fig, axs = plt.subplots(ncols=2, nrows=1)
-# log scale for times
-axs[1].set_yscale('log')
-
-for data, name, ax in zip((scores, times),
-                          ('average F1 score', 'Training time (s)'), axs):
-    ax.set_title(name)
-    ax.boxplot(data.values(), patch_artist=True, tick_labels=data.keys())
-
-plt.show()
