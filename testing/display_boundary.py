@@ -4,8 +4,7 @@ from typing import Literal, cast
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.datasets import make_classification, make_moons, \
-        load_breast_cancer
+from sklearn.datasets import make_classification, make_moons
 
 from sklearn_morpho.classifiers.ldep import LDEP
 
@@ -15,28 +14,21 @@ display the results and show the decision region if possible for each of them
 """
 
 # create sample data, assign colors
+# 1
 random_state = np.random.RandomState(11)
 
 datasets = {
     'normal classification': make_classification(
         n_samples=500, n_features=2, n_redundant=0, n_classes=2,
         n_clusters_per_class=1, random_state=random_state),
-    'breast cancer': load_breast_cancer(return_X_y=True),
     'non noisy moons': make_moons(n_samples=500, random_state=random_state),
     'noisy moons': make_moons(n_samples=500, noise=.2,
                               random_state=random_state),
-}
-methods: dict[str, Literal['dccp', 'wdccp']] = {
-    'normal classification': 'wdccp',
-    'breast cancer': 'wdccp',
-    'non noisy moons': 'dccp',
-    'noisy moons': 'dccp',
 }
 
 total_test_score = 0
 for name, (X, y) in datasets.items():
     print(f'Training with "{name}" dataset...')
-    method = methods[name]
 
     y = np.array(['red', 'blue'])[y]
     pos_label = np.unique(y)[1]
@@ -47,7 +39,7 @@ for name, (X, y) in datasets.items():
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = LDEP(method=method, margin=1, verbose=1, random_state=random_state)
+    dep = LDEP(margin=1, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     score_train = f1_score(y_train, dep.predict(X_train),
                            pos_label=pos_label)
@@ -65,9 +57,7 @@ for name, (X, y) in datasets.items():
         ax = disp.ax_
         ax.scatter(*X_train.T, color=y_train, alpha=.2)
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP with {method}: '
-                          f'training cost {dep.fit_cost_:.8f}, '
-                          f'F1 score {score_test * 100:.3f}%')
+        ax.title.set_text(f'l-DEP: F1 score {score_test * 100:.3f}%')
         plt.show()
 
     print(f'F1 score on training set: {score_train * 100:.3f}%, '

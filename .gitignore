@@ -10,9 +10,13 @@ venv
 # hatch
 dist
 .hatch
+.venv
 
 # dccp
 dccp.log
 
 # datasets
 WDBC.dat.txt
+
+# comparison
+comparison_data.json

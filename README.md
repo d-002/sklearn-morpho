@@ -15,6 +15,13 @@ File tree:
 
 ## Running the project
 
-- Install Python 3 and hatch
+Install Python 3 and hatch.
+Then run one of these commands:
+
 - `hatch run pytest` for tests
-- `hatch run main` to run the display_boundary showcase file
+- `hatch run boundary` to run the display_boundary showcase file
+- `hatch run compare` to launch a comparison between different perceptrons
+- `hatch run compare-show` to display this comparison's results and not have to
+  build it every time.
+  The comparison is saved to a file readable by this command every time a
+  dataset is fully processed by all estimators.

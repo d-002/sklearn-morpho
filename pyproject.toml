@@ -23,7 +23,10 @@ dependencies = [
     "pytest-cov",
     "scikit-learn",
 ]
+# for LSPs
+path = ".venv"
 
 [tool.hatch.envs.default.scripts]
-main = "python testing/display_boundary.py"
+boundary = "python testing/display_boundary.py"
 compare = "python testing/compare_estimators.py"
+compare-show = "python testing/compare_estimators_show.py"

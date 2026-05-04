@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Literal
+from typing import Literal, cast
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import StandardScaler
@@ -7,7 +7,15 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from ..training.dccp_ldep import LDEPDccpTrainer
+from ..dccp.dccp_ldep import LDEPDccpTrainer
+from ..stopping import (
+        StoppingMethod,
+        CostStoppingMethod,
+        HoldoutStoppingMethod,
+        IterStoppingMethod,
+        TrainStopStoppingMethod,
+)
+from ..weighting import SampleWeighting, NoneSampleWeighting
 
 class LDEP(ClassifierMixin, BaseEstimator):
     """
@@ -25,50 +33,55 @@ class LDEP(ClassifierMixin, BaseEstimator):
     also allowing classification of arbitrarily distributed data.
     A higher dimension for the latent space will result in slower training
     times, but will allow the decision boundary to be more complex.
-
-    Fitting can be done by setting the constructor parameter 'method' to either:
-    - dccp:  Use Disciplined Programming and the Convex-Concave Procedure.
-             Compared to gradient descent, DCCP seems to converge faster.
-    - wdccp: Use the same method, except apply weights to the cost
-             contribution of each sample point, to lessen the impact of
-             outliers in the training data.
-             This is the default method, which seems to be more accurate in
-             non-degenerate datasets.
     """
 
-    def __init__(self, method: Literal['dccp', 'wdccp'] = 'dccp',
-                 latent_dims: tuple[int, int] = (10, 10),
-                 margin = 0., max_iterations = 100, batch_size = 32,
-                 done_threshold = 1e-9, verbose: Literal[0, 1, 2] = 0,
+    def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
+                 validation_ratio = .3,
+                 weighting_method: SampleWeighting | None = None,
+                 stopping_methods: list[StoppingMethod] | None = None,
+                 verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
 
-        param latent_dims:    The dimensions of the latent spaces used for the
-                              linear transformations output
-        param method:         Either 'dccp' or 'wcddp'
-        param margin:         Enforce a margin between the decision boundary and
-                              the data. May help with linearly separable
-                              datasets, but generally lower is more accurate.
-        param max_iterations: Upper bound for the number of iterations to use
-                              during fitting.
-        param batch_size:     For mini batch fitting, define the batch size.
-                              If zero, don't use batching.
-        param done_threshold: The rate of change for the cost between
-                              consecutive iterations under which training is
-                              considered finished.
-        param verbose:        Whether to log extra information. 0: no logging,
-                              1: basic logging / timing, 2: cvxpy solve verbose
-        param random_state:   A RandomState object for predictable randomness,
-                              or None
+        param latent_dims:      The dimensions of the latent spaces used for the
+                                linear transformations output
+        param margin:           Enforce a margin between the decision boundary
+                                and the data. May help with linearly separable
+                                datasets, but generally lower is more accurate.
+        param validation_radio: How much of the training set to dedicate to use
+                                as validation during fitting.
+                                Must be between 0 and 1 (inclusive, exclusive),
+                                if set to exactly 0 then incompatible stopping
+                                methods cannot be used (e.g. holdout).
+        param weighting_method: The weighting method to use: apply weights to
+                                the cost contribution of each data point to help
+                                avoid outliers.
+                                If left to None, will use NoneWeightingMethod()
+        param stopping_methods: A list of stopping methods, must not be empty.
+                                At each iteration, these methods will be
+                                sequentially asked whether the training should
+                                stop. In this case, training ends by rolling
+                                back to the iteration with the best validation
+                                cost. If left to None, will use
+            [
+                    CostStoppingMethod(1e-6),
+                    HoldoutStoppingMethod(5),
+                    IterStoppingMethod(20),
+                    TrainStopStoppingMethod(),
+            ]
+        param verbose:          Whether to log extra information. 0: no logging,
+                                1: basic logging / timing, 2: cvxpy solve() set
+                                to verbose mode.
+        param random_state:     A RandomState object or None to allow for seeded
+                                randomness.
         """
 
         self.latent_dims = latent_dims
-        self.method = method
         self.margin = margin
-        self.max_iterations = max_iterations
-        self.batch_size = batch_size
-        self.done_threshold = done_threshold
+        self.validation_ratio = validation_ratio
+        self.weighting_method = weighting_method
+        self.stopping_methods = stopping_methods
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
@@ -79,7 +92,6 @@ class LDEP(ClassifierMixin, BaseEstimator):
         - self.min_perceptron_
         - self.lambda
         - self.classes_:        Unique labels generated from y
-        - self.fit_cost_:       Cached cost, fore use later by the user
 
         X and y must represent binary classifiable data.
         """
@@ -89,6 +101,21 @@ class LDEP(ClassifierMixin, BaseEstimator):
         X, y = validate_data(self, X, y)
         self.scaler_ = StandardScaler()
         X_scaled = self.scaler_.fit_transform(X)
+
+        # set unset parameters to their default values
+        if self.weighting_method is None:
+            weighting_method = NoneSampleWeighting()
+        else:
+            weighting_method = self.weighting_method
+        if self.stopping_methods is None:
+            stopping_methods = [
+                    CostStoppingMethod(1e-6),
+                    HoldoutStoppingMethod(5),
+                    IterStoppingMethod(20),
+                    TrainStopStoppingMethod(),
+            ]
+        else:
+            stopping_methods = self.stopping_methods
 
         # create classes and convert them to distinct integers for fitting
         # the classes are persisted inside the object for use in predict
@@ -102,34 +129,30 @@ class LDEP(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        weighted = self.method == 'wdccp'
-        trainer = LDEPDccpTrainer(X_scaled.shape[1], self.latent_dims, weighted,
-                                  self.margin, self.max_iterations,
-                                  self.batch_size, self.done_threshold,
-                                  self.verbose, random_state)
+        trainer = LDEPDccpTrainer(self.latent_dims, self.margin,
+                                  self.validation_ratio, weighting_method,
+                                  stopping_methods, self.verbose,
+                                  random_state)
 
-        self.fit_cost_ = trainer.train(X_scaled, y_integers)
+        trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
         self.lambda_ = trainer.lambda_
         self.max_matrix_ = trainer.max_matrix
         self.min_matrix_ = trainer.min_matrix
 
-        if self.verbose:
-            print(f'Cost after fit(): {self.fit_cost_:.8f}')
-
         return self
 
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
         X = validate_data(self, X, reset=False)
-        X_scaled = self.scaler_.transform(X)
+        X_scaled = cast(np.ndarray, self.scaler_.transform(X))
 
-        a, b = self.lambda_, 1 - self.lambda_
-        return np.array([
-            a * self.max_perceptron_.forward(self.max_matrix_ @ x) +
-            b * self.min_perceptron_.forward(self.min_matrix_ @ x)
-            for x in X_scaled])
+        expr_max = np.max(self.max_perceptron_ + X_scaled @ self.max_matrix_.T,
+                          axis=1)
+        expr_min = np.min(self.min_perceptron_ + X_scaled @ self.min_matrix_.T,
+                          axis=1)
+        return expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
