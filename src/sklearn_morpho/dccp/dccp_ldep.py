@@ -154,7 +154,6 @@ class LDEPDccpTrainer(DccpTrainer):
         }
 
     def rollback_to_best(self) -> None:
-        print(self.max_perceptron, self.saved['max_w'])
         self.max_perceptron = self.saved['max_w']
         self.min_perceptron = self.saved['min_w']
         self.max_matrix = self.saved['max_m']
