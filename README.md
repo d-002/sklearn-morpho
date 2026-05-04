@@ -18,3 +18,4 @@ File tree:
 - Install Python 3 and hatch
 - `hatch run pytest` for tests
 - `hatch run main` to run the display_boundary showcase file
+- `hatch run compare` to launch a comparison between different perceptrons

@@ -144,3 +144,18 @@ class LDEPDccpTrainer(DccpTrainer):
         self.min_matrix /= 1 - self.lambda_
         self.max_perceptron /= self.lambda_
         self.min_perceptron /= 1 - self.lambda_
+
+    def save_best(self) -> None:
+        self.saved = {
+            'max_w': np.copy(self.max_perceptron),
+            'min_w': np.copy(self.min_perceptron),
+            'max_m': np.copy(self.max_matrix),
+            'min_m': np.copy(self.min_matrix),
+        }
+
+    def rollback_to_best(self) -> None:
+        print(self.max_perceptron, self.saved['max_w'])
+        self.max_perceptron = self.saved['max_w']
+        self.min_perceptron = self.saved['min_w']
+        self.max_matrix = self.saved['max_m']
+        self.min_matrix = self.saved['min_m']
