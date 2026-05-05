@@ -20,8 +20,9 @@ datasets_names = list(scores.keys())
 estimators_names = list(scores[datasets_names[0]].keys())
 
 print()
-for name, data_source, choice_func in (('F1 score', scores, np.argmax),
-                                       ('Time (s)', times, np.argmin)):
+params = (('F1 score', scores, np.argmax, np.argmin),
+          ('Time (s)', times, np.argmin, np.argmax))
+for name, data_source, best_func, worst_func in params:
     headers = ''
     for estimator_name in estimators_names:
         headers += f' | {estimator_name:<12}'
@@ -39,12 +40,15 @@ for name, data_source, choice_func in (('F1 score', scores, np.argmax),
             std = res.std()
             dataset_res.append((avg, std))
 
-        best = choice_func([avg for avg, std in dataset_res])
+        best = best_func([avg for avg, std in dataset_res])
+        worst = worst_func([avg for avg, std in dataset_res])
         for i, (avg, std) in enumerate(dataset_res):
             chunk = f'{avg:.2f}±{std:.2f}'
             chunk = f'{chunk:<12}'
             if i == best:
                 chunk = f'\033[32m{chunk}\033[m'
+            if i == worst:
+                chunk = f'\033[31m{chunk}\033[m'
             line += f' | {chunk}'
 
         print(f'{dataset_name:>35}' + line)

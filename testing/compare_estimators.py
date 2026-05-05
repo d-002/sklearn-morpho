@@ -58,21 +58,16 @@ datasets_names = [
     'sick', 'sonar', 'spambase', 'steel-plates-fault', 'thoracic-surgery',
     'tic-tac-toe', 'titanic',
 ]
-temp_blacklist = ['banana', 'chess', 'eeg-eye-state', 'phoneme',
-                  'PhishingWebsites', 'sick', 'spambase', 'steel-plates-fault']
+temp_blacklist = ['chess', 'PhishingWebsites', 'sick', 'spambase']
 for name in temp_blacklist:
     datasets_names.remove(name)
 
 # datasets not included:
-# - banana (slow for linear SVC)
 # - chess (slow for LDEP)
-# - eeg-eye-state (slow for linear SVC)
 # - internet-advertisements (internally referring to a nonexistent dataset)
-# - phoneme (slow for linear SVC)
 # - PhishingWebsites (slow for LDEP)
 # - sick (slow for LDEP)
 # - spambase (slow for LDEP)
-# - steel-plates-fault (slow for linear SVC)
 datasets_options = {
     'Breast_Cancer_Wisconsin': { 'as_frame': True },
     'titanic': { 'as_frame': True },
