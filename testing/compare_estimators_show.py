@@ -33,10 +33,10 @@ for name, data_source, choice_func in (('F1 score', scores, np.argmax),
 
         dataset_res = [] # list of (avg, std)
         for estimator_name in estimators_names:
-            res = data_source[dataset_name][estimator_name]
+            res = np.array(data_source[dataset_name][estimator_name])
 
-            avg = sum(res) / n_splits
-            std = 0
+            avg = np.average(res)
+            std = res.std()
             dataset_res.append((avg, std))
 
         best = choice_func([avg for avg, std in dataset_res])
@@ -58,11 +58,11 @@ for estimator_name in estimators_names:
     estimators_times[estimator_name] = np.empty(len(datasets_names))
 
     for i, dataset_name in enumerate(datasets_names):
-        score = scores[dataset_name][estimator_name]
-        time = times[dataset_name][estimator_name]
+        score = np.array(scores[dataset_name][estimator_name])
+        time = np.array(times[dataset_name][estimator_name])
 
-        estimators_scores[estimator_name][i] = sum(score) / n_splits
-        estimators_times[estimator_name][i] = sum(time) / n_splits
+        estimators_scores[estimator_name][i] = np.average(score)
+        estimators_times[estimator_name][i] = np.average(time)
 
 fig, axs = plt.subplots(ncols=2, nrows=1)
 # log scale for times
