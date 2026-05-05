@@ -5,23 +5,27 @@ Estimators selection inspired by arxiv/2011.06512
 """
 
 import json
+import signal
 import numpy as np
-from scipy.sparse._csr import csr_matrix
 from time import time
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import f1_score
-from sklearn.pipeline import make_pipeline
-from sklearn.svm import LinearSVC, SVC
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.neural_network import MLPClassifier
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.datasets import load_breast_cancer, fetch_openml
+from scipy.sparse._csr import csr_matrix
 
+from sklearn.metrics import f1_score
+from sklearn.datasets import load_breast_cancer, fetch_openml
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.model_selection import train_test_split, StratifiedKFold
+
+# perceptrons
+from sklearn.svm import LinearSVC, SVC
+from sklearn.impute import SimpleImputer
 from sklearn_morpho import LDEP
+from sklearn.pipeline import make_pipeline
+from sklearn.neural_network import MLPClassifier
+from sklearn.multiclass import OneVsRestClassifier
 
 FILE = 'comparison_data.json'
 n_splits = 5
+timeout = 60
 
 # set up estimators and datasets
 random_state = np.random.RandomState(11)
@@ -35,7 +39,8 @@ estimators = {
 
 def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
-    X, y = fetch_openml(name, version=1, return_X_y=True, **kwargs)
+    kwargs.setdefault('version', 1)
+    X, y = fetch_openml(name, return_X_y=True, **kwargs)
 
     # make sure X and y are not sparse
     if type(X) == csr_matrix:
@@ -58,12 +63,14 @@ datasets_names = [
     'sick', 'sonar', 'spambase', 'steel-plates-fault', 'thoracic-surgery',
     'tic-tac-toe', 'titanic',
 ]
-temp_blacklist = ['chess', 'PhishingWebsites', 'sick', 'spambase']
+temp_blacklist = ['chess', 'eeg-eye-state', 'PhishingWebsites', 'sick',
+                  'spambase']
 for name in temp_blacklist:
     datasets_names.remove(name)
 
 # datasets not included:
 # - chess (slow for LDEP)
+# - eeg-eye-state (slow for LDEP)
 # - internet-advertisements (internally referring to a nonexistent dataset)
 # - PhishingWebsites (slow for LDEP)
 # - sick (slow for LDEP)
@@ -76,6 +83,11 @@ datasets_options = {
 # evaluate estimators
 scores = {}
 times = {}
+
+class TimeoutException(Exception):pass
+def timeout_handler(signum, frame):
+    raise TimeoutException('Timed out')
+signal.signal(signal.SIGALRM, timeout_handler)
 
 def save_data():
     with open(FILE, 'w') as f:
@@ -109,9 +121,19 @@ for dataset_name in datasets_names:
             X_train, X_test, y_train, y_test = train_test_split(
                     X, y, test_size=.5)
 
+            signal.alarm(timeout)
             t0 = time()
-            estimator.fit(X_train, y_train)
+            try:
+                estimator.fit(X_train, y_train)
+            except TimeoutException:
+                print(f'    Warning: {estimator_name} timed out after '
+                      f'{timeout}s.')
+                scores[dataset_name][estimator_name].append(0)
+                times[dataset_name][estimator_name].append(timeout)
+                continue
+
             t1 = time()
+            signal.alarm(0)
 
             score = f1_score(y_train, estimator.predict(X_train),
                              average='micro')
