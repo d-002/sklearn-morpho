@@ -5,14 +5,14 @@ from sklearn.datasets import make_moons
 
 from sklearn_morpho.stopping import (
         CostStoppingMethod,
-        IterStoppingMethod,
+        EpochStoppingMethod,
         TrainStopStoppingMethod,
 )
 
 def test_moons(runs=10, n_samples=500):
     dep = LDEP(validation_ratio=0, stopping_methods=[
         CostStoppingMethod(1e-6),
-        IterStoppingMethod(20),
+        EpochStoppingMethod(20),
         TrainStopStoppingMethod(),
     ])
 
@@ -25,4 +25,4 @@ def test_moons(runs=10, n_samples=500):
 
     # TODO will most likely fail the test, will get back to this
     # basically sometimes the matrices get really big, but adding their norm to
-    # the cost makes things converge slower and iterations very expensive
+    # the cost makes things converge slower and epochs very expensive

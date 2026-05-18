@@ -1,10 +1,10 @@
 from . import StoppingMethod
 
-class HoldoutStoppingMethod(StoppingMethod):
+class EarlyStoppingMethod(StoppingMethod):
     """
     Stopping method that triggers whenever the validation cost starts increasing
     while the training cost keeps decreasing, this for a set number of
-    consecutive iterations.
+    consecutive epochs.
     """
 
     def __init__(self, delay: int):
@@ -19,7 +19,7 @@ class HoldoutStoppingMethod(StoppingMethod):
     def requires_validation(self) -> bool:
         return True
 
-    def should_stop(self, n_iterations: int, train_cost: float,
+    def should_stop(self, n_epochs: int, train_cost: float,
                     validation_cost: float) -> bool:
         if self.best_validation_cost is None:
             self.best_validation_cost = validation_cost

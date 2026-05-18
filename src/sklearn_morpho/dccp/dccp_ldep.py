@@ -58,7 +58,7 @@ class LDEPDccpTrainer(DccpTrainer):
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
         # Therefore, linearize things when needed to make the problem convex,
-        # sometimes using values from the previous iteration.
+        # sometimes using values from the previous epoch.
 
         idx_max = np.argmax(self.max_perceptron + X @ self.max_matrix.T,
                             axis=1)
@@ -115,8 +115,8 @@ class LDEPDccpTrainer(DccpTrainer):
         cost = self.margin + (expr_max + expr_min) * (1 - 2 * y)
         return np.maximum(0, cost).sum()
 
-    def after_iteration(self) -> None:
-        # update the perceptrons weights from this iteration's results
+    def after_epoch(self) -> None:
+        # update the perceptrons weights from this epoch's results
         if self._max_training_weights.value is None or \
                 self._min_training_weights.value is None:
             raise ValueError('CvxPy could not optimize a perceptron')

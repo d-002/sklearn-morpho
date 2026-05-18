@@ -11,8 +11,8 @@ from ..dccp.dccp_ldep import LDEPDccpTrainer
 from ..stopping import (
         StoppingMethod,
         CostStoppingMethod,
-        HoldoutStoppingMethod,
-        IterStoppingMethod,
+        EarlyStoppingMethod,
+        EpochStoppingMethod,
         TrainStopStoppingMethod,
 )
 from ..weighting import SampleWeighting, NoneSampleWeighting
@@ -53,23 +53,23 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 as validation during fitting.
                                 Must be between 0 and 1 (inclusive, exclusive),
                                 if set to exactly 0 then incompatible stopping
-                                methods cannot be used (e.g. holdout).
+                                methods cannot be used (e.g. early stopping).
         param weighting_method: The weighting method to use: apply weights to
                                 the cost contribution of each data point to help
                                 avoid outliers.
                                 If left to None, will use NoneWeightingMethod()
         param stopping_methods: A list of stopping methods, must not be empty.
-                                At each iteration, these methods will be
+                                At each epoch, these methods will be
                                 sequentially asked whether the training should
-                                stop. In this case, training ends by rolling
-                                back to the iteration with the best validation
-                                cost. If left to None, will use
-            [
-                    CostStoppingMethod(1e-6),
-                    HoldoutStoppingMethod(5),
-                    IterStoppingMethod(20),
-                    TrainStopStoppingMethod(),
-            ]
+                                stop. In this case, epoch ends by rolling back
+                                to the epoch with the best validation cost.
+                                If left to None, will use:
+                                [
+                                    CostStoppingMethod(1e-6),
+                                    EarlyStoppingMethod(5),
+                                    EpochStoppingMethod(20),
+                                    TrainStopStoppingMethod(),
+                                ]
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
@@ -110,8 +110,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
         if self.stopping_methods is None:
             stopping_methods = [
                 CostStoppingMethod(1e-6),
-                HoldoutStoppingMethod(5),
-                IterStoppingMethod(20),
+                EarlyStoppingMethod(5),
+                EpochStoppingMethod(20),
                 TrainStopStoppingMethod(),
             ]
         else:

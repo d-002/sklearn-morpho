@@ -16,6 +16,6 @@ class CostStoppingMethod(StoppingMethod):
     def requires_validation(self) -> bool:
         return False
 
-    def should_stop(self, n_iterations: int, train_cost: float,
+    def should_stop(self, n_epochs: int, train_cost: float,
                     validation_cost: float) -> bool:
         return validation_cost <= self.cost_threshold
