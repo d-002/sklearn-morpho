@@ -20,3 +20,6 @@ WDBC.dat.txt
 
 # comparison
 comparison_data.json
+
+# jupyter
+.ipynb_checkpoints

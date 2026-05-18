@@ -27,6 +27,7 @@ Take a look at the Jupyter code examples in the `MREs` directory.
 Install Python 3 and hatch.
 Then run one of these commands:
 
+- `hatch run jupyter lab` to run the Jupyter notebooks
 - `hatch run pytest` for tests
 - `hatch run boundary` to run the display_boundary showcase file
 - `hatch run compare` to launch a comparison between different perceptrons
