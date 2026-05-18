@@ -1,12 +1,15 @@
 # sklearn-morpho
 
-Scikit-learn estimator using morphological perceptrons.
+> [!WARNING]  
+> This repo is still a work in progress.
+> More features, improved documentation and examples are still to come.
 
-Work in progress, meaning no complete documentation is currently available.
-Currently supported:
+Scikit-learn estimators using morphological perceptrons.
 
-- DCCP, Weighted DCCP with cvxpy
-- Linear Dilation-Erosion Perceptron
+Current features:
+
+- Linear Dilation-Erosion Perceptron as a scikit-learn estimator
+- Modular wrapper for DCCP optimization tasks with `cvxpy`
 
 File tree:
 - `src/sklearn_morpho`: contains the source code and a testsuite in `.../tests`
