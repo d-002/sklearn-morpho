@@ -28,7 +28,9 @@ n_splits = 5
 timeout = 60
 
 # set up estimators and datasets
-random_state = np.random.RandomState(11)
+random_state = np.random.RandomState()
+print(f'Random state: {random_state}')
+
 estimators = {
     'l_DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'Linear SVC': LinearSVC(random_state=random_state),
@@ -76,7 +78,9 @@ for name in temp_blacklist:
 # - sick (slow for LDEP)
 # - spambase (slow for LDEP)
 datasets_options = {
+    'australian': { 'version': 4 },
     'Breast_Cancer_Wisconsin': { 'as_frame': True },
+    'cylinder-bands': { 'version': 6 },
     'titanic': { 'as_frame': True },
 }
 
@@ -91,7 +95,8 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 def save_data():
     with open(FILE, 'w') as f:
-        json.dump({ 'n_splits': n_splits, 'scores': scores, 'times': times }, f)
+        json.dump({ 'n_splits': n_splits, 'scores': scores, 'times': times }, f,
+                  indent=2)
 
 skf = StratifiedKFold(n_splits=n_splits)
 for dataset_name in datasets_names:
@@ -119,7 +124,7 @@ for dataset_name in datasets_names:
 
         for X_fold, y_fold in skf.split(X, y):
             X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=.5)
+                    X, y, test_size=.3)
 
             signal.alarm(timeout)
             t0 = time()

@@ -109,10 +109,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
             weighting_method = self.weighting_method
         if self.stopping_methods is None:
             stopping_methods = [
-                    CostStoppingMethod(1e-6),
-                    HoldoutStoppingMethod(5),
-                    IterStoppingMethod(20),
-                    TrainStopStoppingMethod(),
+                CostStoppingMethod(1e-6),
+                HoldoutStoppingMethod(5),
+                IterStoppingMethod(20),
+                TrainStopStoppingMethod(),
             ]
         else:
             stopping_methods = self.stopping_methods
