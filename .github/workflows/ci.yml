@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ "**" ]
 
-env:
-  PIP_CACHE_DIR: "$/root/.cache/pip"
-  HATCH_DATA_DIR: "${{ github.workspace }}/.hatch-data"
-  PIP_ROOT_USER_ACTION: "ignore"
-  HATCH_ENV_TYPE_VIRTUAL_PATH: ".venv"
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,18 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Cache dependencies and Hatch envs
-        uses: actions/cache@v4
-        with:
-          path: |
-            .cache/pip
-            .hatch-data
-            .venv
-
-          key: ${{ github.ref_name }}-hatch-${{ hashFiles('pyproject.toml') }}
-          restore-keys: |
-            ${{ github.ref_name }}-hatch-
 
       - name: Install Hatch
         run: pip install hatch
