@@ -22,6 +22,7 @@ dependencies = [
     "pytest",
     "pytest-cov",
     "scikit-learn",
+    "jupyterlab", # for coding the MREs
 ]
 # for LSPs
 path = ".venv"
