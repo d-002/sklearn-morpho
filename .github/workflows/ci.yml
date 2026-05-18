@@ -7,7 +7,7 @@ on:
     branches: [ "**" ]
 
 env:
-  PIP_CACHE_DIR: "${{ github.workspace }}/.cache/pip"
+  PIP_CACHE_DIR: "$/root/.cache/pip"
   HATCH_DATA_DIR: "${{ github.workspace }}/.hatch-data"
   PIP_ROOT_USER_ACTION: "ignore"
   HATCH_ENV_TYPE_VIRTUAL_PATH: ".venv"
@@ -36,7 +36,7 @@ jobs:
             ${{ github.ref_name }}-hatch-
 
       - name: Install Hatch
-        run: pip install --cache-dir .cache/pip hatch
+        run: pip install hatch
 
       - name: Run tests
         run: hatch run pytest
