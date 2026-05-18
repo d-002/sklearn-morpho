@@ -152,7 +152,8 @@ class DccpTrainer(ABC):
             y_train, y_validation = y, np.empty(y.shape)
         else:
             X_train, X_validation, y_train, y_validation = train_test_split(
-                    X, y, test_size=self.validation_ratio)
+                    X, y, test_size=self.validation_ratio,
+                    random_state=self.random_state)
             X_train = cast(np.ndarray, X_train)
             X_validation = cast(np.ndarray, X_validation)
             y_train = cast(np.ndarray, y_train)

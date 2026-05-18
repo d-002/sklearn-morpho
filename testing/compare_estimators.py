@@ -124,7 +124,7 @@ for dataset_name in datasets_names:
 
         for X_fold, y_fold in skf.split(X, y):
             X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=.3)
+                    X, y, test_size=.3, random_state=random_state)
 
             signal.alarm(timeout)
             t0 = time()
