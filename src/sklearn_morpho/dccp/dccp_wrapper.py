@@ -121,8 +121,8 @@ class DccpTrainer(ABC):
         Compute the cost for a set of sample points in the same way as the cost
         defined in get_problem, used in train/validation training.
 
-        Can use the weights computed in this epoch's after_epoch call,
-        made right before this call.
+        If applicable, should use the weights computed in this epoch's
+        after_epoch call, as it will have been made before this method's call.
         """
 
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
@@ -182,9 +182,6 @@ class DccpTrainer(ABC):
             cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2)) \
                     * cost_normalizer
 
-            if self.verbose:
-                print(f'Epoch {epoch}, cost: {cvxpy_cost:.8f}')
-
             self.after_epoch()
 
             # best score and loop logic
@@ -198,6 +195,15 @@ class DccpTrainer(ABC):
             if validation_cost < best_validation_cost:
                 best_validation_cost = validation_cost
                 self.save_best()
+
+            if self.verbose:
+                if no_validation:
+                    validation_comment = ' [no validation]'
+                else:
+                    validation_comment = f', validation: {validation_cost:.8f}'
+
+                print(f'Epoch {epoch}, training cost: {cvxpy_cost:.8f}' +
+                      validation_comment)
 
             for stopping_method in self.stopping_methods:
                 if stopping_method.should_stop(

@@ -22,7 +22,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
     Scikit-learn estimator wrapper around a l-DEP (linear Dilation-Erosion
     morphological Perceptron) for binary data classification.
 
-    DEP forward pass equation:
+    l-DEP forward pass equation:
 
     \\[ y = f(\\lambda \\tau_(R_1(x)) + (1 - \\lambda) \\tau'_(R_2(x))) \\]
 
@@ -90,7 +90,9 @@ class LDEP(ClassifierMixin, BaseEstimator):
         Fit the classifier, create attributes:
         - self.max_perceptron_
         - self.min_perceptron_
-        - self.lambda
+        - self.lambda_
+        - self.max_matrix_
+        - self.min_matrix_
         - self.classes_:        Unique labels generated from y
 
         X and y must represent binary classifiable data.
