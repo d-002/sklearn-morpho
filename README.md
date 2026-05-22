@@ -4,7 +4,7 @@
 > This repo is still a work in progress.
 > More features, improved documentation and examples are still to come.
 
-Scikit-learn estimators using morphological perceptrons.
+Scikit-learn estimator toolbox for morphological perceptrons.
 
 Current features:
 
