@@ -13,15 +13,17 @@ jobs:
       id-token: write
       contents: read
 
-    container:
-      image: python:3.14-slim
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
       - name: Install Hatch
-        run: pip install hatch
+        run: pip install -U pip hatch
 
       - name: Build package
         run: hatch build

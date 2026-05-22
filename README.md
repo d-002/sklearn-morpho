@@ -9,7 +9,7 @@ Scikit-learn estimators using morphological perceptrons.
 Current features:
 
 - Linear Dilation-Erosion Perceptron as a scikit-learn estimator
-- Modular wrapper for DCCP optimization tasks with `cvxpy`
+- Modular wrapper for DCP optimization tasks with `cvxpy`
 
 File tree:
 - `src/sklearn_morpho`: contains the source code and a testsuite in `.../tests`
