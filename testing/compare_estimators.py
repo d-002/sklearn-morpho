@@ -65,18 +65,10 @@ datasets_names = [
     'sick', 'sonar', 'spambase', 'steel-plates-fault', 'thoracic-surgery',
     'tic-tac-toe', 'titanic',
 ]
-temp_blacklist = ['chess', 'eeg-eye-state', 'PhishingWebsites', 'sick',
-                  'spambase']
-for name in temp_blacklist:
-    datasets_names.remove(name)
 
-# datasets not included:
-# - chess (slow for LDEP)
-# - eeg-eye-state (slow for LDEP)
+# datasets not included compared to arxiv/2011.06512:
 # - internet-advertisements (internally referring to a nonexistent dataset)
-# - PhishingWebsites (slow for LDEP)
-# - sick (slow for LDEP)
-# - spambase (slow for LDEP)
+
 datasets_options = {
     'australian': { 'version': 4 },
     'Breast_Cancer_Wisconsin': { 'as_frame': True },
