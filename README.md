@@ -29,9 +29,8 @@ Then run one of these commands:
 
 - `hatch run jupyter lab` to run the Jupyter notebooks
 - `hatch run pytest` for tests
-- `hatch run boundary` to run the display_boundary showcase file
-- `hatch run compare` to launch a comparison between different perceptrons
-- `hatch run compare-show` to display this comparison's results.
-  The split into two commands is to avoid training the estimators every time.
-  The comparison is saved to a file readable by this command every time a
-  dataset is fully processed by all estimators.
+- `hatch shell` to run testing files like `testing/display_boundary.py` in the
+  right environment.
+
+Special note for the estimators comparison testing files: they are split in two
+files to avoid training the estimators every time one wants to view the results.
