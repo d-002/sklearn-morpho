@@ -12,17 +12,15 @@ dependencies = [
     "scikit-learn",
 ]
 
-[project.optional-dependencies]
-dependencies = [
-    "matplotlib", # for testing files
-    "pandas", # for scikit-learn's check_estimator
-    "pyqt6", # for matplotlib display
-    "jupyterlab", # for coding the MREs
-]
-
 [tool.pytest.ini_options]
 testpaths = ["src/sklearn_morpho/tests"]
 
 [tool.hatch.envs.default]
 python = "3.14"
 path = ".venv" # for LSPs
+dependencies = [
+    "matplotlib", # for testing files
+    "pandas", # for scikit-learn's check_estimator
+    "pyqt6", # for matplotlib display
+    "jupyterlab", # for coding the MREs
+]
