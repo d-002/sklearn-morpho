@@ -23,7 +23,7 @@ class LDEPDccpTrainer(DccpTrainer):
         self.latent_dims = latent_dims
 
         super().__init__(margin, validation_ratio, weighting_method,
-                         stopping_methods, verbose, random_state)
+                         stopping_methods, verbose, {}, random_state)
 
     def at_training_start(self, data_dim: int) -> None:
         N_max, N_min = self.latent_dims

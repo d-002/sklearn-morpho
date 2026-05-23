@@ -16,7 +16,7 @@ class DccpTrainer(ABC):
     def __init__(self, margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
-                 verbose: Literal[0, 1, 2],
+                 verbose: Literal[0, 1, 2], solve_kwargs: dict,
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the trainer.
@@ -32,8 +32,9 @@ class DccpTrainer(ABC):
                                 stop. In this case, training ends by rolling
                                 back to the epoch with the best validation cost.
         param verbose:          Whether to log extra information. 0: no logging,
-                                1: basic logging / timing, 2: cvxpy solve() set
+                                1: basic logging / timing, 2: cvxpy.solve() set
                                 to verbose mode.
+        param solve_kwargs:     The keyword arguments to pass to cvxpy.solve()
         param random_state:     A RandomState object or None to allow for seeded
                                 randomness.
         """
@@ -52,6 +53,7 @@ class DccpTrainer(ABC):
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
         self.verbose = verbose
+        self.solve_kwargs = solve_kwargs
         self.random_state = random_state
 
     def at_training_start(self, data_dim: int) -> None:
@@ -179,8 +181,8 @@ class DccpTrainer(ABC):
             problem = self.get_problem(X_train, y_train, cost_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2)) \
-                    * cost_normalizer
+            cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2),
+                              **self.solve_kwargs) * cost_normalizer
 
             self.after_epoch()
 
