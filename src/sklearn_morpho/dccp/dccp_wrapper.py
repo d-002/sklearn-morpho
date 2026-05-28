@@ -60,7 +60,7 @@ class DccpTrainer(ABC):
         self.random_state = random_state
 
         self.solver_kwargs = {} if self.solver is None else \
-                { "solver": self.solver }
+                { "method": self.solver }
 
     def at_training_start(self, data_dim: int) -> None:
         """
@@ -187,10 +187,14 @@ class DccpTrainer(ABC):
             problem = self.get_problem(X_train, y_train, cost_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            cvxpy_cost = cast(float, problem.solve(
-                verbose=self.verbose == 2,
-                **self.solver_kwargs
-            )) * cost_normalizer
+            solve_result = problem.solve(
+                    verbose=self.verbose == 2, **self.solver_kwargs)
+            print(problem.status)
+            if self.solver == 'dccp':
+                solve_result = cast(float, solve_result[0]) # type: ignore
+            else:
+                solve_result = cast(float, solve_result)
+            cvxpy_cost = solve_result * cost_normalizer
 
             self.after_epoch()
 

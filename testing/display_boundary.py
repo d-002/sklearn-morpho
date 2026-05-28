@@ -27,7 +27,7 @@ datasets = {
                               random_state=random_state),
 }
 
-estimator = RDEP
+Estimator = LDEP
 
 total_test_score = 0
 for name, (X, y) in datasets.items():
@@ -43,7 +43,7 @@ for name, (X, y) in datasets.items():
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = estimator(margin=1, verbose=1, random_state=random_state)
+    dep = Estimator(margin=1, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     score_train = f1_score(y_train, dep.predict(X_train),
                            pos_label=pos_label)
@@ -61,7 +61,7 @@ for name, (X, y) in datasets.items():
         ax = disp.ax_
         ax.scatter(*X_train.T, color=y_train, alpha=.2)
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'{estimator.__name__}: '
+        ax.title.set_text(f'{Estimator.__name__}: '
                           f'F1 score {score_test * 100:.3f}%')
         plt.show()
 

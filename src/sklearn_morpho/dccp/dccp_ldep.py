@@ -134,12 +134,22 @@ class LDEPDccpTrainer(DccpTrainer):
             expr_max = X_ @ self._max_training_matrix.T
             expr_min = X_ @ self._min_training_matrix.T
 
+            # add weights to every row of (X @ matrix.T) using np.ones to create
+            # a matrix safely for cvxpy's cpp backend
+            ones = np.ones((K_, 1))
+            expr_max += ones @ cp.reshape(self._max_training_weights,
+                                          (1, self.max_perceptron.size),
+                                          order='C')
+            expr_min += ones @ cp.reshape(self._min_training_weights,
+                                          (1, self.min_perceptron.size),
+                                          order='C')
+
             if label == 0:
-                constraints.append(self._slack[mask] >= self.margin
-                                   + cp.max(expr_max, axis=1) + active_min)
+                constraints.append(self.margin + cp.max(expr_max, axis=1) <=
+                                   self._slack[mask] - cp.min(expr_min, axis=1))
             else:
-                constraints.append(self._slack[mask] >= self.margin
-                                   - active_max - cp.min(expr_min, axis=1))
+                constraints.append(self.margin - cp.min(expr_min, axis=1) <=
+                                   self._slack[mask] + cp.max(expr_max, axis=1))
         return cp.Problem(self._objective, constraints)
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
