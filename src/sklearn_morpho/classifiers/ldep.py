@@ -40,6 +40,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
                  verbose: Literal[0, 1, 2] = 0,
+                 solver: Literal['dccp'] | None = None,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
@@ -73,6 +74,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
+        param solver:           The solver to use in cvxpy optimizations, or
+                                None for default.
         param random_state:     A RandomState object or None to allow for seeded
                                 randomness.
         """
@@ -83,6 +86,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
         self.verbose: Literal[0, 1, 2] = verbose
+        self.solver: Literal['dccp'] | None = solver
         self.random_state = random_state
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> LDEP:
@@ -133,7 +137,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         # create and train perceptrons
         trainer = LDEPDccpTrainer(self.latent_dims, self.margin,
                                   self.validation_ratio, weighting_method,
-                                  stopping_methods, self.verbose,
+                                  stopping_methods, self.solver, self.verbose,
                                   random_state)
 
         trainer.train(X_scaled, y_integers)

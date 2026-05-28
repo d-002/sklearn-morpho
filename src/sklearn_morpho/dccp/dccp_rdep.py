@@ -10,6 +10,7 @@ class RDEPDccpTrainer(DccpTrainer):
     def __init__(self, margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
+                 solver: Literal['dccp'] | None,
                  verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
@@ -19,23 +20,24 @@ class RDEPDccpTrainer(DccpTrainer):
         """
 
         super().__init__(margin, validation_ratio, weighting_method,
-                         stopping_methods, verbose, {}, random_state)
+                         stopping_methods, solver, verbose, random_state)
+
+        if self.solver != 'dccp':
+            raise ValueError(f'Incompatibler solver for RDEP: {self.solver}')
 
     def at_training_start(self, data_dim: int) -> None:
+        # similar to l-DEP, see corresponding files for implementation comments
         self._objective = None
 
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
         self.max_perceptron = self.random_state.randn(data_dim)
         self.min_perceptron = self.random_state.randn(data_dim)
+        self.lambda_ = self.random_state.randn()
 
-        # Create constraints for linearization derived from real parameters,
-        # used to absorbe non-convex parameters that are restored at the end.
-        # Method inspired by arXiv:2011.06512v1.
-        # TODO: is this representation an issue since the final lambda parameter
-        # is not necessarily in [0, 1]?
         self._max_training_weights = cp.Variable(data_dim)
         self._min_training_weights = cp.Variable(data_dim)
+        self._training_lambda = cp.Variable()
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
                     cost_weights: np.ndarray) -> cp.Problem:
@@ -47,18 +49,11 @@ class RDEPDccpTrainer(DccpTrainer):
             self._objective = cp.Minimize(
                     cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
 
-        # Constraints: convex constraints are for data points in the first
-        # class, while concave ones are for points in the second class.
-        # Therefore, linearize things when needed to make the problem convex,
-        # sometimes using values from the previous epoch.
-
         idx_max = np.argmax(self.max_perceptron + X @ self.max_matrix.T,
                             axis=1)
         idx_min = np.argmin(self.min_perceptron + X @ self.min_matrix.T,
                             axis=1)
 
-        # create arrays to regroup the active indices using numpy, to then apply
-        # constraints all at once and use AST optimizations inside cvxpy
         M_max = np.zeros((K, self.max_perceptron.size))
         M_min = np.zeros((K, self.min_perceptron.size))
         M_max[np.arange(K), idx_max] = 1
@@ -73,12 +68,9 @@ class RDEPDccpTrainer(DccpTrainer):
             X_ = X[mask]
             K_ = X_.shape[0]
 
-            # start building the perceptron's outputs before the min/max
             expr_max = X_ @ self._max_training_matrix.T
             expr_min = X_ @ self._min_training_matrix.T
 
-            # add weights to every row of (X @ matrix.T) using np.ones to create
-            # a matrix safely for cvxpy's cpp backend
             ones = np.ones((K_, 1))
             expr_max += ones @ cp.reshape(self._max_training_weights,
                                           (1, self.max_perceptron.size),
@@ -112,16 +104,21 @@ class RDEPDccpTrainer(DccpTrainer):
         if self._max_training_weights.value is None or \
                 self._min_training_weights.value is None:
             raise ValueError('CvxPy could not optimize a perceptron')
+        if self._training_lambda.value is None:
+            raise ValueError('CvxPy could not optimize lambda')
 
         self.max_perceptron = self._max_training_weights.value
         self.min_perceptron = self._min_training_weights.value
+        self.lambda_ = self._training_lambda.value
 
     def save_best(self) -> None:
         self.saved = {
             'max_w': np.copy(self.max_perceptron),
             'min_w': np.copy(self.min_perceptron),
+            'lambda': self.lambda_,
         }
 
     def rollback_to_best(self) -> None:
         self.max_perceptron = self.saved['max_w']
         self.min_perceptron = self.saved['min_w']
+        self.lambda_ = self.saved['lambda']

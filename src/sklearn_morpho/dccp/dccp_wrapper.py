@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Literal, cast
 import numpy as np
 import cvxpy as cp
+import dccp
 from time import time
 
 from sklearn.model_selection import train_test_split
@@ -16,7 +17,8 @@ class DccpTrainer(ABC):
     def __init__(self, margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
-                 verbose: Literal[0, 1, 2], solve_kwargs: dict,
+                 solver: Literal['dccp'] | None,
+                 verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the trainer.
@@ -31,10 +33,11 @@ class DccpTrainer(ABC):
                                 sequentially asked whether the training should
                                 stop. In this case, training ends by rolling
                                 back to the epoch with the best validation cost.
+        param solver:           The solver to use in cvxpy optimizations, or
+                                None for default.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy.solve() set
                                 to verbose mode.
-        param solve_kwargs:     The keyword arguments to pass to cvxpy.solve()
         param random_state:     A RandomState object or None to allow for seeded
                                 randomness.
         """
@@ -52,9 +55,12 @@ class DccpTrainer(ABC):
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
+        self.solver = solver
         self.verbose = verbose
-        self.solve_kwargs = solve_kwargs
         self.random_state = random_state
+
+        self.solver_kwargs = {} if self.solver is None else \
+                { "solver": self.solver }
 
     def at_training_start(self, data_dim: int) -> None:
         """
@@ -181,8 +187,10 @@ class DccpTrainer(ABC):
             problem = self.get_problem(X_train, y_train, cost_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2),
-                              **self.solve_kwargs) * cost_normalizer
+            cvxpy_cost = cast(float, problem.solve(
+                verbose=self.verbose == 2,
+                **self.solver_kwargs
+            )) * cost_normalizer
 
             self.after_epoch()
 
