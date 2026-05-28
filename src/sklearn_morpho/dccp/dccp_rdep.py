@@ -6,7 +6,7 @@ from .dccp_wrapper import DccpTrainer
 from ..weighting import SampleWeighting
 from ..stopping import StoppingMethod
 
-class LDEPDccpTrainer(DccpTrainer):
+class RDEPDccpTrainer(DccpTrainer):
     def __init__(self, margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],

@@ -7,6 +7,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.datasets import make_classification, make_moons
 
 from sklearn_morpho.classifiers.ldep import LDEP
+from sklearn_morpho.classifiers.rdep import RDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,
@@ -26,6 +27,8 @@ datasets = {
                               random_state=random_state),
 }
 
+estimator = RDEP
+
 total_test_score = 0
 for name, (X, y) in datasets.items():
     print(f'Training with "{name}" dataset...')
@@ -40,7 +43,7 @@ for name, (X, y) in datasets.items():
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = LDEP(margin=1, verbose=1, random_state=random_state)
+    dep = estimator(margin=1, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     score_train = f1_score(y_train, dep.predict(X_train),
                            pos_label=pos_label)
@@ -58,7 +61,8 @@ for name, (X, y) in datasets.items():
         ax = disp.ax_
         ax.scatter(*X_train.T, color=y_train, alpha=.2)
         ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP: F1 score {score_test * 100:.3f}%')
+        ax.title.set_text(f'{estimator.__name__}: '
+                          f'F1 score {score_test * 100:.3f}%')
         plt.show()
 
     print(f'F1 score on training set: {score_train * 100:.3f}%, '
