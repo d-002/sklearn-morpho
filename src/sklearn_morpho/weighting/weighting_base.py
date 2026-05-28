@@ -40,6 +40,7 @@ class SampleWeighting(ABC, OneToOneFeatureMixin, TransformerMixin,
         return self.weights_, self.cost_normalizer_
 
     # override this to make fit_transform usable but still prevent wrong usage
-    def fit_transform(self, X: np.ndarray, y: np.ndarray) -> WeightingResult:
-        self.fit(X, y)
+    def fit_transform(self, X: np.ndarray, y: np.ndarray # pyright: ignore
+                      ) -> WeightingResult:
+        self.fit(X, y) # pyright: ignore
         return self.transform(None)

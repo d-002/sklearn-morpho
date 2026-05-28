@@ -93,7 +93,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
         # input data validation
         random_state = check_random_state(self.random_state)
-        X, y = validate_data(self, X, y)
+        X, y = validate_data(self, X, y) # type: ignore
         self.scaler_ = StandardScaler()
         X_scaled = self.scaler_.fit_transform(X)
 
@@ -137,7 +137,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False)
+        X = validate_data(self, X, reset=False) # type: ignore
         X_scaled = cast(np.ndarray, self.scaler_.transform(X))
 
         expr_max = np.max(self.max_perceptron_ + X_scaled, axis=1)

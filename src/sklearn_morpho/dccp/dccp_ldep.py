@@ -121,9 +121,6 @@ class LDEPDccpTrainer(DccpTrainer):
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
 
-        idx_max = np.argmax(self.max_perceptron + X @ self.max_matrix.T, axis=1)
-        idx_min = np.argmin(self.min_perceptron + X @ self.min_matrix.T, axis=1)
-
         constraints = []
         for label in [0, 1]:
             mask = y == label
@@ -136,19 +133,6 @@ class LDEPDccpTrainer(DccpTrainer):
             # start building the perceptron's outputs before the min/max
             expr_max = X_ @ self._max_training_matrix.T
             expr_min = X_ @ self._min_training_matrix.T
-
-            # add weights to every row of (X @ matrix.T) using np.ones to create
-            # a matrix safely for cvxpy's cpp backend
-            ones = np.ones((K_, 1))
-            expr_max += ones @ cp.reshape(self._max_training_weights,
-                                          (1, self.max_perceptron.size),
-                                          order='C')
-            expr_min += ones @ cp.reshape(self._min_training_weights,
-                                          (1, self.min_perceptron.size),
-                                          order='C')
-
-            active_max = cp.sum(cp.multiply(M_max[mask], expr_max), axis=1)
-            active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
 
             if label == 0:
                 constraints.append(self._slack[mask] >= self.margin

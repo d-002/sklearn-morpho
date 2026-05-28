@@ -1,4 +1,5 @@
 import numpy as np
+from typing import cast
 
 from sklearn_morpho.classifiers.ldep import LDEP
 from sklearn.datasets import make_classification
@@ -9,6 +10,7 @@ def test_train_separable_dataset(n_samples=500):
     X, y = make_classification(n_samples=n_samples, n_features=2, n_redundant=0,
                                n_classes=2, n_clusters_per_class=1,
                                random_state=random_state)
+    X, y = cast(np.ndarray, X), cast(np.ndarray, y) # for pyright
 
     classifier = LDEP(random_state=random_state)
     classifier.fit(X, y)
