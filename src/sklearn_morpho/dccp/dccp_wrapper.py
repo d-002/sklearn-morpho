@@ -189,7 +189,6 @@ class DccpTrainer(ABC):
             # solve the problem, normalize the cost when using wdccp
             solve_result = problem.solve(
                     verbose=self.verbose == 2, **self.solver_kwargs)
-            print(problem.status)
             if self.solver == 'dccp':
                 solve_result = cast(float, solve_result[0]) # type: ignore
             else:

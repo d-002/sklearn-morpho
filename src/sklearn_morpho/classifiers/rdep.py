@@ -30,7 +30,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
     perceptron and $\\tau'$ to a (min, +) one.
     """
 
-    def __init__(self, margin = 1., validation_ratio = .3,
+    def __init__(self, _lambda: float, margin = 1., validation_ratio = .3,
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
                  verbose: Literal[0, 1, 2] = 0,
@@ -39,6 +39,9 @@ class RDEP(ClassifierMixin, BaseEstimator):
         """
         Initialize the classifier, see class help for more.
 
+        param _lambda:          Fixed lambda parameter.
+                                Not learnable at this point, must use techniques
+                                like cross-validation to tune.
         param margin:           Enforce a margin between the decision boundary
                                 and the data. May help with linearly separable
                                 datasets, but generally lower is more accurate.
@@ -73,6 +76,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
         """
 
         self.margin = margin
+        self._lambda = _lambda
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
@@ -85,7 +89,6 @@ class RDEP(ClassifierMixin, BaseEstimator):
         Fit the classifier, create attributes:
         - self.max_perceptron_
         - self.min_perceptron_
-        - self.lambda_
         - self.classes_:        Unique labels generated from y
 
         X and y must represent binary classifiable data.
@@ -124,14 +127,14 @@ class RDEP(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        trainer = RDEPDccpTrainer(self.margin, self.validation_ratio,
-                                  weighting_method, stopping_methods,
-                                  self.solver, self.verbose, random_state)
+        trainer = RDEPDccpTrainer(self._lambda, self.margin,
+                                  self.validation_ratio, weighting_method,
+                                  stopping_methods, self.solver, self.verbose,
+                                  random_state)
 
         trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
-        self.lambda_ = trainer.lambda_
 
         return self
 
@@ -142,7 +145,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
         expr_max = np.max(self.max_perceptron_ + X_scaled, axis=1)
         expr_min = np.min(self.min_perceptron_ + X_scaled, axis=1)
-        return expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
+        return expr_max * self._lambda + expr_min * (1 - self._lambda)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)

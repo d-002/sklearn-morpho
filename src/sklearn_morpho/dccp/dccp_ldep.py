@@ -7,6 +7,16 @@ from ..weighting import SampleWeighting
 from ..stopping import StoppingMethod
 
 class LDEPDccpTrainer(DccpTrainer):
+    """
+    l-DEP trainer.
+
+    During training, the final parameters are implicitly embedded into one
+    another.
+    Some of them (like lambda) are only extracted once the training ends.
+    This is not necessary for performance, but is there for readability and
+    interpretability reasons once the estimator is trained.
+    """
+
     def __init__(self, latent_dims: tuple[int, int],
                  margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,

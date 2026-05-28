@@ -27,7 +27,7 @@ datasets = {
                               random_state=random_state),
 }
 
-Estimator = LDEP
+Estimator = RDEP
 
 total_test_score = 0
 for name, (X, y) in datasets.items():
@@ -43,7 +43,7 @@ for name, (X, y) in datasets.items():
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = Estimator(margin=1, verbose=1, random_state=random_state)
+    dep = Estimator(_lambda=.5, margin=1, verbose=1, solver='dccp', random_state=random_state)
     dep.fit(X_train, y_train)
     score_train = f1_score(y_train, dep.predict(X_train),
                            pos_label=pos_label)
