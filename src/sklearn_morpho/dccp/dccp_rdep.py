@@ -58,7 +58,7 @@ class RDEPDccpTrainer(DccpTrainer):
 
             self._objective = cp.Minimize(
                 cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)) +
-                0#penalty
+                penalty
             )
 
         # Constraints: convex constraints are for data points in the first
@@ -179,7 +179,7 @@ class RDEPDccpTrainer(DccpTrainer):
         expr_max = self._lambda * np.max(self.max_perceptron + X, axis=1)
         expr_min = (1 - self._lambda) * np.min(self.min_perceptron + X, axis=1)
         res = expr_max + expr_min > 0
-        print(f'Training accuracy: {np.count_nonzero(res ^ y)/len(y)*100.2}%')
+        print(f'Training accuracy: {np.count_nonzero(~res ^ y)/len(y)*100.2}%')
 
     def save_best(self) -> None:
         self.saved = {
