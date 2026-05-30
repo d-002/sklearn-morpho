@@ -195,7 +195,7 @@ class DccpTrainer(ABC):
                 solve_result = cast(float, solve_result)
             cvxpy_cost = solve_result * cost_normalizer
 
-            self.after_epoch(X_train, y_train) # TODO remove arguments
+            self.after_epoch()
 
             # best score and loop logic
             done = False

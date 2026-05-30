@@ -27,11 +27,6 @@ datasets = {
                               random_state=random_state),
 }
 
-# TODO remove
-random_state = np.random.RandomState()
-key = next(iter(datasets))
-datasets = {key: datasets[key]}
-
 Estimator = RDEP
 
 colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
@@ -39,21 +34,19 @@ colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
 
 total_test_score = 0
 for name, (X, y) in datasets.items():
-  print(f'Training with "{name}" dataset...')
+    print(f'Training with "{name}" dataset...')
 
-  y = np.array(['red', 'blue'])[y]
-  pos_label = np.unique(y)[1]
-  X_train, X_test, y_train, y_test = train_test_split(
+    y = np.array(['red', 'blue'])[y]
+    pos_label = np.unique(y)[1]
+    X_train, X_test, y_train, y_test = train_test_split(
           X, y, test_size=.33, random_state=random_state)
 
-  # for LSPs
-  X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
-  y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
+# for LSPs
+    X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
+    y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
-  for temp_lambda in np.linspace(.5, .5, 1): # TODO remove
     # create and train estimator
-    # TODO test with margin 1
-    dep = Estimator(_lambda=temp_lambda, margin=0, verbose=1, random_state=random_state)
+    dep = Estimator(verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
     y_train_pred = dep.predict(X_train)
     y_test_pred = dep.predict(X_test)

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 import numpy as np
 import cvxpy as cp
 
@@ -121,7 +121,7 @@ class LDEPDccpTrainer(DccpTrainer):
             else:
                 constraints.append(self._slack[mask] >= self.margin
                                    - active_max - cp.min(expr_min, axis=1))
-        return cp.Problem(self._objective, constraints)
+        return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
                          cost_weights: np.ndarray) -> cp.Problem:
@@ -160,7 +160,7 @@ class LDEPDccpTrainer(DccpTrainer):
             else:
                 constraints.append(self.margin - cp.min(expr_min, axis=1) <=
                                    self._slack[mask] + cp.max(expr_max, axis=1))
-        return cp.Problem(self._objective, constraints)
+        return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_problem(self, X: np.ndarray, y: np.ndarray,
                     cost_weights: np.ndarray) -> cp.Problem:
