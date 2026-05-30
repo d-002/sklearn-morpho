@@ -34,6 +34,9 @@ datasets = {key: datasets[key]}
 
 Estimator = RDEP
 
+colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
+                                           np.repeat(['#aaa'], y_real.shape))
+
 total_test_score = 0
 for name, (X, y) in datasets.items():
   print(f'Training with "{name}" dataset...')
@@ -49,11 +52,13 @@ for name, (X, y) in datasets.items():
 
   for temp_lambda in np.linspace(.5, .5, 1): # TODO remove
     # create and train estimator
-    dep = Estimator(_lambda=temp_lambda, margin=1, verbose=1, random_state=random_state)
+    # TODO test with margin 1
+    dep = Estimator(_lambda=temp_lambda, margin=0, verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
-    score_train = f1_score(y_train, dep.predict(X_train),
-                           pos_label=pos_label)
-    score_test = f1_score(y_test, dep.predict(X_test), pos_label=pos_label)
+    y_train_pred = dep.predict(X_train)
+    y_test_pred = dep.predict(X_test)
+    score_train = f1_score(y_train, y_train_pred, pos_label=pos_label)
+    score_test = f1_score(y_test, y_test_pred, pos_label=pos_label)
 
     # compute and display perceptron decision region
     if X.shape[1] == 2:
@@ -65,8 +70,8 @@ for name, (X, y) in datasets.items():
             colors='black'
         )
         ax = disp.ax_
-        ax.scatter(*X_train.T, color=y_train, alpha=.2)
-        ax.scatter(*X_test.T, color=y_test)
+        ax.scatter(*X_train.T, color=colorize(y_train, y_train_pred), alpha=.2)
+        ax.scatter(*X_test.T, color=colorize(y_test, y_test_pred))
         ax.title.set_text(f'{Estimator.__name__}: '
                           f'F1 score {score_test * 100:.3f}%')
         plt.show()
