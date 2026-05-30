@@ -174,7 +174,7 @@ class LDEPDccpTrainer(DccpTrainer):
 
         # can use the expressions directly without needing to multiply by lambda
         # since still in the training phase
-        cost = self.margin + (expr_max + expr_min) * (1 - 2 * y)
+        cost = (expr_max + expr_min) * (1 - 2 * y)
         return np.maximum(0, cost).sum()
 
     def after_epoch(self) -> None:

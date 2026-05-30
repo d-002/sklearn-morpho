@@ -34,7 +34,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
                  verbose: Literal[0, 1, 2] = 0,
-                 solver: Literal['dccp'] | None = None,
+                 solver: Literal['dccp'] | None = 'dccp', # TODO remove this comment or change solver default to dccp
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
