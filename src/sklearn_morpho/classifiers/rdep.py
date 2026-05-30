@@ -135,6 +135,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
         trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
+        self.invert_res_ = trainer.invert_res
 
         return self
 
@@ -145,7 +146,9 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
         expr_max = np.max(self.max_perceptron_ + X_scaled, axis=1)
         expr_min = np.min(self.min_perceptron_ + X_scaled, axis=1)
-        return expr_max * self._lambda + expr_min * (1 - self._lambda)
+        activation = expr_max * self._lambda + expr_min * (1 - self._lambda)
+
+        return activation * (1 - 2 * self.invert_res_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)

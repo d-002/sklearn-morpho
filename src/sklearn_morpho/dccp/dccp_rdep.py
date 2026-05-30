@@ -46,20 +46,36 @@ class RDEPDccpTrainer(DccpTrainer):
         self._max_training_weights = cp.Variable(data_dim)
         self._min_training_weights = cp.Variable(data_dim)
 
+    def set_objective(self, X: np.ndarray, y: np.ndarray,
+                      cost_weights: np.ndarray) -> None:
+        # the objective and the slack variables do not change, cache them
+        if self._objective is not None:
+            return
+
+        # figure out whether we should invert the perceptron's output, since
+        # the lower class should be lower in coordinates
+        labels, inv, counts = np.unique(y, return_inverse=True,
+                                        return_counts=True)
+        sums = np.zeros((len(labels), X.shape[1]))
+        np.add.at(sums, inv, X)
+        centroids = sums / counts[:, np.newaxis]
+
+        # set the objective
+        self.invert_res = centroids[0].sum() > centroids[1].sum()
+
+        self._slack = cp.Variable(len(X))
+        penalty = 1e-6 * (cp.sum_squares(self._max_training_weights) +
+                          cp.sum_squares(self._min_training_weights))
+
+        self._objective = cp.Minimize(
+            cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)) +
+            penalty
+        )
+
     def get_problem_unproven(self, X: np.ndarray, y: np.ndarray,
                              cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
-
-        # the objective and the slack variables do not change, cache them
-        if self._objective is None:
-            self._slack = cp.Variable(K)
-            penalty = 1e-6 * (cp.sum_squares(self._max_training_weights) +
-                              cp.sum_squares(self._min_training_weights))
-
-            self._objective = cp.Minimize(
-                cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)) +
-                penalty
-            )
+        self.set_objective(X, y, cost_weights)
 
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
@@ -100,28 +116,17 @@ class RDEPDccpTrainer(DccpTrainer):
             active_max = cp.sum(cp.multiply(M_max[mask], expr_max), axis=1)
             active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
 
-            if label == 0:
-                constraints.append(self.margin + cp.max(expr_max, axis=1)
-                                   <= self._slack[mask] - active_min)
+            if (label == 0) ^ self.invert_res:
+                constraints.append(self.margin + self._lambda * cp.max(expr_max, axis=1)
+                                   <= self._slack[mask] - (1 - self._lambda) * active_min)
             else:
-                constraints.append(self.margin - cp.min(expr_min, axis=1)
-                                   <= self._slack[mask] + active_max)
+                constraints.append(self.margin - (1 - self._lambda) * cp.min(expr_min, axis=1)
+                                   <= self._slack[mask] + self._lambda * active_max)
         return cp.Problem(self._objective, constraints)
 
     def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
                          cost_weights: np.ndarray) -> cp.Problem:
-        K = X.shape[0]
-
-        # the objective and the slack variables do not change, cache them
-        if self._objective is None:
-            self._slack = cp.Variable(K)
-            penalty = 1e-6 * (cp.sum_squares(self._max_training_weights) +
-                              cp.sum_squares(self._min_training_weights))
-
-            self._objective = cp.Minimize(
-                cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)) +
-                penalty
-            )
+        self.set_objective(X, y, cost_weights)
 
         constraints = []
         for label in [0, 1]:
@@ -142,7 +147,7 @@ class RDEPDccpTrainer(DccpTrainer):
             expr_max = self._lambda * cp.max(expr_max, axis=1)
             expr_min = (1 - self._lambda) * cp.min(expr_min, axis=1)
 
-            if label == 0:
+            if (label == 1) ^ self.invert_res:
                 constraints.append(self.margin + expr_max <=
                                    self._slack[mask] - expr_min)
             else:
@@ -160,7 +165,7 @@ class RDEPDccpTrainer(DccpTrainer):
         expr_max = self._lambda * np.max(self.max_perceptron + X, axis=1)
         expr_min = (1 - self._lambda) * np.min(self.min_perceptron + X, axis=1)
 
-        cost = (expr_max + expr_min) * (1 - 2 * y)
+        cost = (expr_max + expr_min) * (1 - 2 * y) * (1 - 2 * self.invert_res)
 
         return np.maximum(0, cost).sum()
 
@@ -178,8 +183,8 @@ class RDEPDccpTrainer(DccpTrainer):
         print(self.min_perceptron)
         expr_max = self._lambda * np.max(self.max_perceptron + X, axis=1)
         expr_min = (1 - self._lambda) * np.min(self.min_perceptron + X, axis=1)
-        res = expr_max + expr_min > 0
-        print(f'Training accuracy: {np.count_nonzero(~res ^ y)/len(y)*100.2}%')
+        res = (expr_max + expr_min > 0) * (1 - 2 * self.invert_res)
+        print(f'Training accuracy: {np.count_nonzero(~res ^ (y == y[1]))/len(y)*100:2}%')
 
     def save_best(self) -> None:
         self.saved = {

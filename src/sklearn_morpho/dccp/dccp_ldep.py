@@ -58,15 +58,19 @@ class LDEPDccpTrainer(DccpTrainer):
         self._max_training_matrix = cp.Variable((N_max, data_dim))
         self._min_training_matrix = cp.Variable((N_min, data_dim))
 
+    def set_objective(self, K: int, cost_weights: np.ndarray) -> None:
+        # the objective and the slack variables do not change, cache them
+        if self._objective is not None:
+            return
+
+        self._slack = cp.Variable(K)
+        self._objective = cp.Minimize(
+                cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
+
     def get_problem_unproven(self, X: np.ndarray, y: np.ndarray,
                              cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
-
-        # the objective and the slack variables do not change, cache them
-        if self._objective is None:
-            self._slack = cp.Variable(K)
-            self._objective = cp.Minimize(
-                    cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
+        self.set_objective(K, cost_weights)
 
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
@@ -122,11 +126,7 @@ class LDEPDccpTrainer(DccpTrainer):
     def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
                          cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
-
-        if self._objective is None:
-            self._slack = cp.Variable(K)
-            self._objective = cp.Minimize(
-                    cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
+        self.set_objective(K, cost_weights)
 
         # Constraints: convex constraints are for data points in the first
         # class, while concave ones are for points in the second class.
