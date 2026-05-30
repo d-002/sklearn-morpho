@@ -27,7 +27,7 @@ datasets = {
                               random_state=random_state),
 }
 
-Estimator = RDEP
+Estimator = LDEP
 
 colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
                                            np.repeat(['#aaa'], y_real.shape))
@@ -41,7 +41,7 @@ for name, (X, y) in datasets.items():
     X_train, X_test, y_train, y_test = train_test_split(
           X, y, test_size=.33, random_state=random_state)
 
-# for LSPs
+    # for LSPs
     X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 

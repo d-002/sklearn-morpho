@@ -34,8 +34,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
                  validation_ratio = .3,
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
-                 verbose: Literal[0, 1, 2] = 0,
-                 solver: Literal['dccp'] | None = 'dccp',
+                 use_dccp_library: bool = False, verbose: Literal[0, 1, 2] = 0,
                  random_state: np.random.RandomState | None = None) -> None:
         """
         Initialize the classifier, see class help for more.
@@ -69,11 +68,11 @@ class RDEP(ClassifierMixin, BaseEstimator):
                                     EpochStoppingMethod(20),
                                     TrainStopStoppingMethod(),
                                 ]
+        param use_dccp_library: Whether to use the dccp library as a solver or
+                                a manual constraints linearization in fit.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
-        param solver:           The solver to use in cvxpy optimizations, or
-                                None for default.
         param random_state:     A RandomState object or None to allow for seeded
                                 randomness.
         """
@@ -83,8 +82,8 @@ class RDEP(ClassifierMixin, BaseEstimator):
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
+        self.use_dccp_library = use_dccp_library
         self.verbose: Literal[0, 1, 2] = verbose
-        self.solver: Literal['dccp'] | None = solver
         self.random_state = random_state
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> RDEP:
@@ -132,8 +131,8 @@ class RDEP(ClassifierMixin, BaseEstimator):
         # create and train perceptrons
         trainer = RDEPDccpTrainer(self.lambda_bounds, self.margin,
                                   self.validation_ratio, weighting_method,
-                                  stopping_methods, self.solver, self.verbose,
-                                  random_state)
+                                  stopping_methods, self.use_dccp_library,
+                                  self.verbose, random_state)
 
         trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron

@@ -11,8 +11,7 @@ class RDEPDccpTrainer(DccpTrainer):
     def __init__(self, lambda_bounds: tuple[float, float], margin: float,
                  validation_ratio: float, weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
-                 solver: Literal['dccp'] | None,
-                 verbose: Literal[0, 1, 2],
+                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the r-DEP trainer.
@@ -25,13 +24,14 @@ class RDEPDccpTrainer(DccpTrainer):
         """
 
         super().__init__(margin, validation_ratio, weighting_method,
-                         stopping_methods, solver, verbose, random_state)
+                         stopping_methods, use_dccp_library, verbose,
+                         random_state)
 
         if lambda_bounds[0] < 0 or lambda_bounds[1] > 1:
             raise ValueError('Invalid lambda_bounds, expected within [0, 1] '
                              f'got {list(lambda_bounds)}')
         if (lambda_bounds[0] == 0 or lambda_bounds[1] == 1) \
-                and solver == 'dccp':
+                and use_dccp_library:
             warn('Warning: lambda_bounds may be inappropriate for dccp solver: '
                  f'{list(lambda_bounds)}')
 
@@ -77,8 +77,8 @@ class RDEPDccpTrainer(DccpTrainer):
             cp.sum(cp.multiply(cp.pos(self._slack), cost_weights))
         )
 
-    def get_problem_unproven(self, X: np.ndarray, y: np.ndarray,
-                             cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
+                               cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
         self.set_objective(X, y, cost_weights)
 
@@ -171,12 +171,6 @@ class RDEPDccpTrainer(DccpTrainer):
         constraints += [self.lambda_bounds[0] <= self._training_lambda,
                         self._training_lambda <= self.lambda_bounds[1]]
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
-
-    def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    cost_weights: np.ndarray) -> cp.Problem:
-        if self.solver == 'dccp':
-            return self.get_problem_dccp(X, y, cost_weights)
-        return self.get_problem_unproven(X, y, cost_weights)
 
     def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
         expr_max = np.max(self.lambda_ * X + self.max_perceptron, axis=1)

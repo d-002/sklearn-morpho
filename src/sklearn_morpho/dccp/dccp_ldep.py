@@ -21,8 +21,7 @@ class LDEPDccpTrainer(DccpTrainer):
                  margin: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
-                 solver: Literal['dccp'] | None,
-                 verbose: Literal[0, 1, 2],
+                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the l-DEP trainer.
@@ -34,7 +33,8 @@ class LDEPDccpTrainer(DccpTrainer):
         self.latent_dims = latent_dims
 
         super().__init__(margin, validation_ratio, weighting_method,
-                         stopping_methods, solver, verbose, random_state)
+                         stopping_methods, use_dccp_library, verbose,
+                         random_state)
 
     def at_training_start(self, data_dim: int) -> None:
         N_max, N_min = self.latent_dims
@@ -67,8 +67,8 @@ class LDEPDccpTrainer(DccpTrainer):
         self._objective = cp.Minimize(
                 cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
 
-    def get_problem_unproven(self, X: np.ndarray, y: np.ndarray,
-                             cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
+                               cost_weights: np.ndarray) -> cp.Problem:
         K = X.shape[0]
         self.set_objective(K, cost_weights)
 
@@ -161,12 +161,6 @@ class LDEPDccpTrainer(DccpTrainer):
                 constraints.append(self.margin - cp.min(expr_min, axis=1) <=
                                    self._slack[mask] + cp.max(expr_max, axis=1))
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
-
-    def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    cost_weights: np.ndarray) -> cp.Problem:
-        if self.solver == 'dccp':
-            return self.get_problem_dccp(X, y, cost_weights)
-        return self.get_problem_unproven(X, y, cost_weights)
 
     def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
         expr_max = np.max(self.max_perceptron + X @ self.max_matrix.T, axis=1)
