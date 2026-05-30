@@ -24,3 +24,13 @@ jobs:
 
       - name: Run tests
         run: hatch run pytest
+
+  todo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan for TODOs in the code
+        run: ./check_todos.sh
