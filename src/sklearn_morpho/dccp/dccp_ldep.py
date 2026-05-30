@@ -196,10 +196,21 @@ class LDEPDccpTrainer(DccpTrainer):
             raise ValueError('Transformation matrices are zero, cannot solve')
 
         self.lambda_ = max_matrix_norm / div
-        self.max_matrix /= self.lambda_
-        self.min_matrix /= 1 - self.lambda_
-        self.max_perceptron /= self.lambda_
-        self.min_perceptron /= 1 - self.lambda_
+
+        # if lambda is close to a number that creates divisions by zero, it is
+        # safe to nullify the affected elements, that will not contribute anyway
+        if np.isclose(self.lambda_, 0):
+            self.max_matrix = np.zeros_like(self.max_matrix)
+            self.max_perceptron = np.zeros_like(self.max_perceptron)
+        else:
+            self.max_matrix /= self.lambda_
+            self.max_perceptron /= self.lambda_
+        if np.isclose(self.lambda_, 1):
+            self.min_matrix = np.zeros_like(self.max_matrix)
+            self.min_perceptron = np.zeros_like(self.min_perceptron)
+        else:
+            self.min_matrix /= 1 - self.lambda_
+            self.min_perceptron /= 1 - self.lambda_
 
     def save_best(self) -> None:
         self.saved = {

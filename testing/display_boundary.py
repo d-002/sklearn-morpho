@@ -76,4 +76,4 @@ for name, (X, y) in datasets.items():
 
 n_datasets = len(datasets)
 print(f'Done with all {n_datasets} datasets, average test score: '
-      f'{total_test_score / n_datasets * 100:.3f}')
+      f'{total_test_score / n_datasets * 100:.3f}%')

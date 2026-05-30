@@ -192,8 +192,17 @@ class RDEPDccpTrainer(DccpTrainer):
         self.min_perceptron = self._min_training_weights.value
         self.lambda_ = self._training_lambda.value
 
-        self.max_perceptron /= self.lambda_
-        self.min_perceptron /= self.lambda_
+        # if lambda is close to a number that creates divisions by zero, it is
+        # safe to nullify the affected elements, that will not contribute anyway
+        if np.isclose(self.lambda_, 0):
+            self.max_perceptron = np.zeros_like(self.max_perceptron)
+        else:
+            self.max_perceptron /= self.lambda_
+
+        if np.isclose(self.lambda_, 1):
+            self.min_perceptron = np.zeros_like(self.min_perceptron)
+        else:
+            self.min_perceptron /= 1 - self.lambda_
 
     def save_best(self) -> None:
         self.saved = {
