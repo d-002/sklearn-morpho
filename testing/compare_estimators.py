@@ -16,9 +16,10 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.model_selection import train_test_split, StratifiedKFold
 
 # perceptrons
+from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
+
 from sklearn.svm import LinearSVC, SVC
 from sklearn.impute import SimpleImputer
-from sklearn_morpho import LDEP
 from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
@@ -33,6 +34,15 @@ print(f'Random state: {random_state}')
 
 estimators = {
     'l_DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
+    'DCCP l_DEP': OneVsRestClassifier(
+        LDEP(use_dccp_library=True, random_state=random_state)),
+    'r_DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
+    'DCCP r_DEP': OneVsRestClassifier(
+        RDEP(use_dccp_library=True, random_state=random_state)),
+    'morpho_dilation': OneVsRestClassifier(
+        MorphoPerceptron(kind='max', random_state=random_state)),
+    'morpho_erosion': OneVsRestClassifier(
+        MorphoPerceptron(kind='min', random_state=random_state)),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
     'MLP': MLPClassifier(max_iter=1000, random_state=random_state),
