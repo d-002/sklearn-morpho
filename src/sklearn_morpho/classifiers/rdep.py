@@ -58,10 +58,11 @@ class RDEP(ClassifierMixin, BaseEstimator):
                                 Must be between 0 and 1 (inclusive, exclusive),
                                 if set to exactly 0 then incompatible stopping
                                 methods cannot be used (e.g. early stopping).
+                                Ignored when using the dccp library solver.
         param weighting_method: The weighting method to use: apply weights to
                                 the cost contribution of each data point to help
                                 avoid outliers.
-                                If left to None, will use NoneWeightingMethod()
+                                If left to None, will use NoneWeightingMethod().
         param stopping_methods: A list of stopping methods, must not be empty.
                                 At each epoch, these methods will be
                                 sequentially asked whether the training should
@@ -74,6 +75,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
                                     EpochStoppingMethod(20),
                                     TrainStopStoppingMethod(),
                                 ]
+                                Ignored when using the dccp library solver.
         param use_dccp_library: Whether to use the dccp library as a solver or
                                 a manual constraints linearization in fit.
         param verbose:          Whether to log extra information. 0: no logging,

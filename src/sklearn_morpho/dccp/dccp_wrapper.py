@@ -232,7 +232,7 @@ class DccpTrainer(ABC):
         one step.
         """
 
-        X_train, X_validation, y_train, y_validation = data
+        X_train, _, y_train, _ = data
         cost_weights, cost_normalizer = \
                 self.weighting_method.fit_transform(X_train, y_train)
 
@@ -244,17 +244,14 @@ class DccpTrainer(ABC):
 
         self.after_epoch()
 
-        if self.validation_ratio == 0:
-            validation_cost = solve_result * cost_normalizer
-        else:
-            validation_cost = self.get_cost(X_validation, y_validation)
+        training_cost = solve_result * cost_normalizer
 
         end = time()
 
         if self.verbose:
             dt = end - start
-            print('DCCP done, final validation cost is '
-                  f'{validation_cost:.8f} in {dt:.2f}s')
+            print('DCCP done, training_cost cost is '
+                  f'{training_cost:.8f} in {dt:.2f}s')
 
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
         """
@@ -275,12 +272,13 @@ class DccpTrainer(ABC):
                 comment = 'manual linearization'
             print(f'Starting fitting with DCCP (with {comment})')
 
-        if self.validation_ratio == 0:
-            for stopping_method in self.stopping_methods:
-                if stopping_method.requires_validation():
-                    raise ValueError('Cannot train, at least one stopping '
-                                     'method requires validation which is '
-                                     'disabled by the user')
+        if self.validation_ratio == 0 or self.use_dccp_library:
+            if not self.use_dccp_library:
+                for stopping_method in self.stopping_methods:
+                    if stopping_method.requires_validation():
+                        raise ValueError('Cannot train, at least one stopping '
+                                         'method requires validation which is '
+                                         'disabled by the user')
 
             X_train, X_validation = X, np.empty(X.shape)
             y_train, y_validation = y, np.empty(y.shape)
