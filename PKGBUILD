@@ -1,6 +1,6 @@
 pkgname=python-sklearn-morpho
 _name=sklearn_morpho
-pkgver=0.1.1
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="Scikit-learn estimator toolbox for morphological perceptrons"
 arch=("any")
