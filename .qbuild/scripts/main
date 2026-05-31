@@ -1,1 +1,1 @@
-hatch run boundary
+python testing/display_boundary.py
