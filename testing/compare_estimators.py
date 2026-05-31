@@ -33,15 +33,15 @@ random_state = np.random.RandomState()
 print(f'Random state: {random_state}')
 
 estimators = {
-    'l_DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
+    'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'DCCP l_DEP': OneVsRestClassifier(
         LDEP(use_dccp_library=True, random_state=random_state)),
-    'r_DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
+    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
     'DCCP r_DEP': OneVsRestClassifier(
         RDEP(use_dccp_library=True, random_state=random_state)),
-    'morpho_dilation': OneVsRestClassifier(
+    'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind='max', random_state=random_state)),
-    'morpho_erosion': OneVsRestClassifier(
+    'Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(kind='min', random_state=random_state)),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
