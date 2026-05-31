@@ -28,6 +28,8 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
     Where $\\tau$ refers to the activation of a (max, +) morphological
     perceptron and $\\tau'$ to a (min, +) one.
+    $\\lambda$ is a real number between 0 and 1 to guarantee correct convexity,
+    but in practice a smaller interval can be enforced to avoid imprecisions.
     """
 
     def __init__(self, lambda_bounds = (1e-3, 1 - 1e-3), margin = 0.,

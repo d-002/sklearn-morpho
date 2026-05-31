@@ -51,8 +51,6 @@ class LDEPDccpTrainer(DccpTrainer):
         # Create constraints for linearization derived from real parameters,
         # used to absorbe non-convex parameters that are restored at the end.
         # Method inspired by arXiv:2011.06512v1.
-        # TODO: is this representation an issue since the final lambda parameter
-        # is not necessarily in [0, 1]?
         self._max_training_weights = cp.Variable(N_max)
         self._min_training_weights = cp.Variable(N_min)
         self._max_training_matrix = cp.Variable((N_max, data_dim))
