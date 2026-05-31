@@ -7,10 +7,13 @@ name = "sklearn-morpho"
 version = "0.2.0"
 dependencies = [
     "cvxpy",
-    "dccp",
     "numpy",
-    "pytest",
     "scikit-learn",
+]
+
+[project.optional-dependencies]
+dccp = [
+    "dccp",
 ]
 
 [tool.pytest.ini_options]
@@ -20,8 +23,10 @@ testpaths = ["src/sklearn_morpho/tests"]
 python = "3.14"
 path = ".venv" # for LSPs
 dependencies = [
-    "matplotlib", # for testing files
-    "pandas", # for scikit-learn's check_estimator
-    "pyqt6", # for matplotlib display
+    "dccp",
+    "matplotlib", # for files in testing
+    "pandas", # for scikit-learn's check_estimator and openml datasets
+    "pyqt6", # for matplotlib display on some devices
+    "pytest",
     "jupyterlab", # for coding the MREs
 ]

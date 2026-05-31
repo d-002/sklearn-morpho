@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import Literal, cast
 import numpy as np
 import cvxpy as cp
-import dccp
 from time import time
 
 from sklearn.model_selection import train_test_split
@@ -231,6 +230,9 @@ class DccpTrainer(ABC):
         Helper function for train, uses the dccp library to solve the problem in
         one step.
         """
+
+        # local import because optional dependency
+        import dccp
 
         X_train, _, y_train, _ = data
         cost_weights, cost_normalizer = \

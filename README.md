@@ -59,3 +59,16 @@ Then run one of these commands:
 
 Special note for the estimators comparison testing files: they are split in two
 files to avoid training the estimators every time one wants to view the results.
+
+## For Arch users
+
+The package is available in the
+[Arch User Repository](https://aur.archlinux.org) as `python-sklearn-morpho`, as
+are all its dependencies except `dccp`.
+
+Since the latter is an optional dependency, you can either:
+
+- Download `dccp` through pip or use `pip install sklearn-morpho[dccp]` in a
+  Python virtual environment.
+- Download `python-sklearn-morpho` from the AUR and use
+  `pip install dccp --user`.
