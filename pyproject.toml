@@ -14,6 +14,7 @@ dependencies = [
 [project.optional-dependencies]
 dccp = [
     "dccp",
+    "pytest",
 ]
 
 [tool.pytest.ini_options]

@@ -14,9 +14,9 @@ scikit-learn estimator toolbox for morphological perceptrons.
 > This means that currently the `dccp` module uses `cvxpy.reshape` with soon to
 > be outdated parameters.
 >
-> As of writing this, when using this solver warnings from cvxpy are displayed,
-> however these warnings are projected to be removed in future `cvxpy` versions,
-> which may create silent errors during training.
+> Currently, when using the dccp solver, warnings from cvxpy are displayed;
+> however they may be removed in future `cvxpy` versions, leading to possible
+> silent errors during training.
 >
 > I will leave this notice here until the `dccp` library's maintainer team
 > decides to update the package.
@@ -31,12 +31,13 @@ Current features:
 - Scikit-learn estimators:
   - Linear Dilation-Erosion Perceptron (l-DEP)
   - Reduced Dilation-Erosion Perceptron (r-DEP)
-  - Simple dilation and erosion morphological perceptrons
+  - Simple Dilation and Erosion Morphological Perceptrons
 - Modular wrapper for DCCP optimization tasks with `cvxpy`
 
 File tree:
 
-- `src/sklearn_morpho`: contains the source code and a testsuite in `.../tests`
+- `src/sklearn_morpho`: contains the source code and a testsuite in its `tests`
+  subdirectory.
 - `testing`: standalone files that use this library, may contain tests but they
   are not designed to be run as a CI testsuite for example.
 - `MREs`: standalone jupyter notebooks to showcase some of this library's
@@ -45,7 +46,7 @@ File tree:
 ## Getting started
 
 Take a look at the Jupyter code examples in the
-[`MREs`](https://github.com/d-002/sklearn-morpho/tree/master/MREs) directory.
+[MREs](https://github.com/d-002/sklearn-morpho/tree/master/MREs) directory.
 
 ## Running the project
 
@@ -64,7 +65,8 @@ files to avoid training the estimators every time one wants to view the results.
 
 The package is available in the
 [Arch User Repository](https://aur.archlinux.org) as `python-sklearn-morpho`, as
-are all its dependencies except `dccp`.
+are all its dependencies not already in the official packages, except for
+`dccp`.
 
 Since the latter is an optional dependency, you can either:
 
