@@ -7,7 +7,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from ..dccp.dccp_ldep import LDEPDccpTrainer
+from ..dccp.dccp_rdep import RDEPDccpTrainer
 from ..stopping import (
         StoppingMethod,
         CostStoppingMethod,
@@ -17,25 +17,22 @@ from ..stopping import (
 )
 from ..weighting import SampleWeighting, NoneSampleWeighting
 
-class LDEP(ClassifierMixin, BaseEstimator):
+class RDEP(ClassifierMixin, BaseEstimator):
     """
-    Scikit-learn estimator wrapper around a l-DEP (linear Dilation-Erosion
+    Scikit-learn estimator wrapper around a r-DEP (reduced Dilation-Erosion
     morphological Perceptron) for binary data classification.
 
-    The l-DEP's activation function is defined as:
+    The r-DEP's activation function is defined as:
 
-    \\[ y = f(\\lambda \\tau_(R_1(x)) + (1 - \\lambda) \\tau'_(R_2(x))) \\]
+    \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
 
     Where $\\tau$ refers to the activation of a (max, +) morphological
     perceptron and $\\tau'$ to a (min, +) one.
-    $R_1, R_2$ are linear transformations to apply to the training data.
-    They convert it into a latent space with possibly different dimensions,
-    also allowing classification of arbitrarily distributed data.
-    A higher dimension for the latent space will result in slower training
-    times, but will allow the decision boundary to be more complex.
+    $\\lambda$ is a real number between 0 and 1 to guarantee correct convexity,
+    but in practice a smaller interval can be enforced to avoid imprecisions.
     """
 
-    def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
+    def __init__(self, lambda_bounds = (1e-3, 1 - 1e-3), margin = 0.,
                  penalty = 0., validation_ratio = .3,
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
@@ -44,8 +41,11 @@ class LDEP(ClassifierMixin, BaseEstimator):
         """
         Initialize the classifier, see class help for more.
 
-        param latent_dims:      The dimensions of the latent spaces used for the
-                                linear transformations output
+        param lambda_bounds:    A pair of min and max values for lambda, to
+                                avoid solvers (especially dccp) from failing to
+                                optimize.
+                                To keep the constraints at the right convexity,
+                                the bounds must be inside [0, 1].
         param margin:           Enforce a margin between the decision boundary
                                 and the data. May help with linearly separable
                                 datasets, but generally lower is more accurate.
@@ -85,7 +85,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                 randomness.
         """
 
-        self.latent_dims = latent_dims
+        self.lambda_bounds = lambda_bounds
         self.margin = margin
         self.penalty = penalty
         self.validation_ratio = validation_ratio
@@ -95,14 +95,11 @@ class LDEP(ClassifierMixin, BaseEstimator):
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> LDEP:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> RDEP:
         """
         Fit the classifier, create attributes:
         - self.max_perceptron_
         - self.min_perceptron_
-        - self.lambda_
-        - self.max_matrix_
-        - self.min_matrix_
         - self.classes_:        Unique labels generated from y
 
         X and y must represent binary classifiable data.
@@ -141,18 +138,17 @@ class LDEP(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        trainer = LDEPDccpTrainer(
-            self.latent_dims, self.margin, self.penalty, self.validation_ratio,
-            weighting_method, stopping_methods, self.use_dccp_library,
-            self.verbose, random_state
+        trainer = RDEPDccpTrainer(
+            self.lambda_bounds, self.margin, self.penalty,
+            self.validation_ratio, weighting_method, stopping_methods,
+            self.use_dccp_library, self.verbose, random_state
         )
 
         trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
         self.min_perceptron_ = trainer.min_perceptron
         self.lambda_ = trainer.lambda_
-        self.max_matrix_ = trainer.max_matrix
-        self.min_matrix_ = trainer.min_matrix
+        self.invert_res_ = trainer.invert_res
 
         return self
 
@@ -161,11 +157,11 @@ class LDEP(ClassifierMixin, BaseEstimator):
         X = validate_data(self, X, reset=False) # type: ignore
         X_scaled = cast(np.ndarray, self.scaler_.transform(X))
 
-        expr_max = np.max(self.max_perceptron_ + X_scaled @ self.max_matrix_.T,
-                          axis=1)
-        expr_min = np.min(self.min_perceptron_ + X_scaled @ self.min_matrix_.T,
-                          axis=1)
-        return expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
+        expr_max = np.max(self.max_perceptron_ + X_scaled, axis=1)
+        expr_min = np.min(self.min_perceptron_ + X_scaled, axis=1)
+        activation = expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
+
+        return activation * (1 - 2 * self.invert_res_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)

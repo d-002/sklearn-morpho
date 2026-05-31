@@ -1,17 +1,37 @@
 # sklearn-morpho
 
-> [!WARNING]  
-> This repo is still a work in progress.
-> More features, improved documentation and examples are still to come.
+scikit-learn estimator toolbox for morphological perceptrons.
 
-Scikit-learn estimator toolbox for morphological perceptrons.
+> [!WARNING]  
+> Some features of this repository use the `dccp` module.
+>
+> As of writing this (June 2026) the PyPI package has not been updated since
+> 2023 ([this commit](https://github.com/cvxgpr/dccp/commit/4322809)).
+> This means that currently the `dccp` module uses `cvxpy.reshape` with soon to
+> be outdated parameters.
+> When using this solver, warnings are currently displayed but the correct
+> behavior is observed; however these warnings are projected to be removed in
+> future `cvxpy` versions, which may create silent errors during training.
+>
+> I will leave this notice here until the `dccp` library's maintainer team
+> decides to update the package.
+> Please let me know if that is the case and I did not remove the notice.
+>
+> Since the PyPI package is affected, the hatch commands presented below are as
+> well.
+> To prevent this issue manually, you can clone the dccp repo into the hatch
+> python venv in `.venv`.
 
 Current features:
 
-- Linear Dilation-Erosion Perceptron as a scikit-learn estimator
-- Modular wrapper for DCP optimization tasks with `cvxpy`
+- Scikit-learn estimators:
+  - Linear Dilation-Erosion Perceptron (l-DEP)
+  - Reduced Dilation-Erosion Perceptron (r-DEP)
+  - Simple dilation and erosion morphological perceptrons
+- Modular wrapper for DCCP optimization tasks with `cvxpy`
 
 File tree:
+
 - `src/sklearn_morpho`: contains the source code and a testsuite in `.../tests`
 - `testing`: standalone files that use this library, may contain tests but they
   are not designed to be run as a CI testsuite for example.
@@ -20,7 +40,8 @@ File tree:
 
 ## Getting started
 
-Take a look at the Jupyter code examples in the `MREs` directory.
+Take a look at the Jupyter code examples in the
+[`MREs`](https://github.com/d-002/sklearn-morpho/tree/master/MREs) directory.
 
 ## Running the project
 

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Literal, cast
 import numpy as np
 import cvxpy as cp
+import dccp
 from time import time
 
 from sklearn.model_selection import train_test_split
@@ -13,14 +14,21 @@ class DccpTrainer(ABC):
     Abstract class for DCCP optimization using cvxpy.
     """
 
-    def __init__(self, margin: float, validation_ratio: float,
+    def __init__(self, margin: float, penalty: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
-                 verbose: Literal[0, 1, 2], solve_kwargs: dict,
+                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
         """
         Initialize the trainer.
 
+        param margin:           Enforce a margin between the decision boundary
+                                and the data. May help with linearly separable
+                                datasets, but generally lower is more accurate.
+        param penalty:          A penalty to add to the weights squared and
+                                avoid them exploding.
+                                Must be a small positive number like 1e-6, or
+                                zero to disable penalty calculation altogether.
         param validation_radio: How much of the training set to dedicate to use
                                 as validation during fitting.
         param weighting_method: The weighting method to use: apply weights to
@@ -31,16 +39,20 @@ class DccpTrainer(ABC):
                                 sequentially asked whether the training should
                                 stop. In this case, training ends by rolling
                                 back to the epoch with the best validation cost.
+        param use_dccp_library: Whether to use the dccp library as a solver or
+                                a manual constraints linearization in fit.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy.solve() set
                                 to verbose mode.
-        param solve_kwargs:     The keyword arguments to pass to cvxpy.solve()
         param random_state:     A RandomState object or None to allow for seeded
                                 randomness.
         """
 
         if margin < 0:
             raise ValueError(f'Invalid margin, expected >= 0 but got {margin}')
+        if penalty < 0:
+            raise ValueError(
+                    f'Invalid penalty, expected >= 0 but got {penalty}')
         if not 0 <= validation_ratio < 1:
             raise ValueError('Invalid validation ratio, expected >= 0 and < 1 '
                              f'but got {validation_ratio}')
@@ -49,11 +61,12 @@ class DccpTrainer(ABC):
                              'run indefinitely')
 
         self.margin = margin
+        self.penalty = penalty
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
+        self.use_dccp_library = use_dccp_library
         self.verbose = verbose
-        self.solve_kwargs = solve_kwargs
         self.random_state = random_state
 
     def at_training_start(self, data_dim: int) -> None:
@@ -98,17 +111,35 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def get_problem(self, X: np.ndarray, y: np.ndarray,
-                    cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
+                         cost_weights: np.ndarray) -> cp.Problem:
         """
-        Compute a cvxpy Objective and a list of Constraints for use in DCCP.
-        The prlblem must be DCP, meaning the constraints must all be convex.
+        Compute a cvxpy Objective and a list of Constraints for use in solving.
+        The problem must be DCP, meaning the constraints must all be convex.
         For concave constraints, they must be linearized beforehand, possibly
         from constant values taken from the previous epoch result.
 
         param X:             The data points
         param y:             The data points classes
-        param cost_weights: The wdccp weights, all 1 if not using wdccp, for
+        param cost_weights:  The wdccp weights, all 1 if not using wdccp, for
+                             use in computing the objective.
+                             This is an array with one element corresponding to
+                             an element in X.
+
+        return:              A tuple containing a cvxpy Objective and a list of
+                             Constraints.
+        """
+
+    @abstractmethod
+    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
+                               cost_weights: np.ndarray) -> cp.Problem:
+        """
+        Compute a cvxpy Objective and a list of Constraints for use in solving.
+        The problem must be DCCP, to be used with the dccp library solver.
+
+        param X:             The data points
+        param y:             The data points classes
+        param cost_weights:  The wdccp weights, all 1 if not using wdccp, for
                              use in computing the objective.
                              This is an array with one element corresponding to
                              an element in X.
@@ -127,46 +158,14 @@ class DccpTrainer(ABC):
         after_epoch call, as it will have been made before this method's call.
         """
 
-    def train(self, X: np.ndarray, y: np.ndarray) -> None:
+    def train_linearized(self, data: tuple[np.ndarray, np.ndarray,
+                                           np.ndarray, np.ndarray]) -> None:
         """
-        Train using DCCP.
-        This means this function can only solve problems where the cost function
-        can be separable in the given convex and concave parts.
-
-        param X: The set of data points to use for training.
-        param y: The set of labels associated with elements of X.
-
-        return:  The final cost, or -1 if no training happened.
+        Helper function for train, uses a loop to solve multiple approximated
+        steps, updating linearization accuracy over time.
         """
 
-        if self.verbose:
-            print('Starting fitting with DCCP')
-
-        no_validation = self.validation_ratio == 0
-        if no_validation:
-            for stopping_method in self.stopping_methods:
-                if stopping_method.requires_validation():
-                    raise ValueError('Cannot train, at least one stopping '
-                                     'method requires validation which is '
-                                     'disabled by the user')
-
-            X_train, X_validation = X, np.empty(X.shape)
-            y_train, y_validation = y, np.empty(y.shape)
-        else:
-            X_train, X_validation, y_train, y_validation = train_test_split(
-                    X, y, test_size=self.validation_ratio,
-                    random_state=self.random_state)
-            X_train = cast(np.ndarray, X_train)
-            X_validation = cast(np.ndarray, X_validation)
-            y_train = cast(np.ndarray, y_train)
-            y_validation = cast(np.ndarray, y_validation)
-
-        if not X_train.size or (not X_validation.size and not no_validation):
-            raise ValueError('Current validation ratio makes unwanted '
-                             'degenerate train/validation split: '
-                             + str(self.validation_ratio))
-
-        start = time()
+        X_train, X_validation, y_train, y_validation = data
         cost_weights, cost_normalizer = \
                 self.weighting_method.fit_transform(X_train, y_train)
 
@@ -174,21 +173,21 @@ class DccpTrainer(ABC):
         validation_cost: float = np.inf
         best_validation_cost: float = np.inf
 
-        # formulate the cvxpy problem to solve, common to all epochs
-        self.at_training_start(X_train.shape[1])
-
+        start = time()
         while True:
-            problem = self.get_problem(X_train, y_train, cost_weights)
+            problem = self.get_problem_linearized(
+                    X_train, y_train, cost_weights)
 
             # solve the problem, normalize the cost when using wdccp
-            cvxpy_cost = cast(float, problem.solve(verbose=self.verbose == 2),
-                              **self.solve_kwargs) * cost_normalizer
+            solve_result = problem.solve(verbose=self.verbose == 2)
+            solve_result = cast(float, solve_result)
+            cvxpy_cost = solve_result * cost_normalizer
 
             self.after_epoch()
 
             # best score and loop logic
             done = False
-            if no_validation:
+            if self.validation_ratio == 0:
                 train_cost = cvxpy_cost
                 validation_cost = cvxpy_cost
             else:
@@ -199,7 +198,7 @@ class DccpTrainer(ABC):
                 self.save_best()
 
             if self.verbose:
-                if no_validation:
+                if self.validation_ratio == 0:
                     validation_comment = ' [no validation]'
                 else:
                     validation_comment = f', validation: {validation_cost:.8f}'
@@ -217,11 +216,94 @@ class DccpTrainer(ABC):
                 break
 
             epoch += 1
+        end = time()
 
         if self.verbose:
-            dt = time() - start
-            print(f'DCCP done in {epoch} epochs, '
-                  f'final cost is {validation_cost:.8f} in {dt:.2f}s')
+            dt = end - start
+            print(f'DCCP done in {epoch} epochs, final validation cost is '
+                  f'{validation_cost:.8f} in {dt:.2f}s')
 
         self.rollback_to_best()
+
+    def train_dccp(self, data: tuple[np.ndarray, np.ndarray,
+                                     np.ndarray, np.ndarray]) -> None:
+        """
+        Helper function for train, uses the dccp library to solve the problem in
+        one step.
+        """
+
+        X_train, _, y_train, _ = data
+        cost_weights, cost_normalizer = \
+                self.weighting_method.fit_transform(X_train, y_train)
+
+        start = time()
+
+        problem = self.get_problem_dccp(X_train, y_train, cost_weights)
+        solve_result = problem.solve(verbose=self.verbose == 2, method='dccp')
+        solve_result = cast(float, solve_result[0]) # type: ignore
+
+        self.after_epoch()
+
+        training_cost = solve_result * cost_normalizer
+
+        end = time()
+
+        if self.verbose:
+            dt = end - start
+            print('DCCP done, training_cost cost is '
+                  f'{training_cost:.8f} in {dt:.2f}s')
+
+    def train(self, X: np.ndarray, y: np.ndarray) -> None:
+        """
+        Train using DCCP.
+        This means this function can only solve problems where the cost function
+        can be separable in the given convex and concave parts.
+
+        param X: The set of data points to use for training.
+        param y: The set of labels associated with elements of X.
+
+        return:  The final cost, or -1 if no training happened.
+        """
+
+        if self.verbose:
+            if self.use_dccp_library:
+                comment = 'dccp library'
+            else:
+                comment = 'manual linearization'
+            print(f'Starting fitting with DCCP (with {comment})')
+
+        if self.validation_ratio == 0 or self.use_dccp_library:
+            if not self.use_dccp_library:
+                for stopping_method in self.stopping_methods:
+                    if stopping_method.requires_validation():
+                        raise ValueError('Cannot train, at least one stopping '
+                                         'method requires validation which is '
+                                         'disabled by the user')
+
+            X_train, X_validation = X, np.empty(X.shape)
+            y_train, y_validation = y, np.empty(y.shape)
+        else:
+            X_train, X_validation, y_train, y_validation = train_test_split(
+                    X, y, test_size=self.validation_ratio,
+                    random_state=self.random_state)
+            X_train = cast(np.ndarray, X_train)
+            X_validation = cast(np.ndarray, X_validation)
+            y_train = cast(np.ndarray, y_train)
+            y_validation = cast(np.ndarray, y_validation)
+
+        if not X_train.size or (
+                not X_validation.size and self.validation_ratio != 0):
+            raise ValueError('Current validation ratio makes unwanted '
+                             'degenerate train/validation split: '
+                             + str(self.validation_ratio))
+
+        # formulate the cvxpy problem to solve, common to all epochs
+        self.at_training_start(X_train.shape[1])
+
+        data = X_train, X_validation, y_train, y_validation
+        if self.use_dccp_library:
+            self.train_dccp(data)
+        else:
+            self.train_linearized(data)
+
         self.at_training_end()

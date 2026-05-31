@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Literal, cast
+from typing import cast
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.datasets import make_classification, make_moons
 
+from sklearn_morpho.classifiers.simple_perceptron import MorphoPerceptron
 from sklearn_morpho.classifiers.ldep import LDEP
+from sklearn_morpho.classifiers.rdep import RDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,
@@ -26,6 +28,11 @@ datasets = {
                               random_state=random_state),
 }
 
+Estimator = LDEP
+
+colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
+                                           np.repeat(['#aaa'], y_real.shape))
+
 total_test_score = 0
 for name, (X, y) in datasets.items():
     print(f'Training with "{name}" dataset...')
@@ -33,18 +40,19 @@ for name, (X, y) in datasets.items():
     y = np.array(['red', 'blue'])[y]
     pos_label = np.unique(y)[1]
     X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=.33, random_state=random_state)
+          X, y, test_size=.33, random_state=random_state)
 
     # for LSPs
     X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
     # create and train estimator
-    dep = LDEP(margin=1, verbose=1, random_state=random_state)
+    dep = Estimator(verbose=1, random_state=random_state)
     dep.fit(X_train, y_train)
-    score_train = f1_score(y_train, dep.predict(X_train),
-                           pos_label=pos_label)
-    score_test = f1_score(y_test, dep.predict(X_test), pos_label=pos_label)
+    y_train_pred = dep.predict(X_train)
+    y_test_pred = dep.predict(X_test)
+    score_train = f1_score(y_train, y_train_pred, pos_label=pos_label)
+    score_test = f1_score(y_test, y_test_pred, pos_label=pos_label)
 
     # compute and display perceptron decision region
     if X.shape[1] == 2:
@@ -56,9 +64,10 @@ for name, (X, y) in datasets.items():
             colors='black'
         )
         ax = disp.ax_
-        ax.scatter(*X_train.T, color=y_train, alpha=.2)
-        ax.scatter(*X_test.T, color=y_test)
-        ax.title.set_text(f'l-DEP: F1 score {score_test * 100:.3f}%')
+        ax.scatter(*X_train.T, color=colorize(y_train, y_train_pred), alpha=.2)
+        ax.scatter(*X_test.T, color=colorize(y_test, y_test_pred))
+        ax.title.set_text(f'{Estimator.__name__}: '
+                          f'F1 score {score_test * 100:.3f}%')
         plt.show()
 
     print(f'F1 score on training set: {score_train * 100:.3f}%, '
@@ -68,4 +77,4 @@ for name, (X, y) in datasets.items():
 
 n_datasets = len(datasets)
 print(f'Done with all {n_datasets} datasets, average test score: '
-      f'{total_test_score / n_datasets * 100:.3f}')
+      f'{total_test_score / n_datasets * 100:.3f}%')
