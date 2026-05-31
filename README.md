@@ -6,21 +6,21 @@ scikit-learn estimator toolbox for morphological perceptrons.
 > Some features of this repository use the `dccp` module.
 >
 > As of writing this (June 2026) the PyPI package has not been updated since
-> 2023 ([this commit](https://github.com/cvxgpr/dccp/commit/4322809)).
+> 2025 ([this commit](https://github.com/cvxgpr/dccp/commit/4322809)).
 > This means that currently the `dccp` module uses `cvxpy.reshape` with soon to
 > be outdated parameters.
-> When using this solver, warnings are currently displayed but the correct
-> behavior is observed; however these warnings are projected to be removed in
-> future `cvxpy` versions, which may create silent errors during training.
+>
+> As of writing this, when using this solver warnings from cvxpy are displayed,
+> however these warnings are projected to be removed in future `cvxpy` versions,
+> which may create silent errors during training.
 >
 > I will leave this notice here until the `dccp` library's maintainer team
 > decides to update the package.
 > Please let me know if that is the case and I did not remove the notice.
+> See also: [issue](https://github.com/cvxgrp/dccp/issues/127)
 >
-> Since the PyPI package is affected, the hatch commands presented below are as
-> well.
-> To prevent this issue manually, you can clone the dccp repo into the hatch
-> python venv in `.venv`.
+> If you wish to use the solver in its current state without the warnings, you
+> can manually clone the dccp repo into the hatch venv.
 
 Current features:
 
