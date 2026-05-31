@@ -36,7 +36,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
-                 validation_ratio = .3,
+                 penalty = 0., validation_ratio = .3,
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
                  use_dccp_library: bool = False, verbose: Literal[0, 1, 2] = 0,
@@ -49,6 +49,10 @@ class LDEP(ClassifierMixin, BaseEstimator):
         param margin:           Enforce a margin between the decision boundary
                                 and the data. May help with linearly separable
                                 datasets, but generally lower is more accurate.
+        param penalty:          A penalty to add to the weights squared and
+                                avoid them exploding.
+                                Must be a small positive number like 1e-6, or
+                                zero to disable penalty calculation altogether.
         param validation_radio: How much of the training set to dedicate to use
                                 as validation during fitting.
                                 Must be between 0 and 1 (inclusive, exclusive),
@@ -81,6 +85,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         self.latent_dims = latent_dims
         self.margin = margin
+        self.penalty = penalty
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
@@ -135,7 +140,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         # create and train perceptrons
         trainer = LDEPDccpTrainer(
-            self.latent_dims, self.margin, self.validation_ratio,
+            self.latent_dims, self.margin, self.penalty, self.validation_ratio,
             weighting_method, stopping_methods, self.use_dccp_library,
             self.verbose, random_state
         )

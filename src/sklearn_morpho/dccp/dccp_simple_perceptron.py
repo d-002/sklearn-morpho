@@ -19,7 +19,8 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
     """
 
     def __init__(self, kind: Literal['max', 'min'], margin: float,
-                 validation_ratio: float, weighting_method: SampleWeighting,
+                 penalty: float, validation_ratio: float,
+                 weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
                  use_dccp_library: bool, verbose: Literal[0, 1, 2],
                  random_state: np.random.RandomState) -> None:
@@ -30,7 +31,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         param [others]: See base class.
         """
 
-        super().__init__(margin, validation_ratio, weighting_method,
+        super().__init__(margin, penalty, validation_ratio, weighting_method,
                          stopping_methods, use_dccp_library, verbose,
                          random_state)
 
@@ -51,9 +52,11 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
         self._slack = cp.Variable(len(X))
 
-        self._objective = cp.Minimize(
-            cp.sum(cp.multiply(cp.pos(self._slack), cost_weights))
-        )
+        value = cp.sum(cp.multiply(cp.pos(self._slack), cost_weights))
+        if self.penalty > 0:
+            value += self.penalty * cp.sum_squares(self._training_weights)
+
+        self._objective = cp.Minimize(value)
 
     def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
                                cost_weights: np.ndarray) -> cp.Problem:

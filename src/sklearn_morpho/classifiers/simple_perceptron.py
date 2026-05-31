@@ -30,7 +30,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, kind: Literal['max', 'min'], margin = 0.,
-                 validation_ratio = .3,
+                 penalty = 0., validation_ratio = .3,
                  weighting_method: SampleWeighting | None = None,
                  stopping_methods: list[StoppingMethod] | None = None,
                  use_dccp_library: bool = False, verbose: Literal[0, 1, 2] = 0,
@@ -42,6 +42,10 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
         param margin:           Enforce a margin between the decision boundary
                                 and the data. May help with linearly separable
                                 datasets, but generally lower is more accurate.
+        param penalty:          A penalty to add to the weights squared and
+                                avoid them exploding.
+                                Must be a small positive number like 1e-6, or
+                                zero to disable penalty calculation altogether.
         param validation_radio: How much of the training set to dedicate to use
                                 as validation during fitting.
                                 Must be between 0 and 1 (inclusive, exclusive),
@@ -74,6 +78,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
         self.kind: Literal['max', 'min'] = kind
         self.margin = margin
+        self.penalty = penalty
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
@@ -124,8 +129,9 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
         # create and train perceptrons
         trainer = SimplePerceptronDccpTrainer(
-            self.kind, self.margin, self.validation_ratio, weighting_method,
-            stopping_methods, self.use_dccp_library, self.verbose, random_state
+            self.kind, self.margin, self.penalty, self.validation_ratio,
+            weighting_method, stopping_methods, self.use_dccp_library,
+            self.verbose, random_state
         )
 
         trainer.train(X_scaled, y_integers)

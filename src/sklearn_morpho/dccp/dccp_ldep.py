@@ -18,7 +18,7 @@ class LDEPDccpTrainer(DccpTrainer):
     """
 
     def __init__(self, latent_dims: tuple[int, int],
-                 margin: float, validation_ratio: float,
+                 margin: float, penalty: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
                  use_dccp_library: bool, verbose: Literal[0, 1, 2],
@@ -32,7 +32,7 @@ class LDEPDccpTrainer(DccpTrainer):
 
         self.latent_dims = latent_dims
 
-        super().__init__(margin, validation_ratio, weighting_method,
+        super().__init__(margin, penalty, validation_ratio, weighting_method,
                          stopping_methods, use_dccp_library, verbose,
                          random_state)
 
@@ -62,8 +62,17 @@ class LDEPDccpTrainer(DccpTrainer):
             return
 
         self._slack = cp.Variable(K)
-        self._objective = cp.Minimize(
-                cp.sum(cp.multiply(cp.pos(self._slack), cost_weights)))
+
+        value = cp.sum(cp.multiply(cp.pos(self._slack), cost_weights))
+        if self.penalty > 0:
+            value += self.penalty * (
+                cp.sum_squares(self._max_training_weights) +
+                cp.sum_squares(self._min_training_weights) +
+                cp.sum_squares(self._max_training_matrix) +
+                cp.sum_squares(self._min_training_matrix)
+            )
+
+        self._objective = cp.Minimize(value)
 
     def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
                                cost_weights: np.ndarray) -> cp.Problem:

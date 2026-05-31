@@ -14,7 +14,7 @@ class DccpTrainer(ABC):
     Abstract class for DCCP optimization using cvxpy.
     """
 
-    def __init__(self, margin: float, validation_ratio: float,
+    def __init__(self, margin: float, penalty: float, validation_ratio: float,
                  weighting_method: SampleWeighting,
                  stopping_methods: list[StoppingMethod],
                  use_dccp_library: bool, verbose: Literal[0, 1, 2],
@@ -22,6 +22,13 @@ class DccpTrainer(ABC):
         """
         Initialize the trainer.
 
+        param margin:           Enforce a margin between the decision boundary
+                                and the data. May help with linearly separable
+                                datasets, but generally lower is more accurate.
+        param penalty:          A penalty to add to the weights squared and
+                                avoid them exploding.
+                                Must be a small positive number like 1e-6, or
+                                zero to disable penalty calculation altogether.
         param validation_radio: How much of the training set to dedicate to use
                                 as validation during fitting.
         param weighting_method: The weighting method to use: apply weights to
@@ -43,6 +50,9 @@ class DccpTrainer(ABC):
 
         if margin < 0:
             raise ValueError(f'Invalid margin, expected >= 0 but got {margin}')
+        if penalty < 0:
+            raise ValueError(
+                    f'Invalid penalty, expected >= 0 but got {penalty}')
         if not 0 <= validation_ratio < 1:
             raise ValueError('Invalid validation ratio, expected >= 0 and < 1 '
                              f'but got {validation_ratio}')
@@ -51,6 +61,7 @@ class DccpTrainer(ABC):
                              'run indefinitely')
 
         self.margin = margin
+        self.penalty = penalty
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
