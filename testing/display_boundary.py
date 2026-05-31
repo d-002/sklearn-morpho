@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Literal, cast
+from typing import cast
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.datasets import make_classification, make_moons
 
+from sklearn_morpho.classifiers.simple_perceptron import MorphoPerceptron
 from sklearn_morpho.classifiers.ldep import LDEP
 from sklearn_morpho.classifiers.rdep import RDEP
 

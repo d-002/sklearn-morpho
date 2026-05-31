@@ -22,7 +22,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
     Scikit-learn estimator wrapper around a r-DEP (reduced Dilation-Erosion
     morphological Perceptron) for binary data classification.
 
-    r-DEP forward pass equation:
+    The r-DEP's activation function is defined as:
 
     \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
 
@@ -129,10 +129,11 @@ class RDEP(ClassifierMixin, BaseEstimator):
                              f'got {len(classes_list)} class(es).')
 
         # create and train perceptrons
-        trainer = RDEPDccpTrainer(self.lambda_bounds, self.margin,
-                                  self.validation_ratio, weighting_method,
-                                  stopping_methods, self.use_dccp_library,
-                                  self.verbose, random_state)
+        trainer = RDEPDccpTrainer(
+            self.lambda_bounds, self.margin, self.validation_ratio,
+            weighting_method, stopping_methods, self.use_dccp_library,
+            self.verbose, random_state
+        )
 
         trainer.train(X_scaled, y_integers)
         self.max_perceptron_ = trainer.max_perceptron
