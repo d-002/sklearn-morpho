@@ -2,6 +2,10 @@
 
 scikit-learn estimator toolbox for morphological perceptrons.
 
+![](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
+![](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
+![](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/ci.yml?style=flat-square)
+
 > [!WARNING]  
 > Some features of this repository use the `dccp` module.
 >
