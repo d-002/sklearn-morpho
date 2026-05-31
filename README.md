@@ -6,7 +6,7 @@ scikit-learn estimator toolbox for morphological perceptrons.
 > Some features of this repository use the `dccp` module.
 >
 > As of writing this (June 2026) the PyPI package has not been updated since
-> 2025 ([this commit](https://github.com/cvxgpr/dccp/commit/4322809)).
+> 2025 ([this commit](https://github.com/cvxgrp/dccp/commit/4322809)).
 > This means that currently the `dccp` module uses `cvxpy.reshape` with soon to
 > be outdated parameters.
 >
