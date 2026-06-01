@@ -1,6 +1,5 @@
 # python
 __pycache__
-venv
 *.pyc
 .coverage
 htmlcov
