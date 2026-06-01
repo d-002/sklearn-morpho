@@ -10,7 +10,7 @@ from sklearn_morpho.stopping import (
     EpochStoppingMethod,
 )
 from sklearn_morpho.weighting import NoneSampleWeighting
-from sklearn_morpho.dccp.dccp_ldep import LDEPDccpTrainer
+from sklearn_morpho.training.dccp_ldep import LDEPDccpTrainer
 from sklearn_morpho import LDEP
 
 

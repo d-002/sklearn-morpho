@@ -9,7 +9,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import validate_data, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 
-from ..dccp.dccp_simple_perceptron import SimplePerceptronDccpTrainer
+from ..training.dccp_simple_perceptron import SimplePerceptronDccpTrainer
 from ..stopping import (
     StoppingMethod,
     CostStoppingMethod,

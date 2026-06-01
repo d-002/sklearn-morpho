@@ -140,15 +140,12 @@ class LDEPDccpTrainer(DccpTrainer):
             active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
 
             if label == 0:
-                constraints.append(
-                    self._slack[mask]
-                    >= self.margin + cp.max(expr_max, axis=1) + active_min
-                )
+                constraints.append(self._slack[mask] - active_min >=
+                                   self.margin + cp.max(expr_max, axis=1))
             else:
-                constraints.append(
-                    self._slack[mask]
-                    >= self.margin - active_max - cp.min(expr_min, axis=1)
-                )
+                constraints.append(self._slack[mask] + active_max >=
+                                   self.margin - cp.min(expr_min, axis=1))
+
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_problem_dccp(
@@ -193,10 +190,9 @@ class LDEPDccpTrainer(DccpTrainer):
                     <= self._slack[mask] - cp.min(expr_min, axis=1)
                 )
             else:
-                constraints.append(
-                    self.margin - cp.min(expr_min, axis=1)
-                    <= self._slack[mask] + cp.max(expr_max, axis=1)
-                )
+                constraints.append(self.margin - cp.min(expr_min, axis=1) <=
+                                   self._slack[mask] + cp.max(expr_max, axis=1))
+
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
