@@ -6,26 +6,6 @@ scikit-learn estimator toolbox for morphological perceptrons.
 ![](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/ci.yml?style=flat-square)
 
-> [!WARNING]  
-> Some features of this repository use the `dccp` module.
->
-> As of writing this (June 2026) the PyPI package has not been updated since
-> 2025 ([this commit](https://github.com/cvxgrp/dccp/commit/4322809)).
-> This means that currently the `dccp` module uses `cvxpy.reshape` with soon to
-> be outdated parameters.
->
-> Currently, when using the dccp solver, warnings from cvxpy are displayed;
-> however they may be removed in future `cvxpy` versions, leading to possible
-> silent errors during training.
->
-> I will leave this notice here until the `dccp` library's maintainer team
-> decides to update the package.
-> Please let me know if that is the case and I did not remove the notice.
-> See also: [issue](https://github.com/cvxgrp/dccp/issues/127)
->
-> If you wish to use the solver in its current state without the warnings, you
-> can manually clone the dccp repo into the hatch venv.
-
 Current features:
 
 - Scikit-learn estimators:
