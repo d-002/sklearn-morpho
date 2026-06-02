@@ -167,4 +167,5 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_class = False
+        tags.classifier_tags.poor_score = True
         return tags

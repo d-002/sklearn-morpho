@@ -71,6 +71,12 @@ class RDEPDccpTrainer(DccpTrainer):
         if self._objective is not None:
             return
 
+        n_features = len(np.unique(y))
+        if n_features != 2:
+            raise ValueError('Detected degenerate dataset, perhaps after '
+                             'train/validation split. Expected 2 features, '
+                             f'found only {n_features} feature(s)')
+
         # figure out whether we should invert the perceptron's output, since
         # the lower class should be lower in coordinates
         labels, inv, counts = np.unique(y, return_inverse=True,
