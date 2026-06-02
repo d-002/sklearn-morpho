@@ -6,7 +6,7 @@ class EpochStoppingMethod(StoppingMethod):
     equal to the parameter.
     """
 
-    def __init__(self, max_epochs: int):
+    def __init__(self, max_epochs = 20):
         if max_epochs <= 0:
             raise ValueError('invalid max_epochs, expected > 0 but got '
                              f'{max_epochs}')
