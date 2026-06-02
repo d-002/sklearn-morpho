@@ -2,8 +2,8 @@ from . import StoppingMethod
 
 class EpochStoppingMethod(StoppingMethod):
     """
-    Stopping method that triggers whenever the number of epochs gets greater
-    than the parameter.
+    Stopping method that triggers whenever the number of epochs gets greater or
+    equal to the parameter.
     """
 
     def __init__(self, max_epochs: int):
@@ -18,4 +18,4 @@ class EpochStoppingMethod(StoppingMethod):
 
     def should_stop(self, n_epochs: int, train_cost: float,
                     validation_cost: float) -> bool:
-        return n_epochs > self.max_epochs
+        return n_epochs >= self.max_epochs

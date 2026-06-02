@@ -5,6 +5,9 @@ class EarlyStoppingMethod(StoppingMethod):
     Stopping method that triggers whenever the validation cost starts increasing
     while the training cost keeps decreasing, this for a set number of
     consecutive epochs.
+
+    It is assumed that the training cost keeps decreasing as should be the case
+    during functional training.
     """
 
     def __init__(self, delay: int):
