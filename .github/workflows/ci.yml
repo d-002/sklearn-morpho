@@ -16,9 +16,6 @@ jobs:
           ubuntu-latest,
           windows-latest,
           macos-latest,
-          freebsd-latest,
-          netbst-latest,
-          openbsd-latest
         ]
 
     steps:
