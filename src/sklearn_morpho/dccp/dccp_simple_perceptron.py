@@ -1,7 +1,6 @@
 import numpy as np
 import cvxpy as cp
 from typing import Literal, cast
-from warnings import warn
 
 from .dccp_wrapper import DccpTrainer
 from ..weighting import SampleWeighting
