@@ -54,8 +54,7 @@ jobs:
 
       - name: Check coverage
         run: |
-          hatch run pytest --cov || true
-          python -m coverage report --fail-under=90
+          hatch run pytest --cov --cov-fail-under=90
 
   todo:
     name: Check for TODOs in code
