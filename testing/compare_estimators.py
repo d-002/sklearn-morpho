@@ -102,7 +102,7 @@ def save_data():
 
 skf = StratifiedKFold(n_splits=n_splits)
 for dataset_name in datasets_names:
-    print(f"Training with dataset '{dataset_name}'...")
+    print(f'Training with dataset "{dataset_name}"...')
     scores[dataset_name] = {}
     times[dataset_name] = {}
 

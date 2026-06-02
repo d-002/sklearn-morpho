@@ -21,15 +21,12 @@ class DistSampleWeighting(SampleWeighting):
         centroids = sums / counts[:, np.newaxis]
 
         # inverse distance from each data point to its respective class centroid
-        self.weights_ = 1 / (1e-6 + np.linalg.norm(X - centroids[y], axis=1))
-        max_centroid_w = np.array([self.weights_[y == y_].max()
-                                   for y_ in range(2)])
+        self.weights_ = 1 / (1e-9 + np.linalg.norm(X - centroids[inv], axis=1))
+        max_centroid_w = np.zeros(len(labels))
+        np.maximum.at(max_centroid_w, inv, self.weights_)
         self.weights_ /= max_centroid_w[y]
 
-        cost_normalizer = self.weights_.sum()
-        if np.isclose(cost_normalizer, 0):
-            self.cost_normalizer_ = 1
-        else:
-            self.cost_normalizer_ = cost_normalizer
+        cost_normalizer = self.weights_.sum() / len(labels)
+        self.cost_normalizer_ = cost_normalizer
 
         return self
