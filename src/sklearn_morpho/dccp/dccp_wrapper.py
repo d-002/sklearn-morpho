@@ -242,7 +242,7 @@ class DccpTrainer(ABC):
 
         problem = self.get_problem_dccp(X_train, y_train, cost_weights)
         solve_result = problem.solve(verbose=self.verbose == 2, method='dccp')
-        solve_result = cast(float, solve_result[0]) # type: ignore
+        solve_result = cast(float, solve_result) # type: ignore
 
         self.after_epoch()
 
@@ -279,8 +279,8 @@ class DccpTrainer(ABC):
                 for stopping_method in self.stopping_methods:
                     if stopping_method.requires_validation():
                         raise ValueError('Cannot train, at least one stopping '
-                                         'method requires validation which is '
-                                         'disabled by the user')
+                                         f'method ({stopping_method}) requires '
+                                         'validation which was disabled')
 
             X_train, X_validation = X, np.empty(X.shape)
             y_train, y_validation = y, np.empty(y.shape)
@@ -293,8 +293,9 @@ class DccpTrainer(ABC):
             y_train = cast(np.ndarray, y_train)
             y_validation = cast(np.ndarray, y_validation)
 
-        if not X_train.size or (
-                not X_validation.size and self.validation_ratio != 0):
+        # training and validation datasets should be nonempty, but they could
+        # not contain all classes
+        if len(np.unique(y_train)) != 2 or len(np.unique(y_validation)) != 2:
             raise ValueError('Current validation ratio makes unwanted '
                              'degenerate train/validation split: '
                              + str(self.validation_ratio))
