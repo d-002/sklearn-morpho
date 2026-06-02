@@ -6,17 +6,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sklearn-morpho"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
-    "cvxpy",
-    "numpy",
-    "scikit-learn",
+    "cvxpy>=1.9.0,<2.0.0",
+    "numpy>=2.0.0",
+    "scikit-learn>=1.8.0,<2.0.0",
 ]
 
 [project.optional-dependencies]
 dccp = [
-    "dccp",
-    "pytest",
+    "dccp>=1.1.1,<2.0.0",
+    "pytest>=9.0.0,<10.0.0",
 ]
 
 [tool.pytest.ini_options]
@@ -26,12 +26,12 @@ testpaths = ["tests"]
 python = "3.13"
 path = ".venv" # for LSPs
 dependencies = [
-    "dccp",
-    "jupyterlab", # for coding the MREs
-    "matplotlib", # for files in testing
-    "pandas", # for scikit-learn's check_estimator and openml datasets
-    "pyqt6", # for matplotlib display on some devices
-    "pytest",
+    "dccp>=1.1.1,<2.0.0",
+    "jupyterlab>=4.5.0,<5.0.0", # for coding the MREs
+    "matplotlib>=3.10.0,<4.0.0", # for files in testing
+    "pandas>=3.0.0", # for scikit-learn's check_estimator and openml datasets
+    "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
+    "pytest>=9.0.0,<10.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
     "ruff>=0.15.0,<1.0.0", # linter
 ]
