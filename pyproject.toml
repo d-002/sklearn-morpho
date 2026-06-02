@@ -29,5 +29,6 @@ dependencies = [
     "pandas", # for scikit-learn's check_estimator and openml datasets
     "pyqt6", # for matplotlib display on some devices
     "pytest",
+    "pytest-cov",
     "jupyterlab", # for coding the MREs
 ]

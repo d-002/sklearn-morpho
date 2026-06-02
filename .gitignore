@@ -2,6 +2,8 @@
 __pycache__
 venv
 *.pyc
+.coverage
+htmlcov
 
 # vim
 *.swp
