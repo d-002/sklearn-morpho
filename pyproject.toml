@@ -21,7 +21,7 @@ dccp = [
 testpaths = ["src/sklearn_morpho/tests"]
 
 [tool.hatch.envs.default]
-python = "3.14"
+python = "3.13"
 path = ".venv" # for LSPs
 dependencies = [
     "dccp",
