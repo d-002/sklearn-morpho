@@ -25,6 +25,26 @@ jobs:
       - name: Run tests
         run: hatch run pytest
 
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install Hatch
+        run: pip install -U pip hatch
+
+      - name: Check coverage
+        run: |
+          hatch run pytest --cov || true
+          coverage report --fail-under=90
+
   todo:
     runs-on: ubuntu-latest
 
