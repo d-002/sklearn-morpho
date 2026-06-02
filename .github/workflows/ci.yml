@@ -37,6 +37,7 @@ jobs:
         run: hatch run pytest
 
   coverage:
+    name: Coverage test, ignore failed tests
     runs-on: ubuntu-latest
 
     steps:
@@ -57,6 +58,7 @@ jobs:
           coverage report --fail-under=90
 
   todo:
+    name: Check for TODOs in code
     runs-on: ubuntu-latest
 
     steps:
