@@ -295,10 +295,11 @@ class DccpTrainer(ABC):
 
         # training and validation datasets should be nonempty, but they could
         # not contain all classes
-        if len(np.unique(y_train)) != 2 or len(np.unique(y_validation)) != 2:
+        n_features = min(len(np.unique(y_validation)), len(np.unique(y_train)))
+        if n_features != 2:
             raise ValueError('Current validation ratio makes unwanted '
-                             'degenerate train/validation split: '
-                             + str(self.validation_ratio))
+                             'degenerate train/validation split: expected 2 '
+                             f'features, found only {n_features} feature(s)')
 
         # formulate the cvxpy problem to solve, common to all epochs
         self.at_training_start(X_train.shape[1])
