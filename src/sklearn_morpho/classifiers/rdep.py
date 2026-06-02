@@ -72,9 +72,9 @@ class RDEP(ClassifierMixin, BaseEstimator):
                                 to the epoch with the best validation cost.
                                 If left to None, will use:
                                 [
-                                    CostStoppingMethod(1e-6),
-                                    EarlyStoppingMethod(5),
-                                    EpochStoppingMethod(20),
+                                    CostStoppingMethod(),
+                                    EarlyStoppingMethod(),
+                                    EpochStoppingMethod(),
                                     TrainStopStoppingMethod(),
                                 ]
                                 Ignored when using the dccp library solver.
@@ -120,9 +120,9 @@ class RDEP(ClassifierMixin, BaseEstimator):
             weighting_method = self.weighting_method
         if self.stopping_methods is None:
             stopping_methods = [
-                CostStoppingMethod(1e-6),
-                EarlyStoppingMethod(5),
-                EpochStoppingMethod(20),
+                CostStoppingMethod(),
+                EarlyStoppingMethod(),
+                EpochStoppingMethod(),
                 TrainStopStoppingMethod(),
             ]
         else:
