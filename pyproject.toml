@@ -18,7 +18,7 @@ dccp = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["src/sklearn_morpho/tests"]
+testpaths = ["tests"]
 
 [tool.hatch.envs.default]
 python = "3.13"
@@ -29,6 +29,6 @@ dependencies = [
     "pandas", # for scikit-learn's check_estimator and openml datasets
     "pyqt6", # for matplotlib display on some devices
     "pytest",
-    "pytest-cov",
+    "pytest-cov>=7.1.0,<8.0.0",
     "jupyterlab", # for coding the MREs
 ]
