@@ -67,7 +67,8 @@ class DccpTrainer(ABC):
             )
         if not len(stopping_methods):
             raise ValueError(
-                'Empty list of stopping methods, training would run indefinitely'
+                'Empty list of stopping methods, '
+                'training would run indefinitely'
             )
 
         self.margin = margin
@@ -278,7 +279,8 @@ class DccpTrainer(ABC):
         if self.verbose:
             dt = end - start
             print(
-                f'DCCP done, training_cost cost is {training_cost:.8f} in {dt:.2f}s'
+                'DCCP done, training_cost cost is '
+                f'{training_cost:.8f} in {dt:.2f}s'
             )
 
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
