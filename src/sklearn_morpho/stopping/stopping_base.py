@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class StoppingMethod(ABC):
     """
     Abstract class for a fitting stopping method.
@@ -18,8 +19,9 @@ class StoppingMethod(ABC):
         """
 
     @abstractmethod
-    def should_stop(self, n_epochs: int, train_cost: float,
-                    validation_cost: float) -> bool:
+    def should_stop(
+        self, n_epochs: int, train_cost: float, validation_cost: float
+    ) -> bool:
         """
         Given some information, return whether the fitting process should stop.
         """

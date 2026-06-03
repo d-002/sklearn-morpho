@@ -8,16 +8,23 @@ from sklearn.model_selection import train_test_split
 from ..weighting import SampleWeighting
 from ..stopping import StoppingMethod
 
+
 class DccpTrainer(ABC):
     """
     Abstract class for DCCP optimization using cvxpy.
     """
 
-    def __init__(self, margin: float, penalty: float, validation_ratio: float,
-                 weighting_method: SampleWeighting,
-                 stopping_methods: list[StoppingMethod],
-                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
-                 random_state: np.random.RandomState) -> None:
+    def __init__(
+        self,
+        margin: float,
+        penalty: float,
+        validation_ratio: float,
+        weighting_method: SampleWeighting,
+        stopping_methods: list[StoppingMethod],
+        use_dccp_library: bool,
+        verbose: Literal[0, 1, 2],
+        random_state: np.random.RandomState,
+    ) -> None:
         """
         Initialize the trainer.
 
@@ -51,13 +58,17 @@ class DccpTrainer(ABC):
             raise ValueError(f'Invalid margin, expected >= 0 but got {margin}')
         if penalty < 0:
             raise ValueError(
-                    f'Invalid penalty, expected >= 0 but got {penalty}')
+                f'Invalid penalty, expected >= 0 but got {penalty}'
+            )
         if not 0 <= validation_ratio < 1:
-            raise ValueError('Invalid validation ratio, expected >= 0 and < 1 '
-                             f'but got {validation_ratio}')
+            raise ValueError(
+                'Invalid validation ratio, expected >= 0 and < 1 '
+                f'but got {validation_ratio}'
+            )
         if not len(stopping_methods):
-            raise ValueError('Empty list of stopping methods, training would '
-                             'run indefinitely')
+            raise ValueError(
+                'Empty list of stopping methods, training would run indefinitely'
+            )
 
         self.margin = margin
         self.penalty = penalty
@@ -110,8 +121,9 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
-                         cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_dccp(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         """
         Compute a cvxpy Objective and a list of Constraints for use in solving.
         The problem must be DCP, meaning the constraints must all be convex.
@@ -130,8 +142,9 @@ class DccpTrainer(ABC):
         """
 
     @abstractmethod
-    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
-                               cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_linearized(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         """
         Compute a cvxpy Objective and a list of Constraints for use in solving.
         The problem must be DCCP, to be used with the dccp library solver.
@@ -157,16 +170,18 @@ class DccpTrainer(ABC):
         after_epoch call, as it will have been made before this method's call.
         """
 
-    def train_linearized(self, data: tuple[np.ndarray, np.ndarray,
-                                           np.ndarray, np.ndarray]) -> None:
+    def train_linearized(
+        self, data: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+    ) -> None:
         """
         Helper function for train, uses a loop to solve multiple approximated
         steps, updating linearization accuracy over time.
         """
 
         X_train, X_validation, y_train, y_validation = data
-        cost_weights, cost_normalizer = \
-                self.weighting_method.fit_transform(X_train, y_train)
+        cost_weights, cost_normalizer = self.weighting_method.fit_transform(
+            X_train, y_train
+        )
 
         epoch = 1
         validation_cost: float = np.inf
@@ -175,7 +190,8 @@ class DccpTrainer(ABC):
         start = time()
         while True:
             problem = self.get_problem_linearized(
-                    X_train, y_train, cost_weights)
+                X_train, y_train, cost_weights
+            )
 
             # solve the problem, normalize the cost when using wdccp
             solve_result = problem.solve(verbose=self.verbose == 2)
@@ -202,12 +218,15 @@ class DccpTrainer(ABC):
                 else:
                     validation_comment = f', validation: {validation_cost:.8f}'
 
-                print(f'Epoch {epoch}, training cost: {cvxpy_cost:.8f}' +
-                      validation_comment)
+                print(
+                    f'Epoch {epoch}, training cost: {cvxpy_cost:.8f}'
+                    + validation_comment
+                )
 
             for stopping_method in self.stopping_methods:
                 if stopping_method.should_stop(
-                        epoch, train_cost, validation_cost):
+                    epoch, train_cost, validation_cost
+                ):
                     done = True
                     break
 
@@ -219,13 +238,16 @@ class DccpTrainer(ABC):
 
         if self.verbose:
             dt = end - start
-            print(f'DCCP done in {epoch} epochs, final validation cost is '
-                  f'{validation_cost:.8f} in {dt:.2f}s')
+            print(
+                f'DCCP done in {epoch} epochs, final validation cost is '
+                f'{validation_cost:.8f} in {dt:.2f}s'
+            )
 
         self.rollback_to_best()
 
-    def train_dccp(self, data: tuple[np.ndarray, np.ndarray,
-                                     np.ndarray, np.ndarray]) -> None:
+    def train_dccp(
+        self, data: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+    ) -> None:
         """
         Helper function for train, uses the dccp library to solve the problem in
         one step.
@@ -233,17 +255,19 @@ class DccpTrainer(ABC):
 
         # local import because optional dependency
         import dccp
-        dccp.__name__ # to avoid marking dccp as unused
+
+        dccp.__name__  # to avoid marking dccp as unused
 
         X_train, _, y_train, _ = data
-        cost_weights, cost_normalizer = \
-                self.weighting_method.fit_transform(X_train, y_train)
+        cost_weights, cost_normalizer = self.weighting_method.fit_transform(
+            X_train, y_train
+        )
 
         start = time()
 
         problem = self.get_problem_dccp(X_train, y_train, cost_weights)
         solve_result = problem.solve(verbose=self.verbose == 2, method='dccp')
-        solve_result = cast(float, solve_result) # type: ignore
+        solve_result = cast(float, solve_result)  # type: ignore
 
         self.after_epoch()
 
@@ -253,8 +277,9 @@ class DccpTrainer(ABC):
 
         if self.verbose:
             dt = end - start
-            print('DCCP done, training_cost cost is '
-                  f'{training_cost:.8f} in {dt:.2f}s')
+            print(
+                f'DCCP done, training_cost cost is {training_cost:.8f} in {dt:.2f}s'
+            )
 
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
         """
@@ -279,16 +304,21 @@ class DccpTrainer(ABC):
             if not self.use_dccp_library:
                 for stopping_method in self.stopping_methods:
                     if stopping_method.requires_validation():
-                        raise ValueError('Cannot train, at least one stopping '
-                                         f'method ({stopping_method}) requires '
-                                         'validation which was disabled')
+                        raise ValueError(
+                            'Cannot train, at least one stopping '
+                            f'method ({stopping_method}) requires '
+                            'validation which was disabled'
+                        )
 
             X_train, X_validation = X, np.empty(X.shape)
             y_train, y_validation = y, np.empty(y.shape)
         else:
             X_train, X_validation, y_train, y_validation = train_test_split(
-                    X, y, test_size=self.validation_ratio,
-                    random_state=self.random_state)
+                X,
+                y,
+                test_size=self.validation_ratio,
+                random_state=self.random_state,
+            )
             X_train = cast(np.ndarray, X_train)
             X_validation = cast(np.ndarray, X_validation)
             y_train = cast(np.ndarray, y_train)

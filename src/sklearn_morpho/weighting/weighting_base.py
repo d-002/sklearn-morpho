@@ -5,8 +5,10 @@ from sklearn.base import OneToOneFeatureMixin, TransformerMixin, BaseEstimator
 
 WeightingResult = tuple[np.ndarray, float]
 
-class SampleWeighting(ABC, OneToOneFeatureMixin, TransformerMixin,
-                      BaseEstimator):
+
+class SampleWeighting(
+    ABC, OneToOneFeatureMixin, TransformerMixin, BaseEstimator
+):
     """
     Abstract class for transformers that convert data points to a set of
     respective weights.
@@ -33,14 +35,19 @@ class SampleWeighting(ABC, OneToOneFeatureMixin, TransformerMixin,
 
     def transform(self, X: np.ndarray | None) -> WeightingResult:
         if X is not None:
-            raise ValueError(f'{self.__class__.__name__}: only supports '
-                             'fitting and transforming the same data, do not '
-                             'specify it in transform()')
+            raise ValueError(
+                f'{self.__class__.__name__}: only supports '
+                'fitting and transforming the same data, do not '
+                'specify it in transform()'
+            )
 
         return self.weights_, self.cost_normalizer_
 
     # override this to make fit_transform usable but still prevent wrong usage
-    def fit_transform(self, X: np.ndarray, y: np.ndarray # pyright: ignore
-                      ) -> WeightingResult:
-        self.fit(X, y) # pyright: ignore
+    def fit_transform(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,  # pyright: ignore
+    ) -> WeightingResult:
+        self.fit(X, y)  # pyright: ignore
         return self.transform(None)

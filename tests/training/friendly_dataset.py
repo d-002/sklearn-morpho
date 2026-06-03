@@ -1,8 +1,9 @@
 import numpy as np
 
-def friendly_dataset(n_samples=100,
-                     random_state: np.random.RandomState | None = None
-                     ) -> tuple[np.ndarray, np.ndarray]:
+
+def friendly_dataset(
+    n_samples=100, random_state: np.random.RandomState | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate a toy 2D dataset that is suitable for all l-DEP, r-DEP and simple
     morphological perceptrons.

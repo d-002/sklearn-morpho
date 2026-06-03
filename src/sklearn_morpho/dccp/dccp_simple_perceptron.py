@@ -6,6 +6,7 @@ from .dccp_wrapper import DccpTrainer
 from ..weighting import SampleWeighting
 from ..stopping import StoppingMethod
 
+
 class SimplePerceptronDccpTrainer(DccpTrainer):
     """
     Simple perceptron trainer.
@@ -17,12 +18,18 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
     interpretability reasons once the estimator is trained.
     """
 
-    def __init__(self, kind: Literal['max', 'min'], margin: float,
-                 penalty: float, validation_ratio: float,
-                 weighting_method: SampleWeighting,
-                 stopping_methods: list[StoppingMethod],
-                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
-                 random_state: np.random.RandomState) -> None:
+    def __init__(
+        self,
+        kind: Literal['max', 'min'],
+        margin: float,
+        penalty: float,
+        validation_ratio: float,
+        weighting_method: SampleWeighting,
+        stopping_methods: list[StoppingMethod],
+        use_dccp_library: bool,
+        verbose: Literal[0, 1, 2],
+        random_state: np.random.RandomState,
+    ) -> None:
         """
         Initialize the r-DEP trainer.
 
@@ -30,9 +37,16 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         param [others]: See base class.
         """
 
-        super().__init__(margin, penalty, validation_ratio, weighting_method,
-                         stopping_methods, use_dccp_library, verbose,
-                         random_state)
+        super().__init__(
+            margin,
+            penalty,
+            validation_ratio,
+            weighting_method,
+            stopping_methods,
+            use_dccp_library,
+            verbose,
+            random_state,
+        )
 
         self.kind = kind
 
@@ -43,8 +57,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         self.weights = self.random_state.randn(data_dim)
         self._training_weights = cp.Variable(data_dim)
 
-    def set_objective(self, X: np.ndarray,
-                      cost_weights: np.ndarray) -> None:
+    def set_objective(self, X: np.ndarray, cost_weights: np.ndarray) -> None:
         # the objective and the slack variables do not change, cache them
         if self._objective is not None:
             return
@@ -57,8 +70,9 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
         self._objective = cp.Minimize(value)
 
-    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
-                               cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_linearized(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         K = X.shape[0]
         self.set_objective(X, cost_weights)
 
@@ -82,32 +96,36 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
             # add weights to every row of (X @ matrix.T) using np.ones to create
             # a matrix safely for cvxpy's cpp backend
             ones = np.ones((K_, 1))
-            expr = X_ + ones @ cp.reshape(self._training_weights,
-                                          (1, self.weights.size),
-                                          order='C')
+            expr = X_ + ones @ cp.reshape(
+                self._training_weights, (1, self.weights.size), order='C'
+            )
 
             active_elt = cp.sum(cp.multiply(M[mask], expr), axis=1)
 
             if self.kind == 'max':
                 if label == 0:
-                    constraints.append(self.margin + cp.max(expr, axis=1)
-                                       <= self._slack[mask])
+                    constraints.append(
+                        self.margin + cp.max(expr, axis=1) <= self._slack[mask]
+                    )
                 else:
-                    constraints.append(self.margin
-                                       <= self._slack[mask] + active_elt)
+                    constraints.append(
+                        self.margin <= self._slack[mask] + active_elt
+                    )
             else:
                 if label == 0:
-                    constraints.append(self.margin + active_elt
-                                       <= self._slack[mask])
+                    constraints.append(
+                        self.margin + active_elt <= self._slack[mask]
+                    )
                 else:
-                    constraints.append(self.margin - cp.min(expr, axis=1)
-                                       <= self._slack[mask])
-
+                    constraints.append(
+                        self.margin - cp.min(expr, axis=1) <= self._slack[mask]
+                    )
 
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
-    def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
-                         cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_dccp(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         self.set_objective(X, cost_weights)
 
         constraints = []
@@ -120,9 +138,9 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
             K_ = X_.shape[0]
 
             ones = np.ones((K_, 1))
-            expr = X_ + ones @ cp.reshape(self._training_weights,
-                                          (1, self.weights.size),
-                                          order='C')
+            expr = X_ + ones @ cp.reshape(
+                self._training_weights, (1, self.weights.size), order='C'
+            )
 
             if self.kind == 'max':
                 expr = cp.max(expr, axis=1)

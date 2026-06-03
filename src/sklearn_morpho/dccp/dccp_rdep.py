@@ -7,6 +7,7 @@ from .dccp_wrapper import DccpTrainer
 from ..weighting import SampleWeighting
 from ..stopping import StoppingMethod
 
+
 class RDEPDccpTrainer(DccpTrainer):
     """
     r-DEP trainer.
@@ -18,12 +19,18 @@ class RDEPDccpTrainer(DccpTrainer):
     interpretability reasons once the estimator is trained.
     """
 
-    def __init__(self, lambda_bounds: tuple[float, float], margin: float,
-                 penalty: float, validation_ratio: float,
-                 weighting_method: SampleWeighting,
-                 stopping_methods: list[StoppingMethod],
-                 use_dccp_library: bool, verbose: Literal[0, 1, 2],
-                 random_state: np.random.RandomState) -> None:
+    def __init__(
+        self,
+        lambda_bounds: tuple[float, float],
+        margin: float,
+        penalty: float,
+        validation_ratio: float,
+        weighting_method: SampleWeighting,
+        stopping_methods: list[StoppingMethod],
+        use_dccp_library: bool,
+        verbose: Literal[0, 1, 2],
+        random_state: np.random.RandomState,
+    ) -> None:
         """
         Initialize the r-DEP trainer.
 
@@ -34,17 +41,29 @@ class RDEPDccpTrainer(DccpTrainer):
         param [others]:      See base class.
         """
 
-        super().__init__(margin, penalty, validation_ratio, weighting_method,
-                         stopping_methods, use_dccp_library, verbose,
-                         random_state)
+        super().__init__(
+            margin,
+            penalty,
+            validation_ratio,
+            weighting_method,
+            stopping_methods,
+            use_dccp_library,
+            verbose,
+            random_state,
+        )
 
         if lambda_bounds[0] < 0 or lambda_bounds[1] > 1:
-            raise ValueError('Invalid lambda_bounds, expected within [0, 1] '
-                             f'got {list(lambda_bounds)}')
-        if (lambda_bounds[0] == 0 or lambda_bounds[1] == 1) \
-                and use_dccp_library:
-            warn('Warning: lambda_bounds may be inappropriate for dccp solver: '
-                 f'{list(lambda_bounds)}')
+            raise ValueError(
+                'Invalid lambda_bounds, expected within [0, 1] '
+                f'got {list(lambda_bounds)}'
+            )
+        if (
+            lambda_bounds[0] == 0 or lambda_bounds[1] == 1
+        ) and use_dccp_library:
+            warn(
+                'Warning: lambda_bounds may be inappropriate for dccp solver: '
+                f'{list(lambda_bounds)}'
+            )
 
         self.lambda_bounds = lambda_bounds
 
@@ -56,7 +75,7 @@ class RDEPDccpTrainer(DccpTrainer):
         # initial values for linearization
         self.max_perceptron = self.random_state.randn(data_dim)
         self.min_perceptron = self.random_state.randn(data_dim)
-        self.lambda_ = .5
+        self.lambda_ = 0.5
 
         # to make the problem DCP, the training weights absorb the
         # multiplications involving lambda_, they are explicited at the end of
@@ -65,22 +84,26 @@ class RDEPDccpTrainer(DccpTrainer):
         self._min_training_weights = cp.Variable(data_dim)
         self._training_lambda = cp.Variable()
 
-    def set_objective(self, X: np.ndarray, y: np.ndarray,
-                      cost_weights: np.ndarray) -> None:
+    def set_objective(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> None:
         # the objective and the slack variables do not change, cache them
         if self._objective is not None:
             return
 
         n_features = len(np.unique(y))
         if n_features != 2:
-            raise ValueError('Detected degenerate dataset, perhaps after '
-                             'train/validation split. Expected 2 features, '
-                             f'found only {n_features} feature(s)')
+            raise ValueError(
+                'Detected degenerate dataset, perhaps after '
+                'train/validation split. Expected 2 features, '
+                f'found only {n_features} feature(s)'
+            )
 
         # figure out whether we should invert the perceptron's output, since
         # the lower class should be lower in coordinates
-        labels, inv, counts = np.unique(y, return_inverse=True,
-                                        return_counts=True)
+        labels, inv, counts = np.unique(
+            y, return_inverse=True, return_counts=True
+        )
         sums = np.zeros((len(labels), X.shape[1]))
         np.add.at(sums, inv, X)
         centroids = sums / counts[:, np.newaxis]
@@ -93,14 +116,15 @@ class RDEPDccpTrainer(DccpTrainer):
         value = cp.sum(cp.multiply(cp.pos(self._slack), cost_weights))
         if self.penalty > 0:
             value += self.penalty * (
-                cp.sum_squares(self._max_training_weights) +
-                cp.sum_squares(self._min_training_weights)
+                cp.sum_squares(self._max_training_weights)
+                + cp.sum_squares(self._min_training_weights)
             )
 
         self._objective = cp.Minimize(value)
 
-    def get_problem_linearized(self, X: np.ndarray, y: np.ndarray,
-                               cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_linearized(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         K = X.shape[0]
         self.set_objective(X, y, cost_weights)
 
@@ -110,8 +134,9 @@ class RDEPDccpTrainer(DccpTrainer):
         # sometimes using values from the previous epoch.
 
         idx_max = np.argmax(self.lambda_ * X + self.max_perceptron, axis=1)
-        idx_min = np.argmin((1 - self.lambda_) * X + self.min_perceptron,
-                            axis=1)
+        idx_min = np.argmin(
+            (1 - self.lambda_) * X + self.min_perceptron, axis=1
+        )
 
         # create arrays to regroup the active indices using numpy, to then apply
         # constraints all at once and use AST optimizations inside cvxpy
@@ -134,31 +159,42 @@ class RDEPDccpTrainer(DccpTrainer):
             ones = np.ones((K_, 1))
             expr_max = self._training_lambda * X_
             expr_min = (1 - self._training_lambda) * X_
-            expr_max += ones @ cp.reshape(self._max_training_weights,
-                                          (1, self.max_perceptron.size),
-                                          order='C')
-            expr_min += ones @ cp.reshape(self._min_training_weights,
-                                          (1, self.min_perceptron.size),
-                                          order='C')
+            expr_max += ones @ cp.reshape(
+                self._max_training_weights,
+                (1, self.max_perceptron.size),
+                order='C',
+            )
+            expr_min += ones @ cp.reshape(
+                self._min_training_weights,
+                (1, self.min_perceptron.size),
+                order='C',
+            )
 
             active_max = cp.sum(cp.multiply(M_max[mask], expr_max), axis=1)
             active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
 
             if (label == 0) ^ self.invert_res:
-                constraints.append(self.margin + cp.max(expr_max, axis=1)
-                                   <= self._slack[mask] - active_min)
+                constraints.append(
+                    self.margin + cp.max(expr_max, axis=1)
+                    <= self._slack[mask] - active_min
+                )
             else:
-                constraints.append(self.margin - cp.min(expr_min, axis=1)
-                                   <= self._slack[mask] + active_max)
+                constraints.append(
+                    self.margin - cp.min(expr_min, axis=1)
+                    <= self._slack[mask] + active_max
+                )
 
         # avoid lambda making some constraints convex when they should be
         # concave and vice versa
-        constraints += [self.lambda_bounds[0] <= self._training_lambda,
-                        self._training_lambda <= self.lambda_bounds[1]]
+        constraints += [
+            self.lambda_bounds[0] <= self._training_lambda,
+            self._training_lambda <= self.lambda_bounds[1],
+        ]
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
-    def get_problem_dccp(self, X: np.ndarray, y: np.ndarray,
-                         cost_weights: np.ndarray) -> cp.Problem:
+    def get_problem_dccp(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> cp.Problem:
         self.set_objective(X, y, cost_weights)
 
         constraints = []
@@ -173,25 +209,33 @@ class RDEPDccpTrainer(DccpTrainer):
             ones = np.ones((K_, 1))
             expr_max = self._training_lambda * X_
             expr_min = (1 - self._training_lambda) * X_
-            expr_max += ones @ cp.reshape(self._max_training_weights,
-                                          (1, self.max_perceptron.size),
-                                          order='C')
-            expr_min += ones @ cp.reshape(self._min_training_weights,
-                                          (1, self.min_perceptron.size),
-                                          order='C')
+            expr_max += ones @ cp.reshape(
+                self._max_training_weights,
+                (1, self.max_perceptron.size),
+                order='C',
+            )
+            expr_min += ones @ cp.reshape(
+                self._min_training_weights,
+                (1, self.min_perceptron.size),
+                order='C',
+            )
 
             expr_max = cp.max(expr_max, axis=1)
             expr_min = cp.min(expr_min, axis=1)
 
             if (label == 0) ^ self.invert_res:
-                constraints.append(self.margin + expr_max <=
-                                   self._slack[mask] - expr_min)
+                constraints.append(
+                    self.margin + expr_max <= self._slack[mask] - expr_min
+                )
             else:
-                constraints.append(self.margin - expr_min <=
-                                   self._slack[mask] + expr_max)
+                constraints.append(
+                    self.margin - expr_min <= self._slack[mask] + expr_max
+                )
 
-        constraints += [self.lambda_bounds[0] <= self._training_lambda,
-                        self._training_lambda <= self.lambda_bounds[1]]
+        constraints += [
+            self.lambda_bounds[0] <= self._training_lambda,
+            self._training_lambda <= self.lambda_bounds[1],
+        ]
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -204,8 +248,10 @@ class RDEPDccpTrainer(DccpTrainer):
 
     def after_epoch(self) -> None:
         # update the perceptrons weights from this epoch's results
-        if self._max_training_weights.value is None or \
-                self._min_training_weights.value is None:
+        if (
+            self._max_training_weights.value is None
+            or self._min_training_weights.value is None
+        ):
             raise ValueError('CvxPy could not optimize a perceptron')
         if self._training_lambda.value is None:
             raise ValueError('CvxPy could not optimize lambda')
