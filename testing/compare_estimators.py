@@ -13,6 +13,7 @@ import numpy as np
 from time import time
 from scipy.sparse._csr import csr_matrix
 from joblib import Parallel, delayed
+from multiprocessing import Manager
 
 from sklearn.metrics import f1_score
 from sklearn.datasets import load_breast_cancer, fetch_openml
@@ -26,18 +27,14 @@ from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
 
-## Configuration, timeout handling
+## Configuration
 
 FILE = 'comparison.json'
 # ignore warnings for cleaner logs
 ignore_warnings = True
 n_folds = 5
-max_jobs = 20
-timeout = 60
+max_jobs = 15
 random_state = np.random.RandomState()
-
-scores = {}
-times = {}
 
 if ignore_warnings:
     warnings.filterwarnings("ignore")
@@ -133,12 +130,14 @@ estimators = {
     'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
+datasets_names = datasets_names[:5] # TODO remove
+
 ## Load datasets
 print('\nLoading datasets...')
 
 datasets = {}
 for dataset_name in datasets_names:
-    print(f'=> Loading {dataset_name:<35}', end='\r')
+    print(f'\033[32m=>\033[m Loading {dataset_name:<35}', end='\r')
     match dataset_name:
         case 'breast-cancer':
             datasets[dataset_name] = load_breast_cancer(return_X_y=True)
@@ -150,22 +149,20 @@ print('\n')
 
 ## Main logic
 
+# centralized data
+manager = Manager()
+scores = manager.dict({d: {e: 0 for e in estimators} for d in datasets_names})
+times = manager.dict({d: {e: 0 for e in estimators} for d in datasets_names})
 
-# TODO add progress bar, etc
-# TODO use save_data better
-def save_data(scores, times):
+def save_data():
     with open(FILE, 'w') as f:
-        json.dump(
-            {'n_folds': n_folds, 'scores': scores, 'times': times},
-            f,
-            indent=2,
-        )
+        data = {'n_folds': n_folds, 'scores': scores, 'times': times}
+        json.dump(data, f, indent=2)
 
 
-def worker(dataset_name, estimator_name) -> None:
+def worker(scores: dict[str, dict[str, float]], times: dict[str, dict[str, float]], dataset_name: str, estimator_name: str) -> None:
     if ignore_warnings:
         warnings.filterwarnings("ignore")
-    print(f'{dataset_name:>35}', estimator_name)  # TODO
 
     score_total = 0
     time_total = 0
@@ -188,34 +185,34 @@ def worker(dataset_name, estimator_name) -> None:
         score_total += score
         time_total += t1 - t0
 
-    scores[dataset_name][estimator_name] = score_total / n_folds
-    times[dataset_name][estimator_name] = time_total / n_folds
+    # need to make copies because the variables are shared
+    temp_scores = scores[dataset_name]
+    temp_scores[estimator_name] = score_total / n_folds
+    temp_times = times[dataset_name]
+    temp_times[estimator_name] = time_total / n_folds
+
+    scores[dataset_name] = temp_scores
+    times[dataset_name] = temp_times
 
 
 ## train in parallel
 print('Preparing to train')
 
-# fill the scores and times with dummy elements to avoid reallocations
-# during multiprocessing
-for dataset_name in datasets:
-    scores[dataset_name] = {}
-    times[dataset_name] = {}
-    for estimator_name in estimators:
-        scores[dataset_name][estimator_name] = 0
-        times[dataset_name][estimator_name] = 0
 
-n_jobs = min(os.process_cpu_count(), len(datasets) - 1, max_jobs)
+n_jobs = min(os.process_cpu_count(), len(datasets), max_jobs)
 if n_jobs <= 0:
     print('Nothing to do')
     sys.exit(0)
 
 print(f'{len(datasets)} datasets to process, splitting work in {n_jobs} jobs.')
 
-Parallel(n_jobs=n_jobs, timeout=timeout)(
-    delayed(worker)(dataset_name, estimator_name)
+Parallel(n_jobs=n_jobs)(
+    delayed(worker)(scores, times, dataset_name, estimator_name)
     for dataset_name in datasets
     for estimator_name in estimators
 )
 
+scores, times = dict(scores), dict(times)
+
 print('Done.')
-save_data(scores, times)  # TODO remove
+save_data()  # TODO remove
