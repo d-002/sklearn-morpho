@@ -7,11 +7,12 @@ Estimators selection inspired by arxiv/2011.06512
 import os
 import sys
 import json
-import signal
+import logging
+import warnings
 import numpy as np
 from time import time
 from scipy.sparse._csr import csr_matrix
-from multiprocessing import Manager, Pool
+from joblib import Parallel, delayed
 
 from sklearn.metrics import f1_score
 from sklearn.datasets import load_breast_cancer, fetch_openml
@@ -27,45 +28,22 @@ from sklearn.multiclass import OneVsRestClassifier
 
 ## Configuration, timeout handling
 
-FILE = 'comparison_data.json'
+FILE = 'comparison.json'
+# ignore warnings for cleaner logs
+ignore_warnings = True
 n_folds = 5
+max_jobs = 20
 timeout = 60
-
-class TimeoutException(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise TimeoutException('Training timed out')
-
-
-# TODO handle this
-signal.signal(signal.SIGALRM, timeout_handler)
-
-## set up estimators
 random_state = np.random.RandomState()
-print(f'Random state: {random_state}')
 
-estimators = {
-    'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    'DCCP l-DEP': OneVsRestClassifier(
-        LDEP(use_dccp_library=True, random_state=random_state)
-    ),
-    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
-    'DCCP r-DEP': OneVsRestClassifier(
-        RDEP(use_dccp_library=True, random_state=random_state)
-    ),
-    'Morpho_max': OneVsRestClassifier(
-        MorphoPerceptron(kind='max', random_state=random_state)
-    ),
-    'Morpho_min': OneVsRestClassifier(
-        MorphoPerceptron(kind='min', random_state=random_state)
-    ),
-    'Linear SVC': LinearSVC(random_state=random_state),
-    'RBF SVC': SVC(kernel='rbf', random_state=random_state),
-    'MLP': MLPClassifier(max_iter=1000, random_state=random_state),
-    'Poly SVC': SVC(kernel='poly', random_state=random_state),
-}
+scores = {}
+times = {}
+
+if ignore_warnings:
+    warnings.filterwarnings("ignore")
+
+print(f'Random state: {random_state}')
+print(f'Comparison data will be outputted to: "{FILE}"')
 
 ## Set up datasets
 
@@ -89,14 +67,13 @@ def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
 
 
 skf = StratifiedKFold(n_splits=n_folds)
-datasets = [
+datasets_names = [
     'acute-inflammations',
     'australian',
     'banana',
     'banknote-authentication',
     'blood-transfusion-service-center',
     'breast-cancer',
-    'chess',
     'colic',
     'credit-approval',
     'credit-g',
@@ -122,18 +99,57 @@ datasets = [
 ]
 
 # datasets not included compared to arxiv/2011.06512:
+# - chess (nonexistent)
 # - internet-advertisements (internally referring to a nonexistent dataset)
 
 datasets_options = {
     'australian': {'version': 4},
     'Breast_Cancer_Wisconsin': {'as_frame': True},
-    'chess': {'version': 2},
     'cylinder-bands': {'version': 6},
     'titanic': {'as_frame': True},
 }
 
+## Create estimators
+
+print('Creating estimators...')
+estimators = {
+    'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
+    'DCCP l-DEP': OneVsRestClassifier(
+        LDEP(use_dccp_library=True, random_state=random_state)
+    ),
+    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
+    'DCCP r-DEP': OneVsRestClassifier(
+        RDEP(use_dccp_library=True, random_state=random_state)
+    ),
+    'Morpho_max': OneVsRestClassifier(
+        MorphoPerceptron(kind='max', random_state=random_state)
+    ),
+    'Morpho_min': OneVsRestClassifier(
+        MorphoPerceptron(kind='min', random_state=random_state)
+    ),
+    'Linear SVC': LinearSVC(random_state=random_state),
+    'RBF SVC': SVC(kernel='rbf', random_state=random_state),
+    'MLP': MLPClassifier(max_iter=1000, random_state=random_state),
+    'Poly SVC': SVC(kernel='poly', random_state=random_state),
+}
+
+## Load datasets
+print('\nLoading datasets...')
+
+datasets = {}
+for dataset_name in datasets_names:
+    print(f'=> Loading {dataset_name:<35}', end='\r')
+    match dataset_name:
+        case 'breast-cancer':
+            datasets[dataset_name] = load_breast_cancer(return_X_y=True)
+        case _:
+            datasets[dataset_name] = get_clean_openml(
+                dataset_name, **datasets_options.get(dataset_name, {})
+            )
+print('\n')
 
 ## Main logic
+
 
 # TODO add progress bar, etc
 # TODO use save_data better
@@ -146,91 +162,60 @@ def save_data(scores, times):
         )
 
 
-def worker(scores, times, dataset_name) -> None:
-    # some datasets must be loaded differently
-    match dataset_name:
-        case 'breast-cancer':
-            X, y = load_breast_cancer(return_X_y=True)
-        case _:
-            X, y = get_clean_openml(
-                dataset_name, **datasets_options.get(dataset_name, {})
-            )
+def worker(dataset_name, estimator_name) -> None:
+    if ignore_warnings:
+        warnings.filterwarnings("ignore")
+    print(f'{dataset_name:>35}', estimator_name)  # TODO
 
-    for estimator_name, estimator in estimators.items():
-        print(f'{dataset_name:>35}', estimator_name) # TODO
-        score_total = 0
-        time_total = 0
+    score_total = 0
+    time_total = 0
 
-        estimator = make_pipeline(
-            SimpleImputer(strategy='mean'),  # remove NaNs
-            estimator,
-        )
+    X, y = datasets[dataset_name]
+    estimator = make_pipeline(
+        SimpleImputer(strategy='mean'),  # remove NaNs
+        estimators[estimator_name],
+    )
 
-        for i_train, i_test in skf.split(X, y):
-            X_train, X_test = X[i_train], X[i_test]
-            y_train, y_test = y[i_train], y[i_test]
+    for i_train, i_test in skf.split(X, y):
+        X_train, X_test = X[i_train], X[i_test]
+        y_train, y_test = y[i_train], y[i_test]
 
-            #signal.alarm(timeout)
-            t0 = time()
-            try:
-                estimator.fit(X_train, y_train)
-            except TimeoutException:
-                print(
-                    f'    Warning: {estimator_name} timed out after {timeout}s.'
-                )
-                score_total += 0
-                time_total += timeout
-                continue
+        t0 = time()
+        estimator.fit(X_train, y_train)
+        t1 = time()
 
-            t1 = time()
-            #signal.alarm(0)
+        score = f1_score(y_test, estimator.predict(X_test), average='micro')
+        score_total += score
+        time_total += t1 - t0
 
-            score = f1_score(
-                y_test, estimator.predict(X_test), average='micro'
-            )
-            score_total += score
-            time_total += t1 - t0
-
-        scores[dataset_name][estimator_name] = score_total / n_folds
-        times[dataset_name][estimator_name] = time_total / n_folds
-        print('done with dataset', dataset_name) # TODO remove
+    scores[dataset_name][estimator_name] = score_total / n_folds
+    times[dataset_name][estimator_name] = time_total / n_folds
 
 
-def main():
-    scores = {}
-    times = {}
+## train in parallel
+print('Preparing to train')
 
-    # fill the scores and times with dummy elements to avoid reallocations
-    # during multiprocessing
-    for dataset_name in datasets:
-        scores[dataset_name] = {}
-        times[dataset_name] = {}
-        for estimator_name in estimators:
-            scores[dataset_name][estimator_name] = 0
-            times[dataset_name][estimator_name] = 0
+# fill the scores and times with dummy elements to avoid reallocations
+# during multiprocessing
+for dataset_name in datasets:
+    scores[dataset_name] = {}
+    times[dataset_name] = {}
+    for estimator_name in estimators:
+        scores[dataset_name][estimator_name] = 0
+        times[dataset_name][estimator_name] = 0
 
-    # evaluate estimators in parallel
-    n_workers = min(os.process_cpu_count(), len(datasets) - 1)
-    if n_workers <= 0:
-        print('Nothing to do')
-        sys.exit(0)
+n_jobs = min(os.process_cpu_count(), len(datasets) - 1, max_jobs)
+if n_jobs <= 0:
+    print('Nothing to do')
+    sys.exit(0)
 
-    print(f'{len(datasets)} datasets to process, '
-          f'splitting work in {n_workers} workers.')
+print(f'{len(datasets)} datasets to process, splitting work in {n_jobs} jobs.')
 
-    pool = Pool(n_workers)
-    results = []
-    for dataset_name in datasets:
-        res = pool.apply_async(worker, (scores, times, dataset_name))
-        results.append(res)
+Parallel(n_jobs=n_jobs, timeout=timeout)(
+    delayed(worker)(dataset_name, estimator_name)
+    for dataset_name in datasets
+    for estimator_name in estimators
+)
 
-    for res in results:
-        res.get()
-    pool.close()
-    pool.join()
-
-    print('Done.')
-    save_data(scores, times) # TODO remove
-
-if __name__ == '__main__':
-    main()
+print('Done.')
+save_data(scores, times)  # TODO remove
