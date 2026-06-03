@@ -55,9 +55,9 @@ def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
     X, y = fetch_openml(name, return_X_y=True, **kwargs)
 
     # make sure X and y are not sparse
-    if type(X) == csr_matrix:
+    if isinstance(X, csr_matrix):
         X = X.toarray()
-    if type(y) == csr_matrix:
+    if isinstance(y, csr_matrix):
         y = y.toarray()
 
     # make sure X contains only numbers, not yes/no like in australian
@@ -90,7 +90,8 @@ datasets_options = {
 scores = {}
 times = {}
 
-class TimeoutException(Exception):pass
+class TimeoutException(Exception):
+    pass
 def timeout_handler(signum, frame):
     raise TimeoutException('Timed out')
 signal.signal(signal.SIGALRM, timeout_handler)

@@ -1,3 +1,3 @@
-from .ldep import LDEP
-from .rdep import RDEP
-from .simple_perceptron import MorphoPerceptron
+from .ldep import LDEP as LDEP
+from .rdep import RDEP as RDEP
+from .simple_perceptron import MorphoPerceptron as MorphoPerceptron
