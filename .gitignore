@@ -20,7 +20,8 @@ dccp.log
 WDBC.dat.txt
 
 # comparison
-comparison_data.json
+comparison.json
+comparison.log
 
 # jupyter
 .ipynb_checkpoints
