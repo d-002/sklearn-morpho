@@ -4,31 +4,45 @@ averaged from multiple datasets.
 Estimators selection inspired by arxiv/2011.06512
 """
 
+import os
+import sys
 import json
 import signal
 import numpy as np
 from time import time
 from scipy.sparse._csr import csr_matrix
+from multiprocessing import Manager, Pool
 
 from sklearn.metrics import f1_score
 from sklearn.datasets import load_breast_cancer, fetch_openml
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.model_selection import train_test_split, StratifiedKFold
 
-# perceptrons
 from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
-
 from sklearn.svm import LinearSVC, SVC
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
 
+## Configuration, timeout handling
+
 FILE = 'comparison_data.json'
-n_splits = 5
+n_folds = 5
 timeout = 60
 
-# set up estimators and datasets
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutException('Training timed out')
+
+
+# TODO handle this
+signal.signal(signal.SIGALRM, timeout_handler)
+
+## set up estimators
 random_state = np.random.RandomState()
 print(f'Random state: {random_state}')
 
@@ -53,6 +67,8 @@ estimators = {
     'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
+## Set up datasets
+
 
 def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
@@ -72,7 +88,8 @@ def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-datasets_names = [
+skf = StratifiedKFold(n_splits=n_folds)
+datasets = [
     'acute-inflammations',
     'australian',
     'banana',
@@ -110,42 +127,27 @@ datasets_names = [
 datasets_options = {
     'australian': {'version': 4},
     'Breast_Cancer_Wisconsin': {'as_frame': True},
+    'chess': {'version': 2},
     'cylinder-bands': {'version': 6},
     'titanic': {'as_frame': True},
 }
 
-# evaluate estimators
-scores = {}
-times = {}
 
+## Main logic
 
-class TimeoutException(Exception):
-    pass
-
-
-def timeout_handler(signum, frame):
-    raise TimeoutException('Timed out')
-
-
-signal.signal(signal.SIGALRM, timeout_handler)
-
-
-def save_data():
+# TODO add progress bar, etc
+# TODO use save_data better
+def save_data(scores, times):
     with open(FILE, 'w') as f:
         json.dump(
-            {'n_splits': n_splits, 'scores': scores, 'times': times},
+            {'n_folds': n_folds, 'scores': scores, 'times': times},
             f,
             indent=2,
         )
 
 
-skf = StratifiedKFold(n_splits=n_splits)
-for dataset_name in datasets_names:
-    print(f'Training with dataset "{dataset_name}"...')
-    scores[dataset_name] = {}
-    times[dataset_name] = {}
-
-    # trying to factorize the code but some datasets must be loaded differently
+def worker(scores, times, dataset_name) -> None:
+    # some datasets must be loaded differently
     match dataset_name:
         case 'breast-cancer':
             X, y = load_breast_cancer(return_X_y=True)
@@ -155,21 +157,20 @@ for dataset_name in datasets_names:
             )
 
     for estimator_name, estimator in estimators.items():
-        print(f'  - Estimator {estimator_name}...')
-        scores[dataset_name][estimator_name] = []
-        times[dataset_name][estimator_name] = []
+        print(f'{dataset_name:>35}', estimator_name) # TODO
+        score_total = 0
+        time_total = 0
 
         estimator = make_pipeline(
             SimpleImputer(strategy='mean'),  # remove NaNs
             estimator,
         )
 
-        for X_fold, y_fold in skf.split(X, y):
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.3, random_state=random_state
-            )
+        for i_train, i_test in skf.split(X, y):
+            X_train, X_test = X[i_train], X[i_test]
+            y_train, y_test = y[i_train], y[i_test]
 
-            signal.alarm(timeout)
+            #signal.alarm(timeout)
             t0 = time()
             try:
                 estimator.fit(X_train, y_train)
@@ -177,19 +178,59 @@ for dataset_name in datasets_names:
                 print(
                     f'    Warning: {estimator_name} timed out after {timeout}s.'
                 )
-                scores[dataset_name][estimator_name].append(0)
-                times[dataset_name][estimator_name].append(timeout)
+                score_total += 0
+                time_total += timeout
                 continue
 
             t1 = time()
-            signal.alarm(0)
+            #signal.alarm(0)
 
             score = f1_score(
-                y_train, estimator.predict(X_train), average='micro'
+                y_test, estimator.predict(X_test), average='micro'
             )
-            scores[dataset_name][estimator_name].append(score)
-            times[dataset_name][estimator_name].append(t1 - t0)
+            score_total += score
+            time_total += t1 - t0
 
-    save_data()
+        scores[dataset_name][estimator_name] = score_total / n_folds
+        times[dataset_name][estimator_name] = time_total / n_folds
+        print('done with dataset', dataset_name) # TODO remove
 
-print('Done.')
+
+def main():
+    scores = {}
+    times = {}
+
+    # fill the scores and times with dummy elements to avoid reallocations
+    # during multiprocessing
+    for dataset_name in datasets:
+        scores[dataset_name] = {}
+        times[dataset_name] = {}
+        for estimator_name in estimators:
+            scores[dataset_name][estimator_name] = 0
+            times[dataset_name][estimator_name] = 0
+
+    # evaluate estimators in parallel
+    n_workers = min(os.process_cpu_count(), len(datasets) - 1)
+    if n_workers <= 0:
+        print('Nothing to do')
+        sys.exit(0)
+
+    print(f'{len(datasets)} datasets to process, '
+          f'splitting work in {n_workers} workers.')
+
+    pool = Pool(n_workers)
+    results = []
+    for dataset_name in datasets:
+        res = pool.apply_async(worker, (scores, times, dataset_name))
+        results.append(res)
+
+    for res in results:
+        res.get()
+    pool.close()
+    pool.join()
+
+    print('Done.')
+    save_data(scores, times) # TODO remove
+
+if __name__ == '__main__':
+    main()
