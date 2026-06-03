@@ -21,7 +21,6 @@ WDBC.dat.txt
 
 # comparison
 comparison.json
-comparison.log
 
 # jupyter
 .ipynb_checkpoints
