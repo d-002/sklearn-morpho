@@ -1,7 +1,6 @@
 # sklearn-morpho
 
 Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
-=======
 
 ![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
 ![Supported Python version](https://img.shields.io/pypi/pyversions/sklearn-morpho)
