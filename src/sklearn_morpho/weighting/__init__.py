@@ -1,3 +1,3 @@
-from .weighting_base import SampleWeighting
-from .weighting_dist import DistSampleWeighting
-from .weighting_none import NoneSampleWeighting
+from .weighting_base import SampleWeighting as SampleWeighting
+from .weighting_dist import DistSampleWeighting as DistSampleWeighting
+from .weighting_none import NoneSampleWeighting as NoneSampleWeighting

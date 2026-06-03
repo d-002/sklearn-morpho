@@ -1,5 +1,3 @@
-import pytest
-import numpy as np
 
 from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score

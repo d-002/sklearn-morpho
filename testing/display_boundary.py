@@ -6,9 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.datasets import make_classification, make_moons
 
-from sklearn_morpho.classifiers.simple_perceptron import MorphoPerceptron
 from sklearn_morpho.classifiers.ldep import LDEP
-from sklearn_morpho.classifiers.rdep import RDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,
@@ -30,8 +28,8 @@ datasets = {
 
 Estimator = LDEP
 
-colorize = lambda y_real, y_pred: np.where(y_real == y_pred, y_real,
-                                           np.repeat(['#aaa'], y_real.shape))
+def colorize(y_real: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    return np.where(y_real == y_pred, y_real, np.repeat(['#aaa'], y_real.shape))
 
 total_test_score = 0
 for name, (X, y) in datasets.items():

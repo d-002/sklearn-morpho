@@ -1,3 +1,5 @@
-from .classifiers.ldep import LDEP
-from .classifiers.rdep import RDEP
-from .classifiers.simple_perceptron import MorphoPerceptron
+from .classifiers import (
+    LDEP as LDEP,
+    RDEP as RDEP,
+    MorphoPerceptron as MorphoPerceptron
+)

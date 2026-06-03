@@ -233,6 +233,7 @@ class DccpTrainer(ABC):
 
         # local import because optional dependency
         import dccp
+        dccp.__name__ # to avoid marking dccp as unused
 
         X_train, _, y_train, _ = data
         cost_weights, cost_normalizer = \
