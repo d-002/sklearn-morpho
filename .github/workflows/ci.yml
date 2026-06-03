@@ -68,10 +68,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        name: [ "linting", "coding style" ]
-        command: [
-          "python -m ruff check",
-          "[ -z \"$(python -m ruff format | grep reformatted)\" ]" ]
+        include:
+          - name: "linting"
+            command: "python -m ruff check"
+          - name: "coding style"
+            command: "[ -z \"$(python -m ruff format | grep reformatted)\" ]"
 
     steps:
       - name: Checkout repository
