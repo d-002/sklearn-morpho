@@ -1,5 +1,6 @@
 from . import StoppingMethod
 
+
 class EarlyStoppingMethod(StoppingMethod):
     """
     Stopping method that triggers whenever the validation cost starts increasing
@@ -10,7 +11,7 @@ class EarlyStoppingMethod(StoppingMethod):
     during functional training.
     """
 
-    def __init__(self, delay = 5):
+    def __init__(self, delay=5):
         if delay <= 0:
             raise ValueError(f'invalid delay, expected > 0 but got {delay}')
 
@@ -22,8 +23,9 @@ class EarlyStoppingMethod(StoppingMethod):
     def requires_validation(self) -> bool:
         return True
 
-    def should_stop(self, n_epochs: int, train_cost: float,
-                    validation_cost: float) -> bool:
+    def should_stop(
+        self, n_epochs: int, train_cost: float, validation_cost: float
+    ) -> bool:
         if self.best_validation_cost is None:
             self.best_validation_cost = validation_cost
         else:

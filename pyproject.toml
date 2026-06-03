@@ -1,3 +1,5 @@
+# General
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -33,3 +35,15 @@ dependencies = [
     "pytest-cov>=7.1.0,<8.0.0",
     "ruff>=0.15.0,<1.0.0", # linter
 ]
+
+# Ruff
+[tool.ruff]
+indent-width = 4
+line-length = 80
+
+[tool.ruff.lint]
+select = ["E"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"

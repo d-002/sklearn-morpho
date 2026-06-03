@@ -1,11 +1,14 @@
 from sklearn_morpho import stopping
 
+
 def test_init():
     stopping.TrainStopStoppingMethod()
+
 
 def test_validation():
     method = stopping.TrainStopStoppingMethod()
     assert not method.requires_validation()
+
 
 def test_logic():
     method = stopping.TrainStopStoppingMethod()

@@ -1,5 +1,6 @@
 from . import StoppingMethod
 
+
 class TrainStopStoppingMethod(StoppingMethod):
     """
     Stopping method that triggers whenever the training cost gets to 0, that is
@@ -10,6 +11,7 @@ class TrainStopStoppingMethod(StoppingMethod):
     def requires_validation(self) -> bool:
         return False
 
-    def should_stop(self, n_epochs: int, train_cost: float,
-                    validation_cost: float) -> bool:
+    def should_stop(
+        self, n_epochs: int, train_cost: float, validation_cost: float
+    ) -> bool:
         return train_cost <= 0

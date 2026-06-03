@@ -1,5 +1,5 @@
 from .classifiers import (
     LDEP as LDEP,
     RDEP as RDEP,
-    MorphoPerceptron as MorphoPerceptron
+    MorphoPerceptron as MorphoPerceptron,
 )

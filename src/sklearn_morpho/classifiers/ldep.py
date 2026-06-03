@@ -11,13 +11,14 @@ from sklearn.utils.multiclass import unique_labels
 
 from ..dccp.dccp_ldep import LDEPDccpTrainer
 from ..stopping import (
-        StoppingMethod,
-        CostStoppingMethod,
-        EarlyStoppingMethod,
-        EpochStoppingMethod,
-        TrainStopStoppingMethod,
+    StoppingMethod,
+    CostStoppingMethod,
+    EarlyStoppingMethod,
+    EpochStoppingMethod,
+    TrainStopStoppingMethod,
 )
 from ..weighting import SampleWeighting, NoneSampleWeighting
+
 
 class LDEP(ClassifierMixin, BaseEstimator):
     """
@@ -37,12 +38,18 @@ class LDEP(ClassifierMixin, BaseEstimator):
     times, but will allow the decision boundary to be more complex.
     """
 
-    def __init__(self, latent_dims: tuple[int, int] = (10, 10), margin = 1.,
-                 penalty = 0., validation_ratio = .3,
-                 weighting_method: SampleWeighting | None = None,
-                 stopping_methods: list[StoppingMethod] | None = None,
-                 use_dccp_library: bool = False, verbose: Literal[0, 1, 2] = 0,
-                 random_state: np.random.RandomState | None = None) -> None:
+    def __init__(
+        self,
+        latent_dims: tuple[int, int] = (10, 10),
+        margin=1.0,
+        penalty=0.0,
+        validation_ratio=0.3,
+        weighting_method: SampleWeighting | None = None,
+        stopping_methods: list[StoppingMethod] | None = None,
+        use_dccp_library: bool = False,
+        verbose: Literal[0, 1, 2] = 0,
+        random_state: np.random.RandomState | None = None,
+    ) -> None:
         """
         Initialize the classifier, see class help for more.
 
@@ -112,7 +119,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
         # input data validation
         random_state = check_random_state(self.random_state)
-        X, y = validate_data(self, X, y) # type: ignore
+        X, y = validate_data(self, X, y)  # type: ignore
         self.scaler_ = StandardScaler()
         X_scaled = self.scaler_.fit_transform(X)
 
@@ -135,18 +142,27 @@ class LDEP(ClassifierMixin, BaseEstimator):
         # the classes are persisted inside the object for use in predict
         self.classes_ = unique_labels(y)
         classes_list = list(self.classes_)
-        y_integers = np.array([classes_list.index(c) for c in y],
-                           dtype=np.int32)
+        y_integers = np.array(
+            [classes_list.index(c) for c in y], dtype=np.int32
+        )
 
         if len(classes_list) != 2:
-            raise ValueError('Only binary classification is supported but '
-                             f'got {len(classes_list)} class(es).')
+            raise ValueError(
+                'Only binary classification is supported but '
+                f'got {len(classes_list)} class(es).'
+            )
 
         # create and train perceptrons
         trainer = LDEPDccpTrainer(
-            self.latent_dims, self.margin, self.penalty, self.validation_ratio,
-            weighting_method, stopping_methods, self.use_dccp_library,
-            self.verbose, random_state
+            self.latent_dims,
+            self.margin,
+            self.penalty,
+            self.validation_ratio,
+            weighting_method,
+            stopping_methods,
+            self.use_dccp_library,
+            self.verbose,
+            random_state,
         )
 
         trainer.train(X_scaled, y_integers)
@@ -160,13 +176,15 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
     def decision_function(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False) # type: ignore
+        X = validate_data(self, X, reset=False)  # type: ignore
         X_scaled = cast(np.ndarray, self.scaler_.transform(X))
 
-        expr_max = np.max(self.max_perceptron_ + X_scaled @ self.max_matrix_.T,
-                          axis=1)
-        expr_min = np.min(self.min_perceptron_ + X_scaled @ self.min_matrix_.T,
-                          axis=1)
+        expr_max = np.max(
+            self.max_perceptron_ + X_scaled @ self.max_matrix_.T, axis=1
+        )
+        expr_min = np.min(
+            self.min_perceptron_ + X_scaled @ self.min_matrix_.T, axis=1
+        )
         return expr_max * self.lambda_ + expr_min * (1 - self.lambda_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:

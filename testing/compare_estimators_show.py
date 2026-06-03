@@ -20,8 +20,10 @@ datasets_names = list(scores.keys())
 estimators_names = list(scores[datasets_names[0]].keys())
 
 print()
-params = (('F1 score', scores, np.argmax, np.argmin),
-          ('Time (s)', times, np.argmin, np.argmax))
+params = (
+    ('F1 score', scores, np.argmax, np.argmin),
+    ('Time (s)', times, np.argmin, np.argmax),
+)
 for name, data_source, best_func, worst_func in params:
     headers = ''
     for estimator_name in estimators_names:
@@ -32,7 +34,7 @@ for name, data_source, best_func, worst_func in params:
     for dataset_name in datasets_names:
         line = ''
 
-        dataset_res = [] # list of (avg, std)
+        dataset_res = []  # list of (avg, std)
         for estimator_name in estimators_names:
             res = np.array(data_source[dataset_name][estimator_name])
 
@@ -72,11 +74,15 @@ fig, axs = plt.subplots(ncols=2, nrows=1)
 # log scale for times
 axs[1].set_yscale('log')
 
-for data_source, name, ax in zip((estimators_scores, estimators_times),
-                                 ('F1 score', 'Training time (s)'), axs):
+for data_source, name, ax in zip(
+    (estimators_scores, estimators_times),
+    ('F1 score', 'Training time (s)'),
+    axs,
+):
     ax.set_title(name)
-    ax.boxplot(data_source.values(), patch_artist=True,
-               tick_labels=data_source.keys())
+    ax.boxplot(
+        data_source.values(), patch_artist=True, tick_labels=data_source.keys()
+    )
     ax.tick_params('x', rotation=90)
 
 plt.show()

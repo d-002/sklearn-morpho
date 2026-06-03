@@ -2,4 +2,6 @@ from .stopping_base import StoppingMethod as StoppingMethod
 from .stopping_cost import CostStoppingMethod as CostStoppingMethod
 from .stopping_early import EarlyStoppingMethod as EarlyStoppingMethod
 from .stopping_epoch import EpochStoppingMethod as EpochStoppingMethod
-from .stopping_train_stop import TrainStopStoppingMethod as TrainStopStoppingMethod
+from .stopping_train_stop import (
+    TrainStopStoppingMethod as TrainStopStoppingMethod,
+)

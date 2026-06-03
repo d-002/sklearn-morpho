@@ -4,6 +4,7 @@ import numpy as np
 
 from . import SampleWeighting
 
+
 class DistSampleWeighting(SampleWeighting):
     """
     Weighting method that weights its inputs inversely proportionally to the
@@ -14,8 +15,9 @@ class DistSampleWeighting(SampleWeighting):
         # compute centroids, there should be no classes with no elements thanks
         # to sklearn checks if used in the intended way with a compatible
         # estimator
-        labels, inv, counts = np.unique(y, return_inverse=True,
-                                        return_counts=True)
+        labels, inv, counts = np.unique(
+            y, return_inverse=True, return_counts=True
+        )
         sums = np.zeros((len(labels), X.shape[1]))
         np.add.at(sums, inv, X)
         centroids = sums / counts[:, np.newaxis]
