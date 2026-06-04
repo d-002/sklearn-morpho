@@ -8,8 +8,10 @@ import os
 import sys
 import json
 import time
+import signal
 import warnings
 import numpy as np
+
 from time import time, sleep
 from threading import Thread
 from multiprocessing import Manager
@@ -27,6 +29,17 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
+
+## Timeouts handling
+
+
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_handler(sugnum, frame):
+    raise TimeoutException()
+
 
 ## Configuration
 
@@ -132,8 +145,6 @@ estimators = {
     'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
-# datasets_names = datasets_names[:5] # TODO remove
-
 ## Load datasets
 print('\nLoading datasets...')
 
@@ -199,7 +210,7 @@ def progress_bar():
     def bar(name, time_spent, progress):
         print(
             f'[{"#" * round(progress * 30):-<30}] '
-            F'(\033[33m{int(progress * 100):>3}%\033[m) '
+            f'(\033[33m{int(progress * 100):>3}%\033[m) '
             f'{format_time(time_spent)} {name:<50}|'
         )
 
@@ -256,11 +267,10 @@ def progress_bar():
 
 
 def worker(dataset_name: str, estimator_name: str) -> None:
-    def set_dict(d, value):
-        # need to make copies because the variables are shared
-        temp = d[dataset_name]
+    def set_shared_dict_value(dict_, value):
+        temp = dict_[dataset_name]
         temp[estimator_name] = value
-        d[dataset_name] = temp
+        dict_[dataset_name] = temp
 
     if ignore_warnings:
         warnings.filterwarnings('ignore')
@@ -268,7 +278,8 @@ def worker(dataset_name: str, estimator_name: str) -> None:
     score_total = 0
     time_total = 0
     start = time()
-    set_dict(progress_states, [start, 0])
+
+    set_shared_dict_value(progress_states, [start, 0])
 
     X, y = datasets[dataset_name]
     estimator = make_pipeline(
@@ -277,22 +288,33 @@ def worker(dataset_name: str, estimator_name: str) -> None:
     )
 
     for i, (i_train, i_test) in enumerate(skf.split(X, y)):
-        X_train, X_test = X[i_train], X[i_test]
-        y_train, y_test = y[i_train], y[i_test]
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout)
 
-        t0 = time()
-        estimator.fit(X_train, y_train)
-        t1 = time()
+            X_train, X_test = X[i_train], X[i_test]
+            y_train, y_test = y[i_train], y[i_test]
 
-        score = f1_score(y_test, estimator.predict(X_test), average='micro')
-        score_total += score
-        time_total += t1 - t0
+            t0 = time()
+            estimator.fit(X_train, y_train)
+            t1 = time()
 
-        set_dict(progress_states, [start, (i + 1) / n_folds])
+            score = f1_score(y_test, estimator.predict(X_test), average='micro')
+            score_total += score
+            time_total += t1 - t0
 
-    set_dict(scores, score_total / n_folds)
-    set_dict(times, time_total / n_folds)
-    set_dict(progress_states, [start, time()])
+            set_shared_dict_value(
+                progress_states,
+                [start, (i + 1) / n_folds],
+            )
+        except TimeoutException:
+            set_shared_dict_value(progress_states, [start, time()])
+            return
+
+    set_shared_dict_value(scores, score_total / n_folds)
+    set_shared_dict_value(times, time_total / n_folds)
+    set_shared_dict_value(progress_states, [start, time()])
+    signal.alarm(0)
 
 
 ## train in parallel
@@ -325,4 +347,4 @@ progress_bar_thread.join()
 scores, times = dict(scores), dict(times)
 
 print('Done.')
-save_data()  # TODO remove
+save_data()
