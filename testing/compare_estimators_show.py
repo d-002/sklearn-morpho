@@ -6,14 +6,14 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-FILE = 'comparison_data.json'
+FILE = 'comparison.json'
 
 with open(FILE, 'r') as f:
     data = json.load(f)
 scores = data['scores']
 times = data['times']
 
-n_splits = data['n_splits']
+n_folds = data['n_folds']
 
 # display summary table in console
 datasets_names = list(scores.keys())

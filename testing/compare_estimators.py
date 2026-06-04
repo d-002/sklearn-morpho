@@ -7,13 +7,14 @@ Estimators selection inspired by arxiv/2011.06512
 import os
 import sys
 import json
-import logging
+import time
 import warnings
 import numpy as np
-from time import time
-from scipy.sparse._csr import csr_matrix
-from joblib import Parallel, delayed
+from time import time, sleep
+from threading import Thread
 from multiprocessing import Manager
+from joblib import Parallel, delayed
+from scipy.sparse._csr import csr_matrix
 
 from sklearn.metrics import f1_score
 from sklearn.datasets import load_breast_cancer, fetch_openml
@@ -35,9 +36,10 @@ ignore_warnings = True
 n_folds = 5
 max_jobs = 15
 random_state = np.random.RandomState()
+LINE_SIZE = 100
 
 if ignore_warnings:
-    warnings.filterwarnings("ignore")
+    warnings.filterwarnings('ignore')
 
 print(f'Random state: {random_state}')
 print(f'Comparison data will be outputted to: "{FILE}"')
@@ -111,13 +113,13 @@ datasets_options = {
 print('Creating estimators...')
 estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    'DCCP l-DEP': OneVsRestClassifier(
-        LDEP(use_dccp_library=True, random_state=random_state)
-    ),
+    #'DCCP l-DEP': OneVsRestClassifier(
+    #    LDEP(use_dccp_library=True, random_state=random_state)
+    # ),
     'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
-    'DCCP r-DEP': OneVsRestClassifier(
-        RDEP(use_dccp_library=True, random_state=random_state)
-    ),
+    #'DCCP r-DEP': OneVsRestClassifier(
+    #    RDEP(use_dccp_library=True, random_state=random_state)
+    # ),
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind='max', random_state=random_state)
     ),
@@ -130,14 +132,18 @@ estimators = {
     'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
-datasets_names = datasets_names[:5] # TODO remove
+# datasets_names = datasets_names[:5] # TODO remove
 
 ## Load datasets
 print('\nLoading datasets...')
 
 datasets = {}
-for dataset_name in datasets_names:
-    print(f'\033[32m=>\033[m Loading {dataset_name:<35}', end='\r')
+for i, dataset_name in enumerate(datasets_names):
+    print(
+        f'\033[32m=>\033[m Loading {dataset_name:<35} '
+        f'({i:02}/{len(datasets_names):02})',
+        end='\r',
+    )
     match dataset_name:
         case 'breast-cancer':
             datasets[dataset_name] = load_breast_cancer(return_X_y=True)
@@ -145,27 +151,124 @@ for dataset_name in datasets_names:
             datasets[dataset_name] = get_clean_openml(
                 dataset_name, **datasets_options.get(dataset_name, {})
             )
-print('\n')
+print(' ' * LINE_SIZE)
 
 ## Main logic
 
 # centralized data
 manager = Manager()
-scores = manager.dict({d: {e: 0 for e in estimators} for d in datasets_names})
-times = manager.dict({d: {e: 0 for e in estimators} for d in datasets_names})
+scores = manager.dict({d: {e: -1 for e in estimators} for d in datasets_names})
+times = manager.dict({d: {e: -1 for e in estimators} for d in datasets_names})
+
+# the elements are a list of:
+# - start timestamp, or 0 if not started
+# - number from 0 to 1 for progress, or a timestamp if ended
+progress_states = manager.dict(
+    {d: {e: [0, 0] for e in estimators} for d in datasets_names}
+)
+total_jobs = len(datasets) * len(estimators)
+
 
 def save_data():
     with open(FILE, 'w') as f:
-        data = {'n_folds': n_folds, 'scores': scores, 'times': times}
+        data = {
+            'n_folds': n_folds,
+            'scores': dict(scores),
+            'times': dict(times),
+        }
         json.dump(data, f, indent=2)
 
 
-def worker(scores: dict[str, dict[str, float]], times: dict[str, dict[str, float]], dataset_name: str, estimator_name: str) -> None:
+def progress_bar():
+    print('=' * LINE_SIZE)
+    print('\n')
+    prev_running = 0
+
+    def format_time(t):
+        hm, s = divmod(int(t), 60)
+        h, m = divmod(hm, 60)
+        return f'\033[34m{h:02}:{m:02}:{s:02}\033[m'
+
+    def eta_str(progress, time_spent):
+        if not progress:
+            return f'--:--:--'
+
+        eta = time_spent / progress * (1 - progress)
+        return format_time(eta)
+
+    def bar(name, time_spent, progress):
+        print(
+            f'[{"#" * round(progress * 30):-<30}] '
+            F'(\033[33m{int(progress * 100):>3}%\033[m) '
+            f'{format_time(time_spent)} {name:<50}|'
+        )
+
+    while True:
+        running = []
+        total_time = 0
+        total_progress = 0
+        total_done = 0
+        for dataset_name, elt in dict(progress_states).items():
+            for estimator_name, (start, progress) in elt.items():
+                if progress > 1:
+                    total_time += progress - start
+                    total_done += 1
+                elif start != 0:
+                    total_time += time() - start
+                if start != 0:
+                    if progress < 1:
+                        running.append(
+                            (dataset_name, estimator_name, start, progress)
+                        )
+                        total_progress += progress
+                    else:
+                        total_progress += 1
+
+        total_progress /= total_jobs
+        running.sort(key=lambda x: x[3])
+        now_running = len(running)
+
+        for i in range(prev_running + 1, -1, -1):
+            if i < now_running:
+                print(end='\033[F')
+            else:
+                print(' ' * LINE_SIZE, end='\033[F')
+
+        for dataset_name, estimator_name, start, progress in running:
+            bar(f'{dataset_name} - {estimator_name}', time() - start, progress)
+
+        print('=' * LINE_SIZE)
+        print(
+            f'TOTAL [{"#" * round(total_progress * 24):-<24}] '
+            f'(\033[33m{int(total_progress * 100):>3}%\033[m) '
+            f'ETA: {eta_str(total_progress, total_time)}'
+        )
+
+        # a job was just done, update the results file
+        if now_running != prev_running:
+            save_data()
+
+        if total_done == total_jobs:
+            break
+
+        prev_running = now_running
+        sleep(0.2)
+
+
+def worker(dataset_name: str, estimator_name: str) -> None:
+    def set_dict(d, value):
+        # need to make copies because the variables are shared
+        temp = d[dataset_name]
+        temp[estimator_name] = value
+        d[dataset_name] = temp
+
     if ignore_warnings:
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings('ignore')
 
     score_total = 0
     time_total = 0
+    start = time()
+    set_dict(progress_states, [start, 0])
 
     X, y = datasets[dataset_name]
     estimator = make_pipeline(
@@ -173,7 +276,7 @@ def worker(scores: dict[str, dict[str, float]], times: dict[str, dict[str, float
         estimators[estimator_name],
     )
 
-    for i_train, i_test in skf.split(X, y):
+    for i, (i_train, i_test) in enumerate(skf.split(X, y)):
         X_train, X_test = X[i_train], X[i_test]
         y_train, y_test = y[i_train], y[i_test]
 
@@ -185,32 +288,39 @@ def worker(scores: dict[str, dict[str, float]], times: dict[str, dict[str, float
         score_total += score
         time_total += t1 - t0
 
-    # need to make copies because the variables are shared
-    temp_scores = scores[dataset_name]
-    temp_scores[estimator_name] = score_total / n_folds
-    temp_times = times[dataset_name]
-    temp_times[estimator_name] = time_total / n_folds
+        set_dict(progress_states, [start, (i + 1) / n_folds])
 
-    scores[dataset_name] = temp_scores
-    times[dataset_name] = temp_times
+    set_dict(scores, score_total / n_folds)
+    set_dict(times, time_total / n_folds)
+    set_dict(progress_states, [start, time()])
 
 
 ## train in parallel
 print('Preparing to train')
 
 
-n_jobs = min(os.process_cpu_count(), len(datasets), max_jobs)
+n_jobs = min(os.process_cpu_count(), total_jobs, max_jobs)
 if n_jobs <= 0:
     print('Nothing to do')
     sys.exit(0)
 
 print(f'{len(datasets)} datasets to process, splitting work in {n_jobs} jobs.')
+print()
+
+progress_bar_thread = Thread(target=progress_bar)
+progress_bar_thread.start()
 
 Parallel(n_jobs=n_jobs)(
-    delayed(worker)(scores, times, dataset_name, estimator_name)
+    delayed(worker)(dataset_name, estimator_name)
     for dataset_name in datasets
     for estimator_name in estimators
 )
+
+for d in datasets:
+    for e in estimators:
+        progress_states[e][d][0] = time()
+        progress_states[e][d][1] = time()
+progress_bar_thread.join()
 
 scores, times = dict(scores), dict(times)
 
