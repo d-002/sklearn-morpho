@@ -230,7 +230,11 @@ def worker(dataset_name: str, estimator_name: str) -> None:
         except TimeoutException:
             break
 
-    for data_source, value in ((scores, score_arr), (times, time_arr), (progress_states, [start, time()])):
+    for data_source, value in (
+        (scores, score_arr),
+        (times, time_arr),
+        (progress_states, [start, time()]),
+    ):
         temp = data_source[dataset_name]
         temp[estimator_name] = value
         data_source[dataset_name] = temp
@@ -295,7 +299,9 @@ def progress_bar():
                     else:
                         total_progress += 1
 
-        total_done, total_running, total_queued = (states.count(k) for k in [2, 1, 0])
+        total_done, total_running, total_queued = (
+            states.count(k) for k in [2, 1, 0]
+        )
         total_progress /= total_jobs
         running.sort(key=lambda x: x[3])
         now_running = len(running)
