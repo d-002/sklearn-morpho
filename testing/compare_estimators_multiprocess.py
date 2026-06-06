@@ -1,8 +1,14 @@
 """
 Create and train different estimators and display their respective scores
 averaged from multiple datasets.
-Train perceptrons in parallel using multiple processes, so timing information
-may be inaccurate while scoring should stay the same and will take less time.
+Train perceptrons in parallel using multiple processes, meaning timing
+information (as well as scores depending on internal solver timeouts) may be
+inaccurate, while training will take less time.
+
+Because of the multiprocessing nature of this, timeouts are not asynchronous and
+long-running cpp code can make processing take longer than is theoretically
+permitted by the timeout.
+
 Estimators selection inspired by arxiv/2011.06512
 """
 
