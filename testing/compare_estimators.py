@@ -1,6 +1,8 @@
 """
 Create and train different estimators and display their respective scores
 averaged from multiple datasets.
+Train perceptrons in parallel using multiple processes, so timing information
+may be inaccurate while scoring should stay the same and will take less time.
 Estimators selection inspired by arxiv/2011.06512
 """
 
@@ -50,6 +52,7 @@ n_folds = 5
 max_jobs = 15
 random_state = np.random.RandomState()
 LINE_SIZE = 100
+timeout = 60
 
 if ignore_warnings:
     warnings.filterwarnings('ignore')
@@ -168,16 +171,64 @@ print(' ' * LINE_SIZE)
 
 # centralized data
 manager = Manager()
-scores = manager.dict({d: {e: -1 for e in estimators} for d in datasets_names})
-times = manager.dict({d: {e: -1 for e in estimators} for d in datasets_names})
+scores = manager.dict({d: {e: [] for e in estimators} for d in datasets_names})
+times = manager.dict({d: {e: [] for e in estimators} for d in datasets_names})
 
 # the elements are a list of:
 # - start timestamp, or 0 if not started
 # - number from 0 to 1 for progress, or a timestamp if ended
 progress_states = manager.dict(
-    {d: {e: [0, 0] for e in estimators} for d in datasets_names}
+    {d: {e: [0.0, 0.0] for e in estimators} for d in datasets_names}
 )
 total_jobs = len(datasets) * len(estimators)
+
+
+def worker(dataset_name: str, estimator_name: str) -> None:
+    if ignore_warnings:
+        warnings.filterwarnings('ignore')
+
+    score_arr = []
+    time_arr = []
+    start = time()
+
+    # need to reassign because of shared data getters/setters
+    temp = progress_states[dataset_name]
+    temp[estimator_name][0] = start
+    progress_states[dataset_name] = temp
+
+    X, y = datasets[dataset_name]
+    estimator = make_pipeline(
+        SimpleImputer(strategy='mean'),  # remove NaNs
+        estimators[estimator_name],
+    )
+
+    for i, (i_train, i_test) in enumerate(skf.split(X, y)):
+        try:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout)
+
+            X_train, X_test = X[i_train], X[i_test]
+            y_train, y_test = y[i_train], y[i_test]
+
+            t0 = time()
+            estimator.fit(X_train, y_train)
+            t1 = time()
+
+            score = f1_score(y_test, estimator.predict(X_test), average='micro')
+            score_arr.append(score)
+            time_arr.append(t1 - t0)
+
+            temp = progress_states[dataset_name]
+            temp[estimator_name][1] = (i + 1) / n_folds
+            progress_states[dataset_name] = temp
+        except TimeoutException:
+            break
+
+    for data_source, value in ((scores, score_arr), (times, time_arr), (progress_states, [start, time()])):
+        temp = data_source[dataset_name]
+        temp[estimator_name] = value
+        data_source[dataset_name] = temp
+    signal.alarm(0)
 
 
 def save_data():
@@ -218,14 +269,17 @@ def progress_bar():
         running = []
         total_time = 0
         total_progress = 0
-        total_done = 0
+        states = []
         for dataset_name, elt in dict(progress_states).items():
             for estimator_name, (start, progress) in elt.items():
                 if progress > 1:
+                    states.append(2)
                     total_time += progress - start
-                    total_done += 1
                 elif start != 0:
+                    states.append(1)
                     total_time += time() - start
+                else:
+                    states.append(0)
                 if start != 0:
                     if progress < 1:
                         running.append(
@@ -235,6 +289,7 @@ def progress_bar():
                     else:
                         total_progress += 1
 
+        total_done, total_running, total_queued = (states.count(k) for k in [2, 1, 0])
         total_progress /= total_jobs
         running.sort(key=lambda x: x[3])
         now_running = len(running)
@@ -252,7 +307,8 @@ def progress_bar():
         print(
             f'TOTAL [{"#" * round(total_progress * 24):-<24}] '
             f'(\033[33m{int(total_progress * 100):>3}%\033[m) '
-            f'ETA: {eta_str(total_progress, total_time)}'
+            f'ETA: {eta_str(total_progress, total_time)} - '
+            f'{total_done} done, {total_running} running, {total_queued} queued'
         )
 
         # a job was just done, update the results file
@@ -264,57 +320,6 @@ def progress_bar():
 
         prev_running = now_running
         sleep(0.2)
-
-
-def worker(dataset_name: str, estimator_name: str) -> None:
-    def set_shared_dict_value(dict_, value):
-        temp = dict_[dataset_name]
-        temp[estimator_name] = value
-        dict_[dataset_name] = temp
-
-    if ignore_warnings:
-        warnings.filterwarnings('ignore')
-
-    score_total = 0
-    time_total = 0
-    start = time()
-
-    set_shared_dict_value(progress_states, [start, 0])
-
-    X, y = datasets[dataset_name]
-    estimator = make_pipeline(
-        SimpleImputer(strategy='mean'),  # remove NaNs
-        estimators[estimator_name],
-    )
-
-    for i, (i_train, i_test) in enumerate(skf.split(X, y)):
-        try:
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout)
-
-            X_train, X_test = X[i_train], X[i_test]
-            y_train, y_test = y[i_train], y[i_test]
-
-            t0 = time()
-            estimator.fit(X_train, y_train)
-            t1 = time()
-
-            score = f1_score(y_test, estimator.predict(X_test), average='micro')
-            score_total += score
-            time_total += t1 - t0
-
-            set_shared_dict_value(
-                progress_states,
-                [start, (i + 1) / n_folds],
-            )
-        except TimeoutException:
-            set_shared_dict_value(progress_states, [start, time()])
-            return
-
-    set_shared_dict_value(scores, score_total / n_folds)
-    set_shared_dict_value(times, time_total / n_folds)
-    set_shared_dict_value(progress_states, [start, time()])
-    signal.alarm(0)
 
 
 ## train in parallel
@@ -338,6 +343,7 @@ Parallel(n_jobs=n_jobs)(
     for estimator_name in estimators
 )
 
+# force end all datasets
 for d in datasets:
     for e in estimators:
         progress_states[e][d][0] = time()
