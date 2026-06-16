@@ -25,10 +25,14 @@ def test_train():
     X, y = friendly_dataset()
 
     for kind in kinds:
-        perceptron = MorphoPerceptron(kind=kind)  # type: ignore
-        perceptron.fit(X, y)
+        for use_dccp_library in [False, True]:
+            perceptron = MorphoPerceptron(
+                kind=kind,
+                use_dccp_library=use_dccp_library,  # type: ignore
+            )
+            perceptron.fit(X, y)
 
-        assert f1_score(y, perceptron.predict(X)) >= 0.8
+            assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
 def test_train_custom_weighted_stopping():

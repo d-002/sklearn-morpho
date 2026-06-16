@@ -49,12 +49,13 @@ def test_train_degenerate_dataset():
 
 
 def test_train():
-    rdep = RDEP()
-
     X, y = friendly_dataset()
-    rdep.fit(X, y)
 
-    assert f1_score(y, rdep.predict(X)) >= 0.8
+    for use_dccp_library in [False, True]:
+        rdep = RDEP(use_dccp_library=use_dccp_library)
+        rdep.fit(X, y)
+
+        assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
 def test_train_custom_weighted_stopping():
