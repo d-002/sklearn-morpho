@@ -35,10 +35,12 @@ print(f'Random state: {random_state}')
 estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'DCCP l-DEP': OneVsRestClassifier(
-        LDEP(use_dccp_library=True, random_state=random_state)),
+        LDEP(use_dccp_library=True, random_state=random_state)
+    ),
     'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
     'DCCP r-DEP': OneVsRestClassifier(
-        RDEP(use_dccp_library=True, random_state=random_state)),
+        RDEP(use_dccp_library=True, random_state=random_state)
+    ),
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind='max', random_state=random_state)
     ),
