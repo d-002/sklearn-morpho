@@ -29,12 +29,13 @@ def test_train_zero_matrices():
 
 
 def test_train():
-    ldep = LDEP()
-
     X, y = friendly_dataset()
-    ldep.fit(X, y)
 
-    assert f1_score(y, ldep.predict(X)) >= 0.8
+    for use_dccp_library in [False, True]:
+        ldep = LDEP(use_dccp_library=use_dccp_library)
+        ldep.fit(X, y)
+
+        assert f1_score(y, ldep.predict(X)) >= 0.8
 
 
 def test_train_custom_weighted_stopping():
