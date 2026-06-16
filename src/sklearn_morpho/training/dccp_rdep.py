@@ -174,11 +174,15 @@ class RDEPDccpTrainer(DccpTrainer):
             active_min = cp.sum(cp.multiply(M_min[mask], expr_min), axis=1)
 
             if (label == 0) ^ self.invert_res:
-                constraints.append(self._slack[mask] - active_min >=
-                                   self.margin + cp.max(expr_max, axis=1))
+                constraints.append(
+                    self._slack[mask] - active_min
+                    >= self.margin + cp.max(expr_max, axis=1)
+                )
             else:
-                constraints.append(self._slack[mask] + active_max >=
-                                   self.margin - cp.min(expr_min, axis=1))
+                constraints.append(
+                    self._slack[mask] + active_max
+                    >= self.margin - cp.min(expr_min, axis=1)
+                )
 
         # avoid lambda making some constraints convex when they should be
         # concave and vice versa
