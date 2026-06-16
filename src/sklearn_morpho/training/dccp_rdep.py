@@ -206,6 +206,7 @@ class RDEPDccpTrainer(DccpTrainer):
             X_ = X[mask]
             K_ = X_.shape[0]
 
+            ones = np.ones((K_, 1))
             expr_max = self._training_lambda * X_
             expr_min = (1 - self._training_lambda) * X_
             expr_max += ones @ cp.reshape(
