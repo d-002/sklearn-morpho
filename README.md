@@ -1,12 +1,12 @@
 # sklearn-morpho
 
-scikit-learn estimator toolbox for morphological perceptrons.
+scikit-learn estimator toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
 
 ![](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
 ![](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
 ![](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/ci.yml?style=flat-square)
 
-Current features:
+## Current features
 
 - Scikit-learn estimators:
   - Linear Dilation-Erosion Perceptron (l-DEP)
@@ -54,3 +54,5 @@ Since the latter is an optional dependency, you can either:
   Python virtual environment.
 - Download `python-sklearn-morpho` from the AUR and use
   `pip install dccp --user`.
+
+## What are morphological perceptrons?
