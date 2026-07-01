@@ -6,18 +6,24 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-FILE = 'comparison_data.json'
+FILE = 'comparison.json'
 
 with open(FILE, 'r') as f:
     data = json.load(f)
 scores = data['scores']
 times = data['times']
 
-n_splits = data['n_splits']
+n_folds = data['n_folds']
 
 # display summary table in console
 datasets_names = list(scores.keys())
 estimators_names = list(scores[datasets_names[0]].keys())
+
+for dataset_name in datasets_names:
+    for estimator_name in estimators_names:
+        for data_source in (scores, times):
+            arr = data_source[dataset_name][estimator_name]
+            data_source[dataset_name][estimator_name] = np.array(arr)
 
 print()
 params = (
@@ -36,7 +42,7 @@ for name, data_source, best_func, worst_func in params:
 
         dataset_res = []  # list of (avg, std)
         for estimator_name in estimators_names:
-            res = np.array(data_source[dataset_name][estimator_name])
+            res = data_source[dataset_name][estimator_name]
 
             avg = np.average(res)
             std = res.std()
@@ -56,19 +62,24 @@ for name, data_source, best_func, worst_func in params:
         print(f'{dataset_name:>35}' + line)
     print()
 
-# merge and display results averaged over all datasets
+# merge and display results averaged over all datasets where there are results
 estimators_scores = {}
 estimators_times = {}
 for estimator_name in estimators_names:
-    estimators_scores[estimator_name] = np.empty(len(datasets_names))
-    estimators_times[estimator_name] = np.empty(len(datasets_names))
-
-    for i, dataset_name in enumerate(datasets_names):
-        score = np.array(scores[dataset_name][estimator_name])
-        time = np.array(times[dataset_name][estimator_name])
-
-        estimators_scores[estimator_name][i] = np.average(score)
-        estimators_times[estimator_name][i] = np.average(time)
+    estimators_scores[estimator_name] = np.array(
+        [
+            score
+            for dataset_name in datasets_names
+            for score in scores[dataset_name][estimator_name]
+        ]
+    )
+    estimators_times[estimator_name] = np.array(
+        [
+            time
+            for dataset_name in datasets_names
+            for time in times[dataset_name][estimator_name]
+        ]
+    )
 
 fig, axs = plt.subplots(ncols=2, nrows=1)
 # log scale for times

@@ -1,11 +1,13 @@
 """
 Create and train different estimators and display their respective scores
 averaged from multiple datasets.
+
 Estimators selection inspired by arxiv/2011.06512
 """
 
 import json
 import signal
+import warnings
 import numpy as np
 from time import time
 from scipy.sparse._csr import csr_matrix
@@ -24,8 +26,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.neural_network import MLPClassifier
 from sklearn.multiclass import OneVsRestClassifier
 
-FILE = 'comparison_data.json'
-n_splits = 5
+FILE = 'comparison.json'
+n_folds = 5
 timeout = 60
 
 # set up estimators and datasets
@@ -34,11 +36,11 @@ print(f'Random state: {random_state}')
 
 estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    'DCCP l-DEP': OneVsRestClassifier(
+    'DCCP l_DEP': OneVsRestClassifier(
         LDEP(use_dccp_library=True, random_state=random_state)
     ),
     'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
-    'DCCP r-DEP': OneVsRestClassifier(
+    'DCCP r_DEP': OneVsRestClassifier(
         RDEP(use_dccp_library=True, random_state=random_state)
     ),
     'Morpho_max': OneVsRestClassifier(
@@ -133,13 +135,13 @@ signal.signal(signal.SIGALRM, timeout_handler)
 def save_data():
     with open(FILE, 'w') as f:
         json.dump(
-            {'n_splits': n_splits, 'scores': scores, 'times': times},
+            {'n_folds': n_folds, 'scores': scores, 'times': times},
             f,
             indent=2,
         )
 
 
-skf = StratifiedKFold(n_splits=n_splits)
+skf = StratifiedKFold(n_splits=n_folds)
 for dataset_name in datasets_names:
     print(f'Training with dataset "{dataset_name}"...')
     scores[dataset_name] = {}
@@ -164,22 +166,19 @@ for dataset_name in datasets_names:
             estimator,
         )
 
-        for X_fold, y_fold in skf.split(X, y):
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.3, random_state=random_state
-            )
+        for i_train, i_test in skf.split(X, y):
+            X_train, X_test = X[i_train], X[i_test]
+            y_train, y_test = y[i_train], y[i_test]
 
             signal.alarm(timeout)
             t0 = time()
             try:
                 estimator.fit(X_train, y_train)
             except TimeoutException:
-                print(
-                    f'    Warning: {estimator_name} timed out after {timeout}s.'
-                )
+                warnings.warn(f'{estimator_name} timed out after {timeout}s.')
                 scores[dataset_name][estimator_name].append(0)
                 times[dataset_name][estimator_name].append(timeout)
-                continue
+                break
 
             t1 = time()
             signal.alarm(0)

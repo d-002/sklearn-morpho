@@ -1,6 +1,6 @@
 # sklearn-morpho
 
-scikit-learn estimator toolbox for morphological perceptrons.
+Scikit-learn estimator toolbox for morphological perceptrons.
 
 ![](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
 ![](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
@@ -18,8 +18,10 @@ File tree:
 
 - `src/sklearn_morpho`: contains the source code and a testsuite in its `tests`
   subdirectory.
-- `testing`: standalone files that use this library, may contain tests but they
-  are not designed to be run as a CI testsuite for example.
+- `tests`: pytest testsuite.
+- `testing`: standalone files that use this library.
+  They are used internally for testing, but they are not tests nor part of the
+  library.
 - `MREs`: standalone jupyter notebooks to showcase some of this library's
   features.
 
@@ -41,9 +43,22 @@ Then run one of these commands:
 Special note for the estimators comparison testing files: they are split in two
 files to avoid training the estimators every time one wants to view the results.
 
+## Contributing
+
+As the project is open source, any help is greatly appreciated!
+
+To keep code clean, this repository uses a CI/CD pipeline with tests and an
+enforced coding style, which can all be found in the project's configuration
+files.
+
+Please adhere to these rules when contributing.
+
+Regarding AI pull requests, they are generally discouraged as you should be able
+to understand and help maintaining any features you add to this repo.
+
 ## For Arch users
 
-The package is available in the
+The Python package is available in the
 [Arch User Repository](https://aur.archlinux.org) as `python-sklearn-morpho`, as
 are all its dependencies not already in the official packages, except for
 `dccp`.
