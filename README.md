@@ -61,8 +61,8 @@ Perceptrons are the fundamental building blocks of many machine learning
 constructs, namely the well-known neural networks.
 
 They fulfill this role because their simple yet effective activation function
-($y = wx + b$) allows for the emergence of arbitrarily complex behavior, for
-example when such perceptrons are wired together in networks.
+($y = w \cdot x + b$) allows for the emergence of arbitrarily complex behavior,
+for example when such perceptrons are wired together in networks.
 
 In the equation above, $w$ and $x$ are row and column matrices respectively,
 meaning their multiplication equates to a set of scalar multiplications,
@@ -74,11 +74,11 @@ and most importantly that the operations performed are different:
 
 While, as established above, a classical perceptron computes several
 multiplications followed by a summation, a morphological perceptron performs
-multiple additions, followed by a $min$ or $max$.
+multiple additions, followed by a $\min$ or $\max$.
 
 This simple shift into a different semiring creates a more complex decision
 boundary, making these constructs a natural choice for designing binary
 classifiers.
 
-This repository expores the behavior of such perceptrons, namely standalone
+This repository explores the behavior of such perceptrons, namely standalone
 ones, but also more complex structures, such as r-DEP and l-DEP.
