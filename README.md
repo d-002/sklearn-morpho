@@ -3,10 +3,10 @@
 Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
 =======
 
-![](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
-![](https://img.shields.io/pypi/pyversions/sklearn-morpho)
-![](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
-![](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/ci.yml?style=flat-square)
+![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
+![Supported Python version](https://img.shields.io/pypi/pyversions/sklearn-morpho)
+![AUR package](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)
+![CI status](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/ci.yml?style=flat-square)
 
 ## Current features
 
