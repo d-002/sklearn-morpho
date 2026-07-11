@@ -9,16 +9,22 @@ build-backend = "hatchling.build"
 [project]
 name = "sklearn-morpho"
 version = "0.2.2"
+requires-python = ">=3.11"
 dependencies = [
     "cvxpy>=1.9.0,<2.0.0",
     "numpy>=2.0.0",
     "scikit-learn>=1.8.0,<2.0.0",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
 
 [project.optional-dependencies]
 dccp = [
     "dccp>=1.1.1,<2.0.0",
-    "pytest>=9.0.0,<10.0.0", # TODO remove
 ]
 
 [tool.pytest.ini_options]
@@ -40,18 +46,24 @@ dependencies = [
     "ruff>=0.15.0,<1.0.0", # linter
 ]
 
+[tool.hatch.envs.default.env-vars]
+SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
+
 # Matrix test
 
 [tool.hatch.envs.test]
-# break inheritance from default to ignore .venv and allow different py versions
-template = "test"
+template = "test" # break inheritance from default to ignore .venv
 features = [
     "dccp",
 ]
 dependencies = [
+    "pandas>=3.0.0",
     "pytest>=9.0.0,<10.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
 ]
+
+[tool.hatch.envs.test.env-vars]
+SCIPY_ARRAY_API = "1"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["3.11", "3.12", "3.13", "3.14"]
