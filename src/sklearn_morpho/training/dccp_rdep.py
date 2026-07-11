@@ -1,11 +1,12 @@
-import numpy as np
-import cvxpy as cp
 from typing import Literal, cast
 from warnings import warn
 
-from .dccp_wrapper import DccpTrainer
-from ..weighting import SampleWeighting
+import cvxpy as cp
+import numpy as np
+
 from ..stopping import StoppingMethod
+from ..weighting import SampleWeighting
+from .dccp_wrapper import DccpTrainer
 
 
 class RDEPDccpTrainer(DccpTrainer):

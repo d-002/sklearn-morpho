@@ -1,10 +1,11 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import cast
+
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.datasets import make_classification, make_moons
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
-from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.datasets import make_classification, make_moons
 
 from sklearn_morpho.classifiers.ldep import LDEP
 

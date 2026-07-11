@@ -1,7 +1,7 @@
-import numpy as np
 from abc import ABC
 
-from sklearn.base import OneToOneFeatureMixin, TransformerMixin, BaseEstimator
+import numpy as np
+from sklearn.base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin
 
 WeightingResult = tuple[np.ndarray, float]
 

@@ -1,17 +1,17 @@
-import pytest
-import numpy as np
 from typing import cast
 
+import numpy as np
+import pytest
 from friendly_dataset import friendly_dataset
 
+from sklearn_morpho import LDEP
 from sklearn_morpho.stopping import (
+    EpochStoppingMethod,
     StoppingMethod,
     TrainStopStoppingMethod,
-    EpochStoppingMethod,
 )
-from sklearn_morpho.weighting import NoneSampleWeighting
 from sklearn_morpho.training.dccp_ldep import LDEPDccpTrainer
-from sklearn_morpho import LDEP
+from sklearn_morpho.weighting import NoneSampleWeighting
 
 
 def test_init():

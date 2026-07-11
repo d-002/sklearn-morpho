@@ -1,10 +1,11 @@
 from typing import Literal, cast
-import numpy as np
-import cvxpy as cp
 
-from .dccp_wrapper import DccpTrainer
-from ..weighting import SampleWeighting
+import cvxpy as cp
+import numpy as np
+
 from ..stopping import StoppingMethod
+from ..weighting import SampleWeighting
+from .dccp_wrapper import DccpTrainer
 
 
 class LDEPDccpTrainer(DccpTrainer):

@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Literal, cast
-import numpy as np
-import cvxpy as cp
 from time import time
+from typing import Literal, cast
 
+import cvxpy as cp
+import numpy as np
 from sklearn.model_selection import train_test_split
-from ..weighting import SampleWeighting
+
 from ..stopping import StoppingMethod
+from ..weighting import SampleWeighting
 
 
 class DccpTrainer(ABC):
