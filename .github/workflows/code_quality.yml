@@ -1,4 +1,4 @@
-name: Check for ${{ matrix.name }} errors
+name: Code quality
 
 on:
   push:
@@ -7,7 +7,19 @@ on:
     branches: [ "**" ]
 
 jobs:
-  linter:
+  todo:
+    name: Check for TODOs in code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan for TODOs in the code
+        run: ./check_todos.sh
+
+  lint:
+    name: Check for ${{ matrix.name }} errors
     runs-on: ubuntu-latest
     strategy:
       matrix:

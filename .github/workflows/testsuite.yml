@@ -1,4 +1,4 @@
-name: Coverage test (ignore failed tests)
+name: Testsuite
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   coverage:
+    name: Coverage test (ignore failed tests)
     runs-on: ubuntu-latest
 
     steps:
