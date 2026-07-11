@@ -1,4 +1,4 @@
-name: Run testsuite on different OSes with py3.13
+name: Run testsuite with py3.13
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }} with py3.13
+    name: use OS ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
