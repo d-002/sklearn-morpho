@@ -1,12 +1,11 @@
-import pytest
 import numpy as np
-
+import pytest
 from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
-from sklearn_morpho.weighting import DistSampleWeighting
-from sklearn_morpho.stopping import StoppingMethod, EpochStoppingMethod
 from sklearn_morpho import LDEP
+from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
+from sklearn_morpho.weighting import DistSampleWeighting
 
 
 def test_init():

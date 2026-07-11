@@ -3,8 +3,9 @@ Display training results gotten from a compare_estimators.py run.
 """
 
 import json
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 FILE = 'comparison.json'
 

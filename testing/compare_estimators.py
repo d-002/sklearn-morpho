@@ -8,23 +8,22 @@ Estimators selection inspired by arxiv/2011.06512
 import json
 import signal
 import warnings
-import numpy as np
 from time import time
-from scipy.sparse._csr import csr_matrix
 
+import numpy as np
+from scipy.sparse._csr import csr_matrix
+from sklearn.datasets import fetch_openml, load_breast_cancer
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
-from sklearn.datasets import load_breast_cancer, fetch_openml
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.svm import SVC, LinearSVC
 
 # perceptrons
 from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import make_pipeline
-from sklearn.neural_network import MLPClassifier
-from sklearn.multiclass import OneVsRestClassifier
 
 FILE = 'comparison.json'
 n_folds = 5

@@ -12,31 +12,30 @@ permitted by the timeout.
 Estimators selection inspired by arxiv/2011.06512
 """
 
-import os
-import sys
 import json
-import time
+import os
 import signal
+import sys
+import time
 import warnings
-import numpy as np
-
-from time import time, sleep
-from threading import Thread
 from multiprocessing import Manager
+from threading import Thread
+from time import sleep, time
+
+import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse._csr import csr_matrix
-
+from sklearn.datasets import fetch_openml, load_breast_cancer
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
-from sklearn.datasets import load_breast_cancer, fetch_openml
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.svm import SVC, LinearSVC
 
 from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
-from sklearn.svm import LinearSVC, SVC
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import make_pipeline
-from sklearn.neural_network import MLPClassifier
-from sklearn.multiclass import OneVsRestClassifier
 
 ## Timeouts handling
 

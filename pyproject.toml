@@ -77,7 +77,7 @@ indent-width = 4
 line-length = 80
 
 [tool.ruff.lint]
-select = ["E"]
+select = ["E", "I"]
 
 [tool.ruff.format]
 quote-style = "single"
