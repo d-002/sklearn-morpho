@@ -1,0 +1,66 @@
+name: Testsuite
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu-latest" ]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        # also test on other OSes, but not for all versions to save minutes
+        include:
+          - os: windows-latest
+            python-version: "3.13"
+          - os: macos-latest
+            python-version: "3.13"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: Run tests with Hatch
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            hatch run test.py${{ matrix.python-version }}:pytest
+          else
+            hatch run pytest
+          fi
+
+  coverage:
+    name: Coverage test (ignore failed tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Hatch
+        run: pip install hatch
+
+      - name: Install coverage utilities
+        run: pip install coverage
+
+      - name: Check coverage
+        run: |
+          hatch run pytest --cov --cov-fail-under=90
