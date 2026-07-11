@@ -22,8 +22,8 @@ jobs:
     name: Check for ${{ matrix.name }} errors
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        fail-fast: false
         include:
           - name: "linting"
             command: "python -m ruff check"
