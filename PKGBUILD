@@ -9,7 +9,7 @@ license=("MIT")
 depends=("python" "python-cvxpy" "python-numpy" "python-scikit-learn")
 makedepends=("python-build" "python-installer" "python-wheel" "python-hatchling")
 source=("https://files.pythonhosted.org/packages/source/${_name::1}/${_name}/${_name}-${pkgver}.tar.gz")
-sha256sums=('4dc5a155a32332c4da33f375c7e4e83af15fa2a0ea8bb68f1843e74d0b47bce9')
+sha256sums=('a0451822efbfef83e45940560560eae443fb7bbb045167b66b9d53a09656c0af')
 
 build() {
   cd "${_name}-${pkgver}"
