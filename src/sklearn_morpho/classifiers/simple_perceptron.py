@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Literal, cast
 
 import numpy as np
-from sklearn.utils import Tags
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import check_random_state
+from sklearn.utils import Tags, check_random_state
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -169,7 +168,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
         expr = self.weights_ + X_scaled
 
         res: np.ndarray
-        if self.kind == 'max':
+        if self.kind == Kind.MAX:
             res = expr.max(axis=1)
         else:
             res = expr.min(axis=1)
