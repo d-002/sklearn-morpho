@@ -50,7 +50,6 @@ for name, (X, y) in datasets.items():
         X, y, test_size=0.33, random_state=random_state
     )
 
-    # for LSPs
     X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
     y_train, y_test = cast(np.ndarray, y_train), cast(np.ndarray, y_test)
 
