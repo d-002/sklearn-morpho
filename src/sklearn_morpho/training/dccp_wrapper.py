@@ -196,8 +196,7 @@ class DccpTrainer(ABC):
             )
 
             # solve the problem, normalize the cost when using wdccp
-            solve_result = problem.solve(verbose=self.verbose == 2)
-            solve_result = cast(float, solve_result)
+            solve_result = cast(float, problem.solve(verbose=self.verbose == 2))
             cvxpy_cost = solve_result * cost_normalizer
 
             self.after_epoch()
