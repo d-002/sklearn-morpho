@@ -4,9 +4,9 @@ from warnings import warn
 import cvxpy as cp
 import numpy as np
 
+from ..inversion import InversionHeuristic
 from ..stopping import StoppingMethod
 from ..weighting import SampleWeighting
-from ..inversion import InversionHeuristic
 from .dccp_wrapper import DccpTrainer
 
 

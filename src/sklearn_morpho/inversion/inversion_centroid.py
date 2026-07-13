@@ -2,6 +2,7 @@ import numpy as np
 
 from .inversion_base import InversionHeuristic
 
+
 class CentroidInversion(InversionHeuristic):
     """
     Let $c0$, $c1$ be the centroids of the negative and positive classes
