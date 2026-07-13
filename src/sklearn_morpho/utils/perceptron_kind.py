@@ -1,5 +1,6 @@
 import enum
 
+
 class Kind(str, enum.Enum):
     """
     The kind of morphological perceptron, either min or max.

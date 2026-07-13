@@ -4,8 +4,8 @@ import cvxpy as cp
 import numpy as np
 
 from ..stopping import StoppingMethod
-from ..weighting import SampleWeighting
 from ..utils.perceptron_kind import Kind
+from ..weighting import SampleWeighting
 from .dccp_wrapper import DccpTrainer
 
 

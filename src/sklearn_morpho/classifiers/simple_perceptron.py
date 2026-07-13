@@ -17,8 +17,9 @@ from ..stopping import (
     TrainStopStoppingMethod,
 )
 from ..training.dccp_simple_perceptron import SimplePerceptronDccpTrainer
-from ..weighting import NoneSampleWeighting, SampleWeighting
 from ..utils.perceptron_kind import Kind
+from ..weighting import NoneSampleWeighting, SampleWeighting
+
 
 class MorphoPerceptron(ClassifierMixin, BaseEstimator):
     """
