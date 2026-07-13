@@ -50,20 +50,19 @@ dependencies = [
 [tool.hatch.envs.default.env-vars]
 SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
 
-# Mypy environment for CI
+# Mypy environment
 
-[rool.hatch.envs.mypy]
-features = "*"
+[tool.hatch.envs.mypy]
+features = [
+    "dccp"
+]
+detached = true
 dependencies = [
     "pytest>=9.0.0,<10.0.0",
-    "mypy>=2.1.0,<3.0.0",
+    "mypy",
 ]
 
-[tool.hatch.envs.mypy.scripts]
-mypy-venv = "mypy src tests --python-executable=.venv/bin/python"
-
-
-# Matrix test
+# Matrix tests environment
 
 [tool.hatch.envs.test]
 template = "test" # break inheritance from default to ignore .venv
