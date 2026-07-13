@@ -9,6 +9,7 @@ from sklearn.utils import Tags, check_random_state
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted, validate_data
 
+from ..inversion import CentroidInversion, InversionHeuristic
 from ..stopping import (
     CostStoppingMethod,
     EarlyStoppingMethod,
@@ -18,7 +19,6 @@ from ..stopping import (
 )
 from ..training.dccp_rdep import RDEPDccpTrainer
 from ..weighting import NoneSampleWeighting, SampleWeighting
-from ..inversion import InversionHeuristic, NoInversion
 
 
 class RDEP(ClassifierMixin, BaseEstimator):
@@ -44,7 +44,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
         validation_ratio: float = 0.3,
         weighting_method: SampleWeighting | None = None,
         stopping_methods: list[StoppingMethod] | None = None,
-        inversion_method: InversionHeuristic = NoInversion(),
+        inversion_method: InversionHeuristic | None = None,
         use_dccp_library: bool = False,
         verbose: Literal[0, 1, 2] = 0,
         random_state: np.random.RandomState | None = None,
@@ -90,6 +90,8 @@ class RDEP(ClassifierMixin, BaseEstimator):
         param inversion_method: The heuristic to use to know whether to invert
                                 the target classes, as the dataset's orientation
                                 might not always be favorable.
+                                If left to None, will use a CentroidInversion
+                                optimizing for (1, 1, ..., 1).
         param use_dccp_library: Whether to use the dccp library as a solver or
                                 a manual constraints linearization in fit.
         param verbose:          Whether to log extra information. 0: no logging,
@@ -140,6 +142,10 @@ class RDEP(ClassifierMixin, BaseEstimator):
             ]
         else:
             stopping_methods = self.stopping_methods
+        if self.inversion_method is None:
+            inversion_method = CentroidInversion(np.ones(X.shape[1]))
+        else:
+            inversion_method = self.inversion_method
 
         # create classes and convert them to distinct integers for fitting
         # the classes are persisted inside the object for use in predict
@@ -163,7 +169,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
             self.validation_ratio,
             weighting_method,
             stopping_methods,
-            self.inversion_method,
+            inversion_method,
             self.use_dccp_library,
             self.verbose,
             random_state,
