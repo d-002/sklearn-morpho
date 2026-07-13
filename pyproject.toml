@@ -13,7 +13,7 @@ version = "0.2.3"
 requires-python = ">=3.11"
 dependencies = [
     "cvxpy>=1.9.0,<2.0.0",
-    "numpy>=2.0.0",
+    "numpy>=2.0.0,<3.0.0",
     "scikit-learn>=1.8.0,<2.0.0",
 ]
 classifiers = [
@@ -41,7 +41,7 @@ dependencies = [
     "dccp>=1.1.1,<2.0.0",
     "jupyterlab>=4.5.0,<5.0.0", # for coding the MREs
     "matplotlib>=3.10.0,<4.0.0", # for files in testing
-    "pandas>=3.0.0", # for scikit-learn's check_estimator and openml datasets
+    "pandas>=3.0.0,<4.0.0", # for scikit-learn's check_estimator and openml datasets
     "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
     "pytest>=9.0.0,<10.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
@@ -50,8 +50,18 @@ dependencies = [
 [tool.hatch.envs.default.env-vars]
 SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
 
-[tool.hatch.envs.default.scripts]
-mypy-venv = "python -m mypy src tests --python-executable=.venv/bin/python"
+# Mypy environment for CI
+
+[rool.hatch.envs.mypy]
+features = "*"
+dependencies = [
+    "pytest>=9.0.0,<10.0.0",
+    "mypy>=2.1.0,<3.0.0",
+]
+
+[tool.hatch.envs.mypy.scripts]
+mypy-venv = "mypy src tests --python-executable=.venv/bin/python"
+
 
 # Matrix test
 
@@ -61,7 +71,7 @@ features = [
     "dccp",
 ]
 dependencies = [
-    "pandas>=3.0.0",
+    "pandas>=3.0.0,<4.0.0",
     "pytest>=9.0.0,<10.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
 ]
