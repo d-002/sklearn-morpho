@@ -111,7 +111,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
             active_elt = cp.sum(cp.multiply(M[mask], expr), axis=1)
 
-            if self.kind == 'max':
+            if self.kind == Kind.MAX:
                 if label == 0:
                     constraints.append(
                         self.margin + cp.max(expr, axis=1) <= self._slack[mask]
@@ -151,7 +151,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
                 self._training_weights, (1, self.weights.size), order='C'
             )
 
-            if self.kind == 'max':
+            if self.kind == Kind.MAX:
                 expr = cp.max(expr, axis=1)
             else:
                 expr = cp.min(expr, axis=1)
@@ -164,7 +164,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         return cp.Problem(cast(cp.Minimize, self._objective), constraints)
 
     def get_cost(self, X: np.ndarray, y: np.ndarray) -> float:
-        if self.kind == 'max':
+        if self.kind == Kind.MAX:
             expr = np.max(X + self.weights, axis=1)
         else:
             expr = np.min(X + self.weights, axis=1)
