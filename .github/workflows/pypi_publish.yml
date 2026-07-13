@@ -4,11 +4,14 @@ on:
   release:
     types: [ published ]
 
+concurrency:
+  group: "deploy"
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: pypi
-
     permissions:
       id-token: write
       contents: read

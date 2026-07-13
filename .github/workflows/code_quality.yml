@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "master" ]
 
+concurrency:
+  group: "code quality"
+  cancel-in-progress: true
+
 jobs:
   todo:
     name: Check for TODOs in code
