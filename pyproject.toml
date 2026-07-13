@@ -50,6 +50,9 @@ dependencies = [
 [tool.hatch.envs.default.env-vars]
 SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
 
+[tool.hatch.envs.default.scripts]
+cov-html = "pytest --cov --cov-report=html"
+
 # Mypy environment
 
 [tool.hatch.envs.mypy]
