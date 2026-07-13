@@ -24,6 +24,7 @@ from sklearn.svm import SVC, LinearSVC
 
 # perceptrons
 from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
+from sklearn_morpho.utils import Kind
 
 FILE = 'comparison.json'
 n_folds = 5
@@ -43,10 +44,10 @@ estimators = {
         RDEP(use_dccp_library=True, random_state=random_state)
     ),
     'Morpho_max': OneVsRestClassifier(
-        MorphoPerceptron(kind='max', random_state=random_state)
+        MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
     'Morpho_min': OneVsRestClassifier(
-        MorphoPerceptron(kind='min', random_state=random_state)
+        MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),

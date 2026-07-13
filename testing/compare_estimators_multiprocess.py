@@ -36,6 +36,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
 from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
+from sklearn_morpho.utils import Kind
 
 ## Timeouts handling
 
@@ -44,7 +45,7 @@ class TimeoutException(Exception):
     pass
 
 
-def timeout_handler(sugnum, frame):
+def timeout_handler(signum, frame):
     raise TimeoutException()
 
 
@@ -142,10 +143,10 @@ estimators = {
     #    RDEP(use_dccp_library=True, random_state=random_state)
     # ),
     'Morpho_max': OneVsRestClassifier(
-        MorphoPerceptron(kind='max', random_state=random_state)
+        MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
     'Morpho_min': OneVsRestClassifier(
-        MorphoPerceptron(kind='min', random_state=random_state)
+        MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
