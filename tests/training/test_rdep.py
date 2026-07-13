@@ -80,7 +80,6 @@ def test_train_with_penalty() -> None:
 
 
 def test_train_dccp() -> None:
-    return  # TODO temporary, need #2 to be closed to work again
     rdep = RDEP(use_dccp_library=True)
 
     X, y = friendly_dataset()
@@ -90,7 +89,6 @@ def test_train_dccp() -> None:
 
 
 def test_train_dccp_with_penalty() -> None:
-    return  # temporary, need #2 to be closed to work again
     rdep = RDEP(penalty=0.1, use_dccp_library=True)
 
     X, y = friendly_dataset()
