@@ -23,8 +23,8 @@ from ..weighting import NoneSampleWeighting, SampleWeighting
 
 class DEP(ClassifierMixin, BaseEstimator):
     """
-    Scikit-learn estimator wrapper around a DEP (reduced Dilation-Erosion
-    morphological Perceptron) for binary data classification.
+    Scikit-learn estimator wrapper around a DEP (Dilation-Erosion morphological
+    Perceptron) for binary data classification.
 
     The DEP's activation function is defined as:
 
