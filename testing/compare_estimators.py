@@ -23,7 +23,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
 # perceptrons
-from sklearn_morpho import LDEP, DEP, MorphoPerceptron
+from sklearn_morpho import DEP, LDEP, MorphoPerceptron
 from sklearn_morpho.utils import Kind
 
 FILE = 'comparison.json'
