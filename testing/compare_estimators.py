@@ -15,7 +15,7 @@ from scipy.sparse._csr import csr_matrix
 from sklearn.datasets import fetch_openml, load_breast_cancer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
