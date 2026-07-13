@@ -172,6 +172,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
         trainer.train(X_scaled, y_integers)
         self.weights_ = trainer.weights
+        self.invert_res_ = trainer.invert_res
 
         return self
 
@@ -188,7 +189,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
         else:
             res = expr.min(axis=1)
 
-        return res
+        return res * (1 - 2 * self.invert_res_)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
