@@ -18,6 +18,13 @@ class CentroidInversion(InversionHeuristic):
         self.perfect_vector = perfect_vector
 
     def should_inverse(self, X: np.ndarray, y: np.ndarray) -> bool:
+        s0, s1 = X.shape[1:], self.perfect_vector.shape
+        if s0 != s1:
+            raise ValueError(
+                'Incompatible data passed to should_inverse: '
+                f'expected size {s1} but got {s0}'
+            )
+
         labels, inv, counts = np.unique(
             y, return_inverse=True, return_counts=True
         )
