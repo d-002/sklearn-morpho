@@ -18,7 +18,7 @@ from ..stopping import (
 )
 from ..training.dccp_simple_perceptron import SimplePerceptronDccpTrainer
 from ..weighting import NoneSampleWeighting, SampleWeighting
-
+from ..utils.perceptron_kind import Kind
 
 class MorphoPerceptron(ClassifierMixin, BaseEstimator):
     """
@@ -34,7 +34,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
     def __init__(
         self,
-        kind: Literal['max', 'min'],
+        kind: Kind | Literal['max', 'min'],
         margin=0.0,
         penalty=0.0,
         validation_ratio=0.3,
@@ -87,7 +87,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
                                 randomness.
         """
 
-        self.kind: Literal['max', 'min'] = kind
+        self.kind: Kind | Literal['max', 'min'] = kind
         self.margin = margin
         self.penalty = penalty
         self.validation_ratio = validation_ratio
