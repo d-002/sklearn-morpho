@@ -70,6 +70,13 @@ SCIPY_ARRAY_API = "1"
 [[tool.hatch.envs.test.matrix]]
 python = ["3.11", "3.12", "3.13", "3.14"]
 
+# Pyright
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+
 # Ruff
 
 [tool.ruff]
@@ -82,3 +89,17 @@ select = ["E", "I"]
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
+
+# Mypy
+
+[tool.mypy]
+strict = true
+python_executable = ".venv/bin/python"
+disallow_subclassing_any = false
+# since pyright tries to parse incorrectly typed modules
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "cvxpy.*", "dccp.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
