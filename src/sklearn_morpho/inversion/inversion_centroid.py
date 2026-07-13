@@ -34,4 +34,5 @@ class CentroidInversion(InversionHeuristic):
 
         dataset_vector = centroids[1] - centroids[0]
 
-        return dataset_vector @ self.perfect_vector < 0
+        res: bool = dataset_vector @ self.perfect_vector < 0
+        return res

@@ -143,7 +143,9 @@ class RDEP(ClassifierMixin, BaseEstimator):
         else:
             stopping_methods = self.stopping_methods
         if self.inversion_method is None:
-            inversion_method = CentroidInversion(np.ones(X.shape[1]))
+            inversion_method: InversionHeuristic = CentroidInversion(
+                np.ones(X.shape[1])
+            )
         else:
             inversion_method = self.inversion_method
 
