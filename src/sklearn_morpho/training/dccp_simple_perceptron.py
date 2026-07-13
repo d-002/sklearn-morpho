@@ -5,6 +5,7 @@ import numpy as np
 
 from ..stopping import StoppingMethod
 from ..weighting import SampleWeighting
+from ..utils.perceptron_kind import Kind
 from .dccp_wrapper import DccpTrainer
 
 
@@ -21,7 +22,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
     def __init__(
         self,
-        kind: Literal['max', 'min'],
+        kind: Kind | Literal['max', 'min'],
         margin: float,
         penalty: float,
         validation_ratio: float,
@@ -77,7 +78,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         K = X.shape[0]
         self.set_objective(X, cost_weights)
 
-        if self.kind == 'max':
+        if self.kind == Kind.MAX:
             idx = np.argmax(X + self.weights, axis=1)
         else:
             idx = np.argmin(X + self.weights, axis=1)
