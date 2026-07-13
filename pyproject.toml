@@ -45,11 +45,13 @@ dependencies = [
     "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
     "pytest>=9.0.0,<10.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
-    "ruff>=0.15.0,<1.0.0", # linter
 ]
 
 [tool.hatch.envs.default.env-vars]
 SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
+
+[tool.hatch.envs.default.scripts]
+mypy-venv = "python -m mypy src tests --python-executable=.venv/bin/python"
 
 # Matrix test
 
@@ -94,7 +96,6 @@ indent-style = "space"
 
 [tool.mypy]
 strict = true
-python_executable = ".venv/bin/python"
 disallow_subclassing_any = false
 # since pyright tries to parse incorrectly typed modules
 warn_unused_ignores = false

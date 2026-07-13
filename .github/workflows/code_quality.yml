@@ -36,11 +36,11 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      - name: Install linter
-        run: pip install mypy
+      - name: Install Hatch
+        run: pip install hatch
 
-      - name: Run mypy on src and tests
-        run: python -m mypy src tests
+      - name: Run mypy through hatch
+        run: hatch run mypy
 
   lint:
     name: Check for ${{ matrix.name }} errors
