@@ -7,7 +7,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 
-from sklearn_morpho.classifiers.ldep import LDEP
+from sklearn_morpho.classifiers import LDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,

@@ -51,7 +51,7 @@ estimators = {
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
-    'MLP': MLPClassifier(max_iter=1000, random_state=random_state),
+    'MLP': MLPClassifier(random_state=random_state),
     'Poly SVC': SVC(kernel='poly', random_state=random_state),
 }
 
@@ -81,33 +81,31 @@ datasets_names = [
     'banknote-authentication',
     'blood-transfusion-service-center',
     'breast-cancer',
-    'chess',
+    # 'chess',
     'colic',
     'credit-approval',
     'credit-g',
     'cylinder-bands',
     'diabetes',
-    'eeg-eye-state',
+    # 'eeg-eye-state',
     'haberman',
     'hill-valley',
     'ilpd',
+    # 'internet-advertisements',
     'ionosphere',
     'mofn-3-7-10',
     'monks-problems-2',
     'mushroom',
     'phoneme',
-    'PhishingWebsites',
-    'sick',
+    # 'PhishingWebsites',
+    # 'sick',
     'sonar',
-    'spambase',
+    # 'spambase',
     'steel-plates-fault',
     'thoracic-surgery',
     'tic-tac-toe',
     'titanic',
 ]
-
-# datasets not included compared to arxiv/2011.06512:
-# - internet-advertisements (internally referring to a nonexistent dataset)
 
 datasets_options = {
     'australian': {'version': 4},
@@ -176,8 +174,6 @@ for dataset_name in datasets_names:
                 estimator.fit(X_train, y_train)
             except TimeoutException:
                 warnings.warn(f'{estimator_name} timed out after {timeout}s.')
-                scores[dataset_name][estimator_name].append(0)
-                times[dataset_name][estimator_name].append(timeout)
                 break
 
             t1 = time()
