@@ -17,16 +17,16 @@ from ..stopping import (
     StoppingMethod,
     TrainStopStoppingMethod,
 )
-from ..training.dccp_rdep import RDEPDccpTrainer
+from ..training.dccp_dep import DEPDccpTrainer
 from ..weighting import NoneSampleWeighting, SampleWeighting
 
 
-class RDEP(ClassifierMixin, BaseEstimator):
+class DEP(ClassifierMixin, BaseEstimator):
     """
-    Scikit-learn estimator wrapper around a r-DEP (reduced Dilation-Erosion
+    Scikit-learn estimator wrapper around a DEP (reduced Dilation-Erosion
     morphological Perceptron) for binary data classification.
 
-    The r-DEP's activation function is defined as:
+    The DEP's activation function is defined as:
 
     \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
 
@@ -112,7 +112,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> RDEP:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> DEP:
         """
         Fit the classifier, create attributes:
         - self.max_perceptron_
@@ -164,7 +164,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
             )
 
         # create and train perceptrons
-        trainer = RDEPDccpTrainer(
+        trainer = DEPDccpTrainer(
             self.lambda_bounds,
             self.margin,
             self.penalty,
