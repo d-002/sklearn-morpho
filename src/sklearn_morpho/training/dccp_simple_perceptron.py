@@ -72,10 +72,12 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         self.weights = self.random_state.randn(data_dim)
         self._training_weights = cp.Variable(data_dim)
 
-    def set_objective(self, X: np.ndarray, cost_weights: np.ndarray) -> None:
+    def set_objective(self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray) -> None:
         # the objective and the slack variables do not change, cache them
         if self._objective is not None:
             return
+
+        self.invert_res = self.inversion_method.should_invert(X, y)
 
         self._slack = cp.Variable(len(X))
 
@@ -89,7 +91,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
     ) -> cp.Problem:
         K = X.shape[0]
-        self.set_objective(X, cost_weights)
+        self.set_objective(X, y, cost_weights)
 
         if self.kind == Kind.MAX:
             idx = np.argmax(X + self.weights, axis=1)
@@ -118,7 +120,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
             active_elt = cp.sum(cp.multiply(M[mask], expr), axis=1)
 
             if self.kind == Kind.MAX:
-                if label == 0:
+                if (label == 0) ^ self.invert_res:
                     constraints.append(
                         self.margin + cp.max(expr, axis=1) <= self._slack[mask]
                     )
@@ -127,7 +129,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
                         self.margin <= self._slack[mask] + active_elt
                     )
             else:
-                if label == 0:
+                if (label == 0) ^ self.invert_res:
                     constraints.append(
                         self.margin + active_elt <= self._slack[mask]
                     )
@@ -141,7 +143,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
     def get_problem_dccp(
         self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
     ) -> cp.Problem:
-        self.set_objective(X, cost_weights)
+        self.set_objective(X, y, cost_weights)
 
         constraints = []
         for label in [0, 1]:
@@ -162,7 +164,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
             else:
                 expr = cp.min(expr, axis=1)
 
-            if label == 0:
+            if (label == 0) ^ self.invert_res:
                 constraints.append(self.margin + expr <= self._slack[mask])
             else:
                 constraints.append(self.margin - expr <= self._slack[mask])
@@ -175,7 +177,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         else:
             expr = np.min(X + self.weights, axis=1)
 
-        cost = (expr) * (1 - 2 * y)
+        cost = (expr) * (1 - 2 * y) * (1 - 2 * self.invert_res)
 
         res: float = np.maximum(0, cost).sum()
         return res
