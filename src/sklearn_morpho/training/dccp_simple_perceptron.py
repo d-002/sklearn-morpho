@@ -6,6 +6,7 @@ import numpy as np
 from ..stopping import StoppingMethod
 from ..utils.perceptron_kind import Kind
 from ..weighting import SampleWeighting
+from ..inversion import InversionHeuristic
 from .dccp_wrapper import DccpTrainer
 
 
@@ -35,6 +36,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         validation_ratio: float,
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
+        inversion_method: InversionHeuristic,
         use_dccp_library: bool,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
@@ -42,8 +44,11 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         """
         Initialize the r-DEP trainer.
 
-        param kind:     Whether the perceptron is dilation or erosion.
-        param [others]: See base class.
+        param kind:             Whether the perceptron is dilation or erosion.
+        param inversion_method: The method to use to know whether to invert
+                                the target classes, as the dataset's orientation
+                                might not always be favorable.
+        param [others]:         See base class.
         """
 
         super().__init__(
@@ -58,6 +63,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         )
 
         self.kind = kind
+        self.inversion_method = inversion_method
 
     def at_training_start(self, data_dim: int) -> None:
         # similar to l-DEP, see corresponding files for implementation comments
