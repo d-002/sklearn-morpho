@@ -119,7 +119,6 @@ class RDEPDccpTrainer(DccpTrainer):
                 f'found only {n_features} feature(s)'
             )
 
-        # set the objective
         self.invert_res = self.inversion_method.should_invert(X, y)
 
         self._slack = cp.Variable(len(X))
