@@ -12,7 +12,7 @@ Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morph
 
 - Scikit-learn classifiers:
   - Linear Dilation-Erosion Perceptron (l-DEP)
-  - Reduced Dilation-Erosion Perceptron (r-DEP)
+  - Dilation-Erosion Perceptron (DEP)
   - Simple Dilation and Erosion Morphological Perceptrons
 - Modular wrapper for DCCP optimization tasks with `cvxpy`
 
@@ -98,4 +98,4 @@ boundary, making these constructs a natural choice for designing binary
 classifiers.
 
 This repository explores the behavior of such perceptrons, namely standalone
-ones, but also more complex structures, such as r-DEP and l-DEP.
+ones, but also more complex structures, such as DEP and l-DEP.

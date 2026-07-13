@@ -1,6 +1,6 @@
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn_morpho import LDEP, RDEP, MorphoPerceptron
+from sklearn_morpho import LDEP, DEP, MorphoPerceptron
 from sklearn_morpho.utils import Kind
 
 
@@ -9,9 +9,9 @@ def test_check_estimator_ldep() -> None:
     assert check_estimator(ldep)
 
 
-def test_check_estimator_rdep() -> None:
-    rdep = RDEP()
-    assert check_estimator(rdep)
+def test_check_estimator_dep() -> None:
+    dep = DEP()
+    assert check_estimator(dep)
 
 
 def test_check_estimator_max_perceptron_str() -> None:

@@ -23,9 +23,9 @@ class SavedState:
         self.lambda_ = lambda_
 
 
-class RDEPDccpTrainer(DccpTrainer):
+class DEPDccpTrainer(DccpTrainer):
     """
-    r-DEP trainer.
+    DEP trainer.
 
     During training, the final parameters are implicitly embedded into one
     another.
@@ -48,7 +48,7 @@ class RDEPDccpTrainer(DccpTrainer):
         random_state: np.random.RandomState,
     ) -> None:
         """
-        Initialize the r-DEP trainer.
+        Initialize the DEP trainer.
 
         param lambda_bounds:    A pair of min and max values for lambda, to
                                 avoid solvers (especially dccp) from failing to

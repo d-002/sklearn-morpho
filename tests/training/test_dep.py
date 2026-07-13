@@ -3,97 +3,97 @@ import pytest
 from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
-from sklearn_morpho import RDEP
+from sklearn_morpho import DEP
 from sklearn_morpho.inversion import NoInversion
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.weighting import DistSampleWeighting
 
 
 def test_init() -> None:
-    RDEP()
+    DEP()
 
 
 @pytest.mark.filterwarnings('error')
 def test_train_invalid_params() -> None:
     X, y = friendly_dataset()
 
-    RDEP()
-    RDEP(lambda_bounds=(0, 1)).fit(X, y)
+    DEP()
+    DEP(lambda_bounds=(0, 1)).fit(X, y)
 
     with pytest.raises(ValueError):
-        RDEP(lambda_bounds=(-1, 1)).fit(X, y)
+        DEP(lambda_bounds=(-1, 1)).fit(X, y)
     with pytest.raises(ValueError):
-        RDEP(lambda_bounds=(0, 1.1)).fit(X, y)
+        DEP(lambda_bounds=(0, 1.1)).fit(X, y)
     with pytest.raises(ValueError):
-        RDEP(lambda_bounds=(-1, 2)).fit(X, y)
+        DEP(lambda_bounds=(-1, 2)).fit(X, y)
 
     with pytest.raises(UserWarning):
-        RDEP(lambda_bounds=(0, 1), use_dccp_library=True).fit(X, y)
+        DEP(lambda_bounds=(0, 1), use_dccp_library=True).fit(X, y)
     with pytest.raises(ValueError):
-        RDEP(lambda_bounds=(-1, 2), use_dccp_library=True).fit(X, y)
+        DEP(lambda_bounds=(-1, 2), use_dccp_library=True).fit(X, y)
 
 
 def test_train_noverif() -> None:
-    rdep = RDEP()
+    dep = DEP()
 
     X, y = friendly_dataset()
-    rdep.fit(X, y)
+    dep.fit(X, y)
 
 
 def test_train_degenerate_dataset() -> None:
-    rdep = RDEP()
+    dep = DEP()
 
     X, y = np.zeros((2, 1)), np.arange(2)
     with pytest.raises(ValueError):
-        rdep.fit(X, y)
+        dep.fit(X, y)
 
 
 def test_train() -> None:
     X, y = friendly_dataset()
 
     for use_dccp_library in [False, True]:
-        rdep = RDEP(use_dccp_library=use_dccp_library)
-        rdep.fit(X, y)
+        dep = DEP(use_dccp_library=use_dccp_library)
+        dep.fit(X, y)
 
-        assert f1_score(y, rdep.predict(X)) >= 0.8
+        assert f1_score(y, dep.predict(X)) >= 0.8
 
 
 def test_train_custom_weighted_stopping_invert() -> None:
     stopping_methods: list[StoppingMethod] = [EpochStoppingMethod()]
-    rdep = RDEP(
+    dep = DEP(
         weighting_method=DistSampleWeighting(),
         stopping_methods=stopping_methods,
         inversion_method=NoInversion(),
     )
 
     X, y = friendly_dataset()
-    rdep.fit(X, y)
+    dep.fit(X, y)
 
-    assert f1_score(y, rdep.predict(X)) >= 0.8
+    assert f1_score(y, dep.predict(X)) >= 0.8
 
 
 def test_train_with_penalty() -> None:
-    rdep = RDEP(penalty=0.1)
+    dep = DEP(penalty=0.1)
 
     X, y = friendly_dataset()
-    rdep.fit(X, y)
+    dep.fit(X, y)
 
-    assert f1_score(y, rdep.predict(X)) >= 0.8
+    assert f1_score(y, dep.predict(X)) >= 0.8
 
 
 def test_train_dccp() -> None:
-    rdep = RDEP(use_dccp_library=True)
+    dep = DEP(use_dccp_library=True)
 
     X, y = friendly_dataset()
-    rdep.fit(X, y)
+    dep.fit(X, y)
 
-    assert f1_score(y, rdep.predict(X)) >= 0.8
+    assert f1_score(y, dep.predict(X)) >= 0.8
 
 
 def test_train_dccp_with_penalty() -> None:
-    rdep = RDEP(penalty=0.1, use_dccp_library=True)
+    dep = DEP(penalty=0.1, use_dccp_library=True)
 
     X, y = friendly_dataset()
-    rdep.fit(X, y)
+    dep.fit(X, y)
 
-    assert f1_score(y, rdep.predict(X)) >= 0.8
+    assert f1_score(y, dep.predict(X)) >= 0.8

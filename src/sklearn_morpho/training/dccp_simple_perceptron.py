@@ -42,7 +42,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         random_state: np.random.RandomState,
     ) -> None:
         """
-        Initialize the r-DEP trainer.
+        Initialize the DEP trainer.
 
         param kind:             Whether the perceptron is dilation or erosion.
         param inversion_method: The method to use to know whether to invert
