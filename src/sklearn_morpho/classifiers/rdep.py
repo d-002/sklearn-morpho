@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 import numpy as np
-from sklearn import Tags
+from sklearn.utils import Tags
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
