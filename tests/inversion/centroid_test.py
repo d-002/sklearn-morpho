@@ -1,11 +1,12 @@
-import pytest
 import numpy as np
+import pytest
 
 from sklearn_morpho import inversion
 
 
 def test_init() -> None:
     inversion.CentroidInversion(np.ones(1))
+
 
 def test_data_size() -> None:
     inversion.CentroidInversion(np.ones(1))
@@ -15,6 +16,7 @@ def test_data_size() -> None:
     heuristic.should_invert(np.ones((10, 2)), y)
     with pytest.raises(ValueError):
         heuristic.should_invert(np.ones((10, 3)), y)
+
 
 def test_logic() -> None:
     heuristic = inversion.CentroidInversion(np.ones(2))

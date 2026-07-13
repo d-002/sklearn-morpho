@@ -72,7 +72,9 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         self.weights = self.random_state.randn(data_dim)
         self._training_weights = cp.Variable(data_dim)
 
-    def set_objective(self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray) -> None:
+    def set_objective(
+        self, X: np.ndarray, y: np.ndarray, cost_weights: np.ndarray
+    ) -> None:
         # the objective and the slack variables do not change, cache them
         if self._objective is not None:
             return
