@@ -35,7 +35,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
-from sklearn_morpho import LDEP, DEP, MorphoPerceptron
+from sklearn_morpho import DEP, LDEP, MorphoPerceptron
 from sklearn_morpho.utils import Kind
 
 ## Timeouts handling

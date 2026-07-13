@@ -1,8 +1,8 @@
 from .classifiers import (
-    LDEP as LDEP,
+    DEP as DEP,
 )
 from .classifiers import (
-    DEP as DEP,
+    LDEP as LDEP,
 )
 from .classifiers import (
     MorphoPerceptron as MorphoPerceptron,

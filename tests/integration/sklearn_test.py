@@ -1,6 +1,6 @@
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn_morpho import LDEP, DEP, MorphoPerceptron
+from sklearn_morpho import DEP, LDEP, MorphoPerceptron
 from sklearn_morpho.utils import Kind
 
 
