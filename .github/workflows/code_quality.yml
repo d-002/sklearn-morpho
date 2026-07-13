@@ -22,6 +22,26 @@ jobs:
       - name: Scan for TODOs in the code
         run: ./check_todos.sh
 
+  types:
+    name: Check for typing errors
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install linter
+        run: pip install mypy
+
+      - name: Run mypy on src and tests
+        run: python -m mypy src tests
+
   lint:
     name: Check for ${{ matrix.name }} errors
     runs-on: ubuntu-latest
@@ -29,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "linting"
+          - name: "generic linting"
             command: "python -m ruff check"
           - name: "coding style"
             command: "[ -z \"$(python -m ruff format | grep reformatted)\" ]"
@@ -47,5 +67,5 @@ jobs:
       - name: Install linter
         run: pip install ruff
 
-      - name: Run linter for coding style errors
+      - name: Run linter for ${{ matrix.name }} errors
         run: ${{ matrix.command }}
