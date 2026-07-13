@@ -6,6 +6,7 @@ import numpy as np
 
 from ..stopping import StoppingMethod
 from ..weighting import SampleWeighting
+from ..inversion import InversionHeuristic
 from .dccp_wrapper import DccpTrainer
 
 
@@ -41,6 +42,7 @@ class RDEPDccpTrainer(DccpTrainer):
         validation_ratio: float,
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
+        inversion_method: InversionHeuristic,
         use_dccp_library: bool,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
@@ -48,11 +50,14 @@ class RDEPDccpTrainer(DccpTrainer):
         """
         Initialize the r-DEP trainer.
 
-        param lambda_bounds: A pair of min and max values for lambda, to avoid
-                             solvers (especially dccp) from failing to optimize.
-                             To keep the constraints at the right convexity,
-                             the bounds must be inside [0, 1].
-        param [others]:      See base class.
+        param lambda_bounds:    A pair of min and max values for lambda, to
+                                avoid solvers (especially dccp) from failing to
+                                optimize. To keep the constraints at the right
+                                convexity, the bounds must be inside [0, 1].
+        param inversion_method: The heuristic to use to know whether to invert
+                                the target classes, as the dataset's orientation
+                                might not always be favorable.
+        param [others]:         See base class.
         """
 
         super().__init__(
@@ -80,6 +85,7 @@ class RDEPDccpTrainer(DccpTrainer):
             )
 
         self.lambda_bounds = lambda_bounds
+        self.inversion_method = inversion_method
 
     def at_training_start(self, data_dim: int) -> None:
         # similar to l-DEP, see corresponding files for implementation comments
@@ -113,17 +119,8 @@ class RDEPDccpTrainer(DccpTrainer):
                 f'found only {n_features} feature(s)'
             )
 
-        # figure out whether we should invert the perceptron's output, since
-        # the lower class should be lower in coordinates
-        labels, inv, counts = np.unique(
-            y, return_inverse=True, return_counts=True
-        )
-        sums = np.zeros((len(labels), X.shape[1]))
-        np.add.at(sums, inv, X)
-        centroids = sums / counts[:, np.newaxis]
-
         # set the objective
-        self.invert_res = centroids[0].sum() > centroids[1].sum()
+        self.invert_res = self.inversion_method.should_inverse(X, y)
 
         self._slack = cp.Variable(len(X))
 
