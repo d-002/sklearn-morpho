@@ -5,6 +5,7 @@ from sklearn_morpho import MorphoPerceptron
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.utils import Kind
 from sklearn_morpho.weighting import DistSampleWeighting
+from sklearn_morpho.inversion import NoInversion
 
 
 def test_init() -> None:
@@ -34,7 +35,7 @@ def test_train() -> None:
             assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
-def test_train_custom_weighted_stopping() -> None:
+def test_train_custom_weighted_stopping_invert() -> None:
     X, y = friendly_dataset()
 
     stopping_methods: list[StoppingMethod] = [EpochStoppingMethod()]
@@ -43,6 +44,7 @@ def test_train_custom_weighted_stopping() -> None:
             kind=kind,
             weighting_method=DistSampleWeighting(),
             stopping_methods=stopping_methods,
+            inversion_method=NoInversion(),
         )
 
         perceptron.fit(X, y)
