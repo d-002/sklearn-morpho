@@ -8,12 +8,12 @@ from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.weighting import DistSampleWeighting
 
 
-def test_init():
+def test_init() -> None:
     RDEP()
 
 
 @pytest.mark.filterwarnings('error')
-def test_train_invalid_params():
+def test_train_invalid_params() -> None:
     X, y = friendly_dataset()
 
     RDEP()
@@ -32,14 +32,14 @@ def test_train_invalid_params():
         RDEP(lambda_bounds=(-1, 2), use_dccp_library=True).fit(X, y)
 
 
-def test_train_noverif():
+def test_train_noverif() -> None:
     rdep = RDEP()
 
     X, y = friendly_dataset()
     rdep.fit(X, y)
 
 
-def test_train_degenerate_dataset():
+def test_train_degenerate_dataset() -> None:
     rdep = RDEP()
 
     X, y = np.zeros((2, 1)), np.arange(2)
@@ -47,7 +47,7 @@ def test_train_degenerate_dataset():
         rdep.fit(X, y)
 
 
-def test_train():
+def test_train() -> None:
     X, y = friendly_dataset()
 
     for use_dccp_library in [False, True]:
@@ -57,7 +57,7 @@ def test_train():
         assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
-def test_train_custom_weighted_stopping():
+def test_train_custom_weighted_stopping() -> None:
     stopping_methods: list[StoppingMethod] = [EpochStoppingMethod()]
     rdep = RDEP(
         weighting_method=DistSampleWeighting(),
@@ -70,7 +70,7 @@ def test_train_custom_weighted_stopping():
     assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
-def test_train_with_penalty():
+def test_train_with_penalty() -> None:
     rdep = RDEP(penalty=0.1)
 
     X, y = friendly_dataset()
@@ -79,8 +79,8 @@ def test_train_with_penalty():
     assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
-def test_train_dccp():
-    return  # temporary, need #2 to be closed to work again
+def test_train_dccp() -> None:
+    return  # TODO temporary, need #2 to be closed to work again
     rdep = RDEP(use_dccp_library=True)
 
     X, y = friendly_dataset()
@@ -89,7 +89,7 @@ def test_train_dccp():
     assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
-def test_train_dccp_with_penalty():
+def test_train_dccp_with_penalty() -> None:
     return  # temporary, need #2 to be closed to work again
     rdep = RDEP(penalty=0.1, use_dccp_library=True)
 

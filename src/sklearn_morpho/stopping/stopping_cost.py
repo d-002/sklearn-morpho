@@ -7,7 +7,7 @@ class CostStoppingMethod(StoppingMethod):
     parameter.
     """
 
-    def __init__(self, cost_threshold=1e-6):
+    def __init__(self, cost_threshold: float = 1e-6) -> None:
         if cost_threshold <= 0:
             raise ValueError(
                 f'invalid done_threshold, expected > 0 but got {cost_threshold}'

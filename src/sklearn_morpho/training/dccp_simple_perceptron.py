@@ -9,6 +9,13 @@ from ..weighting import SampleWeighting
 from .dccp_wrapper import DccpTrainer
 
 
+class SavedState:
+    weights: np.ndarray
+
+    def __init__(self, weights: np.ndarray) -> None:
+        self.weights = weights
+
+
 class SimplePerceptronDccpTrainer(DccpTrainer):
     """
     Simple perceptron trainer.
@@ -54,7 +61,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
     def at_training_start(self, data_dim: int) -> None:
         # similar to l-DEP, see corresponding files for implementation comments
-        self._objective = None
+        self._objective: cp.Minimize | None = None
 
         self.weights = self.random_state.randn(data_dim)
         self._training_weights = cp.Variable(data_dim)
@@ -164,7 +171,8 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
 
         cost = (expr) * (1 - 2 * y)
 
-        return np.maximum(0, cost).sum()
+        res: float = np.maximum(0, cost).sum()
+        return res
 
     def after_epoch(self) -> None:
         # update the perceptrons weights from this epoch's results
@@ -174,9 +182,9 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         self.weights = self._training_weights.value
 
     def save_best(self) -> None:
-        self.saved = {
-            'weights': np.copy(self.weights),
-        }
+        self.saved = SavedState(
+            np.copy(self.weights),
+        )
 
     def rollback_to_best(self) -> None:
-        self.weights = self.saved['weights']
+        self.weights = self.saved.weights

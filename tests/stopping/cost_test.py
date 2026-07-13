@@ -3,7 +3,7 @@ import pytest
 from sklearn_morpho import stopping
 
 
-def test_init():
+def test_init() -> None:
     stopping.CostStoppingMethod(1)
 
     with pytest.raises(ValueError):
@@ -12,12 +12,12 @@ def test_init():
         stopping.CostStoppingMethod(-1)
 
 
-def test_validation():
+def test_validation() -> None:
     method = stopping.CostStoppingMethod(1)
     assert not method.requires_validation()
 
 
-def test_logic():
+def test_logic() -> None:
     for threshold in (0.1, 1, 10, 1e6):
         method = stopping.CostStoppingMethod(threshold)
 

@@ -4,18 +4,18 @@ import pytest
 from sklearn_morpho import weighting
 
 
-def test_init():
+def test_init() -> None:
     weighting.NoneSampleWeighting()
 
 
-def test_fit_empty():
+def test_fit_empty() -> None:
     X, y = np.arange(0, 2), np.arange(0)
 
     w = weighting.NoneSampleWeighting()
     w.fit(X, y)
 
 
-def test_fit_nonempty():
+def test_fit_nonempty() -> None:
     n = 100
     X, y = np.arange(n, 2), np.arange(n)
 
@@ -23,7 +23,7 @@ def test_fit_nonempty():
     w.fit(X, y)
 
 
-def test_fit_transform_empty():
+def test_fit_transform_empty() -> None:
     X, y = np.zeros(0), np.zeros(0)
 
     w = weighting.NoneSampleWeighting()
@@ -33,7 +33,7 @@ def test_fit_transform_empty():
     assert np.isclose(cost_normalizer, 1)
 
 
-def test_fit_transform_nonempty():
+def test_fit_transform_nonempty() -> None:
     n = 100
     X, y = np.zeros((n, 2)), np.zeros(n)
 
@@ -44,7 +44,7 @@ def test_fit_transform_nonempty():
     assert np.isclose(cost_normalizer, 1)
 
 
-def test_transform_not_allowed():
+def test_transform_not_allowed() -> None:
     w = weighting.NoneSampleWeighting()
     with pytest.raises(ValueError):
         w.transform(np.zeros(10))

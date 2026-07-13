@@ -8,6 +8,25 @@ from ..weighting import SampleWeighting
 from .dccp_wrapper import DccpTrainer
 
 
+class SavedState:
+    max_w: np.ndarray
+    min_w: np.ndarray
+    max_m: np.ndarray
+    min_m: np.ndarray
+
+    def __init__(
+        self,
+        max_w: np.ndarray,
+        min_w: np.ndarray,
+        max_m: np.ndarray,
+        min_m: np.ndarray,
+    ) -> None:
+        self.max_w = max_w
+        self.min_w = min_w
+        self.max_m = max_m
+        self.min_m = min_m
+
+
 class LDEPDccpTrainer(DccpTrainer):
     """
     l-DEP trainer.
@@ -54,7 +73,7 @@ class LDEPDccpTrainer(DccpTrainer):
     def at_training_start(self, data_dim: int) -> None:
         N_max, N_min = self.latent_dims
 
-        self._objective = None
+        self._objective: cp.Minimize | None = None
 
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
@@ -209,7 +228,8 @@ class LDEPDccpTrainer(DccpTrainer):
         # can use the expressions directly without needing to multiply by lambda
         # since still in the training phase
         cost = (expr_max + expr_min) * (1 - 2 * y)
-        return np.maximum(0, cost).sum()
+        res: float = np.maximum(0, cost).sum()
+        return res
 
     def after_epoch(self) -> None:
         # update the perceptrons weights from this epoch's results
@@ -257,15 +277,15 @@ class LDEPDccpTrainer(DccpTrainer):
             self.min_perceptron /= 1 - self.lambda_
 
     def save_best(self) -> None:
-        self.saved = {
-            'max_w': np.copy(self.max_perceptron),
-            'min_w': np.copy(self.min_perceptron),
-            'max_m': np.copy(self.max_matrix),
-            'min_m': np.copy(self.min_matrix),
-        }
+        self.saved = SavedState(
+            np.copy(self.max_perceptron),
+            np.copy(self.min_perceptron),
+            np.copy(self.max_matrix),
+            np.copy(self.min_matrix),
+        )
 
     def rollback_to_best(self) -> None:
-        self.max_perceptron = self.saved['max_w']
-        self.min_perceptron = self.saved['min_w']
-        self.max_matrix = self.saved['max_m']
-        self.min_matrix = self.saved['min_m']
+        self.max_perceptron = self.saved.max_w
+        self.min_perceptron = self.saved.min_w
+        self.max_matrix = self.saved.max_m
+        self.min_matrix = self.saved.min_m
