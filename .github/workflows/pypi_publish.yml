@@ -25,6 +25,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
+          cache-dependency-path: "pyproject.toml"
 
       - name: Install Hatch
         run: pip install -U pip hatch
