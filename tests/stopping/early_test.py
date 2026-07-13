@@ -3,7 +3,7 @@ import pytest
 from sklearn_morpho import stopping
 
 
-def test_init():
+def test_init() -> None:
     stopping.EarlyStoppingMethod(1)
 
     with pytest.raises(ValueError):
@@ -12,12 +12,12 @@ def test_init():
         stopping.EarlyStoppingMethod(-1)
 
 
-def test_validation():
+def test_validation() -> None:
     method = stopping.EarlyStoppingMethod(1)
     assert method.requires_validation()
 
 
-def test_stop_at_start():
+def test_stop_at_start() -> None:
     for delay in (1, 5, 100):
         method = stopping.EarlyStoppingMethod(delay)
 
@@ -27,7 +27,7 @@ def test_stop_at_start():
         assert method.should_stop(0, 0, delay)
 
 
-def test_reset_then_stop():
+def test_reset_then_stop() -> None:
     method = stopping.EarlyStoppingMethod(3)
 
     assert not method.should_stop(0, 0, 1)

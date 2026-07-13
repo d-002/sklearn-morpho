@@ -4,11 +4,11 @@ import pytest
 from sklearn_morpho import weighting
 
 
-def test_init():
+def test_init() -> None:
     weighting.DistSampleWeighting()
 
 
-def test_fit_single_elements():
+def test_fit_single_elements() -> None:
     X = np.array([(-1, 0), (1, 0)])
     y = np.array([-1, 1])
 
@@ -16,7 +16,7 @@ def test_fit_single_elements():
     w.fit(X, y)
 
 
-def test_fit_transform_single_elements():
+def test_fit_transform_single_elements() -> None:
     X = np.array([(-1, 0), (1, 0)])
     y = np.array([-1, 1])
 
@@ -30,7 +30,7 @@ def test_fit_transform_single_elements():
     assert np.isclose(cost_normalizer, 1)
 
 
-def test_transform_not_allowed():
+def test_transform_not_allowed() -> None:
     w = weighting.DistSampleWeighting()
     with pytest.raises(ValueError):
         w.transform(np.zeros(10))

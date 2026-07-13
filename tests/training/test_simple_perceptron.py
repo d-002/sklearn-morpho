@@ -7,40 +7,40 @@ from sklearn_morpho.utils import Kind
 from sklearn_morpho.weighting import DistSampleWeighting
 
 
-def test_init():
+def test_init() -> None:
     for kind in Kind:
-        MorphoPerceptron(kind=kind)  # type: ignore
+        MorphoPerceptron(kind=kind)
 
 
-def test_train_noverif():
+def test_train_noverif() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
-        perceptron = MorphoPerceptron(kind=kind)  # type: ignore
+        perceptron = MorphoPerceptron(kind=kind)
         perceptron.fit(X, y)
 
 
-def test_train():
+def test_train() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
         for use_dccp_library in [False, True]:
             perceptron = MorphoPerceptron(
                 kind=kind,
-                use_dccp_library=use_dccp_library,  # type: ignore
+                use_dccp_library=use_dccp_library,
             )
             perceptron.fit(X, y)
 
             assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
-def test_train_custom_weighted_stopping():
+def test_train_custom_weighted_stopping() -> None:
     X, y = friendly_dataset()
 
     stopping_methods: list[StoppingMethod] = [EpochStoppingMethod()]
     for kind in Kind:
         perceptron = MorphoPerceptron(
-            kind=kind,  # type: ignore
+            kind=kind,
             weighting_method=DistSampleWeighting(),
             stopping_methods=stopping_methods,
         )
@@ -50,22 +50,22 @@ def test_train_custom_weighted_stopping():
         assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
-def test_train_with_penalty():
+def test_train_with_penalty() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
-        perceptron = MorphoPerceptron(kind=kind, penalty=0.1)  # type: ignore
+        perceptron = MorphoPerceptron(kind=kind, penalty=0.1)
         perceptron.fit(X, y)
 
         assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
-def test_train_dccp():
+def test_train_dccp() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
         perceptron = MorphoPerceptron(
-            kind=kind,  # type: ignore
+            kind=kind,
             use_dccp_library=True,
         )
         perceptron.fit(X, y)
@@ -73,12 +73,12 @@ def test_train_dccp():
         assert f1_score(y, perceptron.predict(X)) >= 0.8
 
 
-def test_train_dccp_with_penalty():
+def test_train_dccp_with_penalty() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
         perceptron = MorphoPerceptron(
-            kind=kind,  # type: ignore
+            kind=kind,
             penalty=0.1,
             use_dccp_library=True,
         )

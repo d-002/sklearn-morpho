@@ -3,7 +3,7 @@ import pytest
 from sklearn_morpho import stopping
 
 
-def test_init():
+def test_init() -> None:
     stopping.EpochStoppingMethod(1)
 
     with pytest.raises(ValueError):
@@ -12,12 +12,12 @@ def test_init():
         stopping.EpochStoppingMethod(-1)
 
 
-def test_validation():
+def test_validation() -> None:
     method = stopping.EpochStoppingMethod(1)
     assert not method.requires_validation()
 
 
-def test_logic():
+def test_logic() -> None:
     for epochs in (1, 5, 100):
         method = stopping.EpochStoppingMethod(epochs)
 

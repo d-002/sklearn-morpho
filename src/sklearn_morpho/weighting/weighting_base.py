@@ -28,8 +28,7 @@ class SampleWeighting(
     methods containing boilerplate code.
     """
 
-    # for LSPs
-    def __init__(self):
+    def __init__(self) -> None:
         self.weights_: np.ndarray
         self.cost_normalizer_: float
 

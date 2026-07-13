@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 import numpy as np
+from sklearn import Tags
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
@@ -41,9 +42,9 @@ class LDEP(ClassifierMixin, BaseEstimator):
     def __init__(
         self,
         latent_dims: tuple[int, int] = (10, 10),
-        margin=1.0,
-        penalty=0.0,
-        validation_ratio=0.3,
+        margin: float = 1.0,
+        penalty: float = 0.0,
+        validation_ratio: float = 0.3,
         weighting_method: SampleWeighting | None = None,
         stopping_methods: list[StoppingMethod] | None = None,
         use_dccp_library: bool = False,
@@ -189,9 +190,12 @@ class LDEP(ClassifierMixin, BaseEstimator):
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         check_is_fitted(self)
-        return self.classes_[(self.decision_function(X) >= 0).astype(int)]
+        res: np.ndarray = self.classes_[
+            (self.decision_function(X) >= 0).astype(int)
+        ]
+        return res
 
-    def __sklearn_tags__(self):
+    def __sklearn_tags__(self) -> Tags:
         """
         Overriden method to allow check_estimator to not run accuracy tests.
         These are designed for perceptrons with a linear decision boundary,

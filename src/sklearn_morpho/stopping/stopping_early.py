@@ -11,7 +11,7 @@ class EarlyStoppingMethod(StoppingMethod):
     during functional training.
     """
 
-    def __init__(self, delay=5):
+    def __init__(self, delay: int = 5) -> None:
         if delay <= 0:
             raise ValueError(f'invalid delay, expected > 0 but got {delay}')
 

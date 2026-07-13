@@ -1,16 +1,16 @@
 from sklearn_morpho import stopping
 
 
-def test_init():
+def test_init() -> None:
     stopping.TrainStopStoppingMethod()
 
 
-def test_validation():
+def test_validation() -> None:
     method = stopping.TrainStopStoppingMethod()
     assert not method.requires_validation()
 
 
-def test_logic():
+def test_logic() -> None:
     method = stopping.TrainStopStoppingMethod()
 
     # also make sure the validation cost is not the one used

@@ -9,6 +9,19 @@ from ..weighting import SampleWeighting
 from .dccp_wrapper import DccpTrainer
 
 
+class SavedState:
+    max_w: np.ndarray
+    min_w: np.ndarray
+    lambda_: float
+
+    def __init__(
+        self, max_w: np.ndarray, min_w: np.ndarray, lambda_: float
+    ) -> None:
+        self.max_w = max_w
+        self.min_w = min_w
+        self.lambda_ = lambda_
+
+
 class RDEPDccpTrainer(DccpTrainer):
     """
     r-DEP trainer.
@@ -70,7 +83,7 @@ class RDEPDccpTrainer(DccpTrainer):
 
     def at_training_start(self, data_dim: int) -> None:
         # similar to l-DEP, see corresponding files for implementation comments
-        self._objective = None
+        self._objective: cp.Minimize | None = None
 
         # Extracted parameters that will be populated during training but need
         # initial values for linearization
@@ -245,7 +258,8 @@ class RDEPDccpTrainer(DccpTrainer):
 
         cost = (expr_max + expr_min) * (1 - 2 * y) * (1 - 2 * self.invert_res)
 
-        return np.maximum(0, cost).sum()
+        res: float = np.maximum(0, cost).sum()
+        return res
 
     def after_epoch(self) -> None:
         # update the perceptrons weights from this epoch's results
@@ -259,7 +273,7 @@ class RDEPDccpTrainer(DccpTrainer):
 
         self.max_perceptron = self._max_training_weights.value
         self.min_perceptron = self._min_training_weights.value
-        self.lambda_ = self._training_lambda.value
+        self.lambda_ = cast(float, self._training_lambda.value)
 
         # if lambda is close to a number that creates divisions by zero, it is
         # safe to nullify the affected elements, that will not contribute anyway
@@ -274,13 +288,13 @@ class RDEPDccpTrainer(DccpTrainer):
             self.min_perceptron /= 1 - self.lambda_
 
     def save_best(self) -> None:
-        self.saved = {
-            'max_w': np.copy(self.max_perceptron),
-            'min_w': np.copy(self.min_perceptron),
-            'lambda': self.lambda_,
-        }
+        self.saved = SavedState(
+            np.copy(self.max_perceptron),
+            np.copy(self.min_perceptron),
+            self.lambda_,
+        )
 
     def rollback_to_best(self) -> None:
-        self.max_perceptron = self.saved['max_w']
-        self.min_perceptron = self.saved['min_w']
-        self.lambda_ = self.saved['lambda']
+        self.max_perceptron = self.saved.max_w
+        self.min_perceptron = self.saved.min_w
+        self.lambda_ = self.saved.lambda_
