@@ -8,4 +8,4 @@ def test_init() -> None:
 
 def test_logic() -> None:
     heuristic = inversion.NoInversion()
-    assert not heuristic.should_inverse(np.zeros(3), np.ones(5))
+    assert not heuristic.should_invert(np.zeros(3), np.ones(5))

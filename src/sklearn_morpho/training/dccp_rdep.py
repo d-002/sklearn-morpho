@@ -120,7 +120,7 @@ class RDEPDccpTrainer(DccpTrainer):
             )
 
         # set the objective
-        self.invert_res = self.inversion_method.should_inverse(X, y)
+        self.invert_res = self.inversion_method.should_invert(X, y)
 
         self._slack = cp.Variable(len(X))
 
