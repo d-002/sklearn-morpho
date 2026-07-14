@@ -115,6 +115,6 @@ disallow_subclassing_any = false
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "cvxpy.*", "dccp.*"]
+module = ["sklearn.*", "cvxpy.*", "dccp.*", "joblib.*"]
 follow_imports = "skip"
 ignore_missing_imports = true

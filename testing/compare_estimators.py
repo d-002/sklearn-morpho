@@ -9,6 +9,8 @@ import json
 import signal
 import warnings
 from time import time
+from types import FrameType
+from typing import Any
 
 import numpy as np
 from scipy.sparse._csr import csr_matrix
@@ -67,7 +69,7 @@ estimators = {
 }
 
 
-def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+def get_clean_openml(name: str, **kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
     kwargs.setdefault('version', 1)
     X, y = fetch_openml(name, return_X_y=True, **kwargs)
@@ -118,7 +120,7 @@ datasets_names = [
     'titanic',
 ]
 
-datasets_options = {
+datasets_options: dict[str, dict[str, bool | int]] = {
     'australian': {'version': 4},
     'Breast_Cancer_Wisconsin': {'as_frame': True},
     'cylinder-bands': {'version': 6},
@@ -126,22 +128,22 @@ datasets_options = {
 }
 
 # evaluate estimators
-scores = {}
-times = {}
+scores: dict[str, dict[str, list[float]]] = {}
+times: dict[str, dict[str, list[float]]] = {}
 
 
 class TimeoutException(Exception):
     pass
 
 
-def timeout_handler(signum, frame):
+def timeout_handler(signum: int, frame: FrameType | None) -> None:
     raise TimeoutException('Timed out')
 
 
 signal.signal(signal.SIGALRM, timeout_handler)
 
 
-def save_data():
+def save_data() -> None:
     with open(FILE, 'w') as f:
         json.dump(
             {'n_folds': n_folds, 'scores': scores, 'times': times},
