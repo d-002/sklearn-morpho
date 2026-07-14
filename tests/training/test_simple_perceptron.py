@@ -2,6 +2,7 @@ from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
 from sklearn_morpho import MorphoPerceptron
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.inversion import NoInversion
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.utils import Kind
@@ -25,10 +26,10 @@ def test_train() -> None:
     X, y = friendly_dataset()
 
     for kind in Kind:
-        for use_dccp_library in [False, True]:
+        for solver in [None, SOLVER_DCCP]:
             perceptron = MorphoPerceptron(
                 kind=kind,
-                use_dccp_library=use_dccp_library,
+                solver=solver,
             )
             perceptron.fit(X, y)
 
@@ -68,7 +69,7 @@ def test_train_dccp() -> None:
     for kind in Kind:
         perceptron = MorphoPerceptron(
             kind=kind,
-            use_dccp_library=True,
+            solver=SOLVER_DCCP,
         )
         perceptron.fit(X, y)
 
@@ -82,7 +83,7 @@ def test_train_dccp_with_penalty() -> None:
         perceptron = MorphoPerceptron(
             kind=kind,
             penalty=0.1,
-            use_dccp_library=True,
+            solver=SOLVER_DCCP,
         )
         perceptron.fit(X, y)
 

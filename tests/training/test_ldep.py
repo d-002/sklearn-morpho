@@ -4,6 +4,7 @@ from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
 from sklearn_morpho import LDEP
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.weighting import DistSampleWeighting
 
@@ -30,8 +31,8 @@ def test_train_zero_matrices() -> None:
 def test_train() -> None:
     X, y = friendly_dataset()
 
-    for use_dccp_library in [False, True]:
-        ldep = LDEP(use_dccp_library=use_dccp_library)
+    for solver in [None, SOLVER_DCCP]:
+        ldep = LDEP(solver=solver)
         ldep.fit(X, y)
 
         assert f1_score(y, ldep.predict(X)) >= 0.8
@@ -60,7 +61,7 @@ def test_train_with_penalty() -> None:
 
 
 def test_train_dccp() -> None:
-    ldep = LDEP(use_dccp_library=True)
+    ldep = LDEP(solver=SOLVER_DCCP)
 
     X, y = friendly_dataset()
     ldep.fit(X, y)
@@ -69,7 +70,7 @@ def test_train_dccp() -> None:
 
 
 def test_train_dccp_with_penalty() -> None:
-    ldep = LDEP(penalty=0.1, use_dccp_library=True)
+    ldep = LDEP(penalty=0.1, solver=SOLVER_DCCP)
 
     X, y = friendly_dataset()
     ldep.fit(X, y)
