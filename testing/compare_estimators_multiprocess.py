@@ -138,11 +138,11 @@ estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'DCCP l-DEP': OneVsRestClassifier(
         LDEP(solver=SOLVER_DCCP, random_state=random_state)
-     ),
+    ),
     'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
     'DCCP DEP': OneVsRestClassifier(
         DEP(solver=SOLVER_DCCP, random_state=random_state)
-     ),
+    ),
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),

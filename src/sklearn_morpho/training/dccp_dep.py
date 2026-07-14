@@ -76,9 +76,7 @@ class DEPDccpTrainer(DccpTrainer):
                 'Invalid lambda_bounds, expected within [0, 1] '
                 f'got {list(lambda_bounds)}'
             )
-        if (
-            lambda_bounds[0] == 0 or lambda_bounds[1] == 1
-        ) and solver:
+        if (lambda_bounds[0] == 0 or lambda_bounds[1] == 1) and solver:
             warn(
                 'Warning: lambda_bounds may be inappropriate for dccp solver: '
                 f'{list(lambda_bounds)}'
