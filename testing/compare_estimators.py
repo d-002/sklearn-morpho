@@ -24,6 +24,7 @@ from sklearn.svm import SVC, LinearSVC
 
 # perceptrons
 from sklearn_morpho import DEP, LDEP, MorphoPerceptron
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.utils import Kind
 
 FILE = 'comparison.json'
@@ -37,23 +38,23 @@ print(f'Random state: {random_state}')
 estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'DCCP l-DEP': OneVsRestClassifier(
-        LDEP(use_dccp_library=True, random_state=random_state)
+        LDEP(solver=SOLVER_DCCP, random_state=random_state)
     ),
     'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
     'DCCP DEP': OneVsRestClassifier(
-        DEP(use_dccp_library=True, random_state=random_state)
+        DEP(solver=SOLVER_DCCP, random_state=random_state)
     ),
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
     'Morpho_max_DCCP': OneVsRestClassifier(
-        MorphoPerceptron(kind=Kind.MAX, use_dccp_library=True, random_state=random_state)
+        MorphoPerceptron(kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state)
     ),
     'Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
     ),
     'Morpho_min_DCCP': OneVsRestClassifier(
-        MorphoPerceptron(kind=Kind.MIN, use_dccp_library=True, random_state=random_state)
+        MorphoPerceptron(kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state)
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),

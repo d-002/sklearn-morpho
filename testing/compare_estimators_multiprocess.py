@@ -36,6 +36,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
 from sklearn_morpho import DEP, LDEP, MorphoPerceptron
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.utils import Kind
 
 ## Timeouts handling
@@ -135,13 +136,13 @@ datasets_options = {
 print('Creating estimators...')
 estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    #'DCCP l-DEP': OneVsRestClassifier(
-    #    LDEP(use_dccp_library=True, random_state=random_state)
-    # ),
+    'DCCP l-DEP': OneVsRestClassifier(
+        LDEP(solver=SOLVER_DCCP, random_state=random_state)
+     ),
     'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
-    #'DCCP DEP': OneVsRestClassifier(
-    #    DEP(use_dccp_library=True, random_state=random_state)
-    # ),
+    'DCCP DEP': OneVsRestClassifier(
+        DEP(solver=SOLVER_DCCP, random_state=random_state)
+     ),
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
