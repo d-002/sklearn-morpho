@@ -55,6 +55,10 @@ for name, data_source, best_func, worst_func in params:
             fail = '' if length == 5 else f' ({5 - length}F)'
             chunk = f'{avg:.2f}±{std:.2f}{fail}'
             chunk = f'{chunk:<16}'
+            if i == best:
+                chunk = f'\033[32m{chunk}\033[m'
+            if i == worst:
+                chunk = f'\033[31m{chunk}\033[m'
             line += f' | {chunk}'
 
         print(f'{dataset_name:>35}' + line)
