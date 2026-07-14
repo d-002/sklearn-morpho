@@ -2,9 +2,9 @@ from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
 from sklearn_morpho import MorphoPerceptron
-from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.inversion import NoInversion
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.utils import Kind
 from sklearn_morpho.weighting import DistSampleWeighting
 
