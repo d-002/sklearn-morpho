@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from ..stopping import StoppingMethod
 from ..weighting import SampleWeighting
 
+SOLVER_DCCP = 'dccp'
+
 
 class DccpTrainer(ABC):
     """
@@ -22,7 +24,7 @@ class DccpTrainer(ABC):
         validation_ratio: float,
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
-        use_dccp_library: bool,
+        solver: str | None,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
     ) -> None:
@@ -46,8 +48,9 @@ class DccpTrainer(ABC):
                                 sequentially asked whether the training should
                                 stop. In this case, training ends by rolling
                                 back to the epoch with the best validation cost.
-        param use_dccp_library: Whether to use the dccp library as a solver or
-                                a manual constraints linearization in fit.
+        param solver:           The solver to use in cvxpy optimization.
+                                If set to "dccp", will use the solver from the
+                                dccp library instead of the customized DCA.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy.solve() set
                                 to verbose mode.
@@ -77,7 +80,7 @@ class DccpTrainer(ABC):
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
-        self.use_dccp_library = use_dccp_library
+        self.solver = solver
         self.verbose = verbose
         self.random_state = random_state
 
@@ -196,7 +199,10 @@ class DccpTrainer(ABC):
             )
 
             # solve the problem, normalize the cost when using wdccp
-            solve_result = cast(float, problem.solve(verbose=self.verbose == 2))
+            solve_result = cast(
+                float,
+                problem.solve(solver=self.solver, verbose=self.verbose == 2),
+            )
             cvxpy_cost = solve_result * cost_normalizer
 
             self.after_epoch()
@@ -296,14 +302,14 @@ class DccpTrainer(ABC):
         """
 
         if self.verbose:
-            if self.use_dccp_library:
+            if self.solver == SOLVER_DCCP:
                 comment = 'dccp library'
             else:
                 comment = 'manual linearization'
             print(f'Starting fitting with DCCP (with {comment})')
 
-        if self.validation_ratio == 0 or self.use_dccp_library:
-            if not self.use_dccp_library:
+        if self.validation_ratio == 0 or self.solver == SOLVER_DCCP:
+            if not self.solver == SOLVER_DCCP:
                 for stopping_method in self.stopping_methods:
                     if stopping_method.requires_validation():
                         raise ValueError(
@@ -335,7 +341,7 @@ class DccpTrainer(ABC):
         self.at_training_start(X_train.shape[1])
 
         data = X_train, X_validation, y_train, y_validation
-        if self.use_dccp_library:
+        if self.solver == SOLVER_DCCP:
             self.train_dccp(data)
         else:
             self.train_linearized(data)

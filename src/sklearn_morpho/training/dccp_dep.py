@@ -43,7 +43,7 @@ class DEPDccpTrainer(DccpTrainer):
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
         inversion_method: InversionHeuristic,
-        use_dccp_library: bool,
+        solver: str | None,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
     ) -> None:
@@ -66,7 +66,7 @@ class DEPDccpTrainer(DccpTrainer):
             validation_ratio,
             weighting_method,
             stopping_methods,
-            use_dccp_library,
+            solver,
             verbose,
             random_state,
         )
@@ -78,7 +78,7 @@ class DEPDccpTrainer(DccpTrainer):
             )
         if (
             lambda_bounds[0] == 0 or lambda_bounds[1] == 1
-        ) and use_dccp_library:
+        ) and solver:
             warn(
                 'Warning: lambda_bounds may be inappropriate for dccp solver: '
                 f'{list(lambda_bounds)}'
