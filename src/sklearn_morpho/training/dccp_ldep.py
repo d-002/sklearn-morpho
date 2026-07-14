@@ -46,7 +46,7 @@ class LDEPDccpTrainer(DccpTrainer):
         validation_ratio: float,
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
-        use_dccp_library: bool,
+        solver: str | None,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
     ) -> None:
@@ -65,7 +65,7 @@ class LDEPDccpTrainer(DccpTrainer):
             validation_ratio,
             weighting_method,
             stopping_methods,
-            use_dccp_library,
+            solver,
             verbose,
             random_state,
         )

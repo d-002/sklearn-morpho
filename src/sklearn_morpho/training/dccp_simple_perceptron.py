@@ -37,7 +37,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
         weighting_method: SampleWeighting,
         stopping_methods: list[StoppingMethod],
         inversion_method: InversionHeuristic,
-        use_dccp_library: bool,
+        solver: str | None,
         verbose: Literal[0, 1, 2],
         random_state: np.random.RandomState,
     ) -> None:
@@ -57,7 +57,7 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
             validation_ratio,
             weighting_method,
             stopping_methods,
-            use_dccp_library,
+            solver,
             verbose,
             random_state,
         )

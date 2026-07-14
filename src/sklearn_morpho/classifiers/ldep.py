@@ -46,7 +46,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         validation_ratio: float = 0.3,
         weighting_method: SampleWeighting | None = None,
         stopping_methods: list[StoppingMethod] | None = None,
-        use_dccp_library: bool = False,
+        solver: str | None = None,
         verbose: Literal[0, 1, 2] = 0,
         random_state: np.random.RandomState | None = None,
     ) -> None:
@@ -85,8 +85,9 @@ class LDEP(ClassifierMixin, BaseEstimator):
                                     TrainStopStoppingMethod(),
                                 ]
                                 Ignored when using the dccp library solver.
-        param use_dccp_library: Whether to use the dccp library as a solver or
-                                a manual constraints linearization in fit.
+        param solver:           The solver to use in cvxpy optimization.
+                                If set to "dccp", will use the solver from the
+                                dccp library instead of the customized DCA.
         param verbose:          Whether to log extra information. 0: no logging,
                                 1: basic logging / timing, 2: cvxpy solve() set
                                 to verbose mode.
@@ -100,7 +101,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         self.validation_ratio = validation_ratio
         self.weighting_method = weighting_method
         self.stopping_methods = stopping_methods
-        self.use_dccp_library = use_dccp_library
+        self.solver = solver
         self.verbose: Literal[0, 1, 2] = verbose
         self.random_state = random_state
 
@@ -160,7 +161,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
             self.validation_ratio,
             weighting_method,
             stopping_methods,
-            self.use_dccp_library,
+            self.solver,
             self.verbose,
             random_state,
         )
