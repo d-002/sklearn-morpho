@@ -26,7 +26,7 @@ def test_init() -> None:
             0,
             none,
             stopping_methods,
-            False,
+            None,
             0,
             np.random.RandomState(),
         )
@@ -38,7 +38,7 @@ def test_init() -> None:
             0,
             none,
             stopping_methods,
-            False,
+            None,
             0,
             np.random.RandomState(),
         )
@@ -50,7 +50,7 @@ def test_init() -> None:
             -1,
             none,
             stopping_methods,
-            False,
+            None,
             0,
             np.random.RandomState(),
         )
@@ -62,7 +62,7 @@ def test_init() -> None:
             1,
             none,
             stopping_methods,
-            False,
+            None,
             0,
             np.random.RandomState(),
         )
@@ -74,13 +74,13 @@ def test_init() -> None:
             2,
             none,
             stopping_methods,
-            False,
+            None,
             0,
             np.random.RandomState(),
         )
     with pytest.raises(ValueError):
         LDEPDccpTrainer(
-            dims, 0, 0, 0, none, [], False, 0, np.random.RandomState()
+            dims, 0, 0, 0, none, [], None, 0, np.random.RandomState()
         )
 
 
