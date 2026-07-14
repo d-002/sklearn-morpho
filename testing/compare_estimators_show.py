@@ -34,7 +34,7 @@ params = (
 for name, data_source, best_func, worst_func in params:
     headers = ''
     for estimator_name in estimators_names:
-        headers += f' | {estimator_name:<12}'
+        headers += f' | {estimator_name:<16}'
     header = f'{name:>35}' + headers
     print(header)
     print('=' * len(header))
@@ -47,17 +47,14 @@ for name, data_source, best_func, worst_func in params:
 
             avg = np.average(res)
             std = res.std()
-            dataset_res.append((avg, std))
+            dataset_res.append((avg, std, len(res)))
 
-        best = best_func([avg for avg, std in dataset_res])
-        worst = worst_func([avg for avg, std in dataset_res])
-        for i, (avg, std) in enumerate(dataset_res):
-            chunk = f'{avg:.2f}±{std:.2f}'
-            chunk = f'{chunk:<12}'
-            if i == best:
-                chunk = f'\033[32m{chunk}\033[m'
-            if i == worst:
-                chunk = f'\033[31m{chunk}\033[m'
+        best = best_func([avg for avg, _, _ in dataset_res])
+        worst = worst_func([avg for avg, _, _ in dataset_res])
+        for i, (avg, std, length) in enumerate(dataset_res):
+            fail = '' if length == 5 else f' ({5 - length}F)'
+            chunk = f'{avg:.2f}±{std:.2f}{fail}'
+            chunk = f'{chunk:<16}'
             line += f' | {chunk}'
 
         print(f'{dataset_name:>35}' + line)
