@@ -16,11 +16,13 @@ import json
 import os
 import signal
 import sys
-import time
 import warnings
 from multiprocessing import Manager
+from multiprocessing.managers import DictProxy
 from threading import Thread
 from time import sleep, time
+from types import FrameType
+from typing import Any, cast
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -46,7 +48,7 @@ class TimeoutException(Exception):
     pass
 
 
-def timeout_handler(signum, frame):
+def timeout_handler(signum: int, frame: FrameType | None) -> None:
     raise TimeoutException()
 
 
@@ -70,7 +72,7 @@ print(f'Comparison data will be outputted to: "{FILE}"')
 ## Set up datasets
 
 
-def get_clean_openml(name: str, **kwargs) -> tuple[np.ndarray, np.ndarray]:
+def get_clean_openml(name: str, **kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
     kwargs.setdefault('version', 1)
     X, y = fetch_openml(name, return_X_y=True, **kwargs)
@@ -167,10 +169,13 @@ for i, dataset_name in enumerate(datasets_names):
     )
     match dataset_name:
         case 'breast-cancer':
-            datasets[dataset_name] = load_breast_cancer(return_X_y=True)
+            datasets[cast(str, dataset_name)] = load_breast_cancer(
+                return_X_y=True
+            )
         case _:
             datasets[dataset_name] = get_clean_openml(
-                dataset_name, **datasets_options.get(dataset_name, {})
+                dataset_name,
+                **cast(Any, datasets_options.get(dataset_name, {})),
             )
 print(' ' * LINE_SIZE)
 
@@ -178,8 +183,12 @@ print(' ' * LINE_SIZE)
 
 # centralized data
 manager = Manager()
-scores = manager.dict({d: {e: [] for e in estimators} for d in datasets_names})
-times = manager.dict({d: {e: [] for e in estimators} for d in datasets_names})
+scores: DictProxy[str, dict[str, list[float]]] = manager.dict(
+    {d: {e: [] for e in estimators} for d in datasets_names}
+)
+times: DictProxy[str, dict[str, list[float]]] = manager.dict(
+    {d: {e: [] for e in estimators} for d in datasets_names}
+)
 
 # the elements are a list of:
 # - start timestamp, or 0 if not started
@@ -242,7 +251,7 @@ def worker(dataset_name: str, estimator_name: str) -> None:
     signal.alarm(0)
 
 
-def save_data():
+def save_data() -> None:
     with open(FILE, 'w') as f:
         data = {
             'n_folds': n_folds,
@@ -252,24 +261,24 @@ def save_data():
         json.dump(data, f, indent=2)
 
 
-def progress_bar():
+def progress_bar() -> None:
     print('=' * LINE_SIZE)
     print('\n')
     prev_running = 0
 
-    def format_time(t):
+    def format_time(t: float) -> str:
         hm, s = divmod(int(t), 60)
         h, m = divmod(hm, 60)
         return f'\033[34m{h:02}:{m:02}:{s:02}\033[m'
 
-    def eta_str(progress, time_spent):
+    def eta_str(progress: float, time_spent: float) -> str:
         if not progress:
             return f'--:--:--'
 
         eta = time_spent / progress * (1 - progress)
         return format_time(eta)
 
-    def bar(name, time_spent, progress):
+    def bar(name: str, time_spent: float, progress: float) -> None:
         print(
             f'[{"#" * round(progress * 30):-<30}] '
             f'(\033[33m{int(progress * 100):>3}%\033[m) '
@@ -278,8 +287,8 @@ def progress_bar():
 
     while True:
         running = []
-        total_time = 0
-        total_progress = 0
+        total_time: float = 0
+        total_progress: float = 0
         states = []
         for dataset_name, elt in dict(progress_states).items():
             for estimator_name, (start, progress) in elt.items():
@@ -362,8 +371,6 @@ for d in datasets:
         progress_states[e][d][0] = time()
         progress_states[e][d][1] = time()
 progress_bar_thread.join()
-
-scores, times = dict(scores), dict(times)
 
 print('Done.')
 save_data()
