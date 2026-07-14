@@ -41,7 +41,7 @@ jobs:
         run: pip install hatch
 
       - name: Run mypy through hatch
-        run: hatch run mypy:mypy src tests
+        run: hatch run mypy:mypy src tests testing
 
   lint:
     name: Check for ${{ matrix.name }} errors
