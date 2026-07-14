@@ -4,6 +4,7 @@ from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
 
 from sklearn_morpho import DEP
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.inversion import NoInversion
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.weighting import DistSampleWeighting
@@ -28,9 +29,9 @@ def test_train_invalid_params() -> None:
         DEP(lambda_bounds=(-1, 2)).fit(X, y)
 
     with pytest.raises(UserWarning):
-        DEP(lambda_bounds=(0, 1), use_dccp_library=True).fit(X, y)
+        DEP(lambda_bounds=(0, 1), solver=SOLVER_DCCP).fit(X, y)
     with pytest.raises(ValueError):
-        DEP(lambda_bounds=(-1, 2), use_dccp_library=True).fit(X, y)
+        DEP(lambda_bounds=(-1, 2), solver=SOLVER_DCCP).fit(X, y)
 
 
 def test_train_noverif() -> None:
@@ -51,8 +52,8 @@ def test_train_degenerate_dataset() -> None:
 def test_train() -> None:
     X, y = friendly_dataset()
 
-    for use_dccp_library in [False, True]:
-        dep = DEP(use_dccp_library=use_dccp_library)
+    for solver in [None, SOLVER_DCCP]:
+        dep = DEP(solver=solver)
         dep.fit(X, y)
 
         assert f1_score(y, dep.predict(X)) >= 0.8
@@ -82,7 +83,7 @@ def test_train_with_penalty() -> None:
 
 
 def test_train_dccp() -> None:
-    dep = DEP(use_dccp_library=True)
+    dep = DEP(solver=SOLVER_DCCP)
 
     X, y = friendly_dataset()
     dep.fit(X, y)
@@ -91,7 +92,7 @@ def test_train_dccp() -> None:
 
 
 def test_train_dccp_with_penalty() -> None:
-    dep = DEP(penalty=0.1, use_dccp_library=True)
+    dep = DEP(penalty=0.1, solver=SOLVER_DCCP)
 
     X, y = friendly_dataset()
     dep.fit(X, y)

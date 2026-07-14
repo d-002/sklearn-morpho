@@ -1,5 +1,3 @@
-from typing import cast
-
 import numpy as np
 import pytest
 from friendly_dataset import friendly_dataset
@@ -10,6 +8,7 @@ from sklearn_morpho.stopping import (
     StoppingMethod,
     TrainStopStoppingMethod,
 )
+from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.training.dccp_ldep import LDEPDccpTrainer
 from sklearn_morpho.weighting import NoneSampleWeighting
 
@@ -124,12 +123,12 @@ def test_train_verbose_2() -> None:
 
 
 def test_train_dccp_verbose_1() -> None:
-    ldep = LDEP(use_dccp_library=True, verbose=1)
+    ldep = LDEP(solver=SOLVER_DCCP, verbose=1)
     X, y = friendly_dataset()
     ldep.fit(X, y)
 
 
 def test_train_dccp_verbose_2() -> None:
-    ldep = LDEP(use_dccp_library=True, verbose=2)
+    ldep = LDEP(solver=SOLVER_DCCP, verbose=2)
     X, y = friendly_dataset()
     ldep.fit(X, y)
