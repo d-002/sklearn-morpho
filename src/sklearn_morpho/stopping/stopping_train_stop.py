@@ -3,9 +3,9 @@ from . import StoppingMethod
 
 class TrainStopStoppingMethod(StoppingMethod):
     """
-    Stopping method that triggers whenever the training cost gets to 0, that is
-    the perceptron found a global minimum and will no longer try to improve,
-    rendering validation-related stopping methods unusable.
+Stopping method that triggers whenever the training cost gets to 0, that is the
+perceptron found a global minimum and will no longer try to improve, rendering
+validation-related stopping methods unusable.
     """
 
     def requires_validation(self) -> bool:
