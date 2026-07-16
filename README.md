@@ -2,9 +2,9 @@
 
 Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
 
-![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)
+[![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)](https://pypi.org/project/sklearn-morpho/)
 ![Supported Python version](https://img.shields.io/pypi/pyversions/sklearn-morpho?style=flat-square)
-![AUR package](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)  
+[![AUR package](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)](https://aur.archlinux.org/packages/python-sklearn-morpho)
 ![Code quality](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/code_quality.yml?style=flat-square&label=code%20quality)
 ![Tests](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/tests.yml?style=flat-square&label=tests)
 [![Documentation](https://img.shields.io/badge/docs-pdoc-blue?style=flat-square)](https://d-002.github.io/sklearn-morpho/docs)
