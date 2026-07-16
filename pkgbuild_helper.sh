@@ -8,7 +8,7 @@ if [ -e "python-$pkg_name" ]; then
     exit 1
 fi
 
-updpkgsums
+updpkgsums || exit 1
 makepkg --printsrcinfo > .SRCINFO
 
 git clone "ssh://aur@aur.archlinux.org/python-$pkg_name.git"
