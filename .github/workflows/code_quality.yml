@@ -38,7 +38,7 @@ jobs:
           cache-dependency-path: "pyproject.toml"
 
       - name: Install Hatch
-        run: pip install hatch
+        run: pip install -U pip hatch
 
       - name: Run mypy through hatch
         run: hatch run mypy:mypy src tests testing
@@ -67,7 +67,7 @@ jobs:
           cache-dependency-path: "pyproject.toml"
 
       - name: Install linter
-        run: pip install ruff
+        run: pip install -U pip ruff
 
       - name: Run linter for ${{ matrix.name }} errors
         run: ${{ matrix.command }}
