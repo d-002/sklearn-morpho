@@ -24,3 +24,6 @@ comparison.json
 
 # jupyter
 .ipynb_checkpoints
+
+# Docs
+docs

@@ -38,11 +38,11 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -U pip hatch pdoc
+        run: pip install -U pip hatch
 
       - name: Generate Python backend docs
         run: |
-          python -m pdoc -o docs src/sklearn_morpho
+          hatch run pdoc:pdoc -o docs src/sklearn_morpho
           mv docs dist
 
       - name: Setup Pages
