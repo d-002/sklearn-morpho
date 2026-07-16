@@ -10,8 +10,8 @@ class SampleWeighting(
     ABC, OneToOneFeatureMixin, TransformerMixin, BaseEstimator
 ):
     """
-    Abstract class for transformers that convert data points to a set of respective
-    weights.
+    Abstract class for transformers that convert data points to a set of
+    respective weights.
     These weights may be used as the cost contribution in a DCCP problem.
 
     For example, a sample weighting with functionality `np.full(len(X), 1)`
@@ -22,7 +22,8 @@ class SampleWeighting(
     - self.cost_normalizer_: float
 
     If the implementation does not follow these guidelines, the weighting should
-    still be able to provide a `WeightingResult` as the return value of `transform`.
+    still be able to provide a `WeightingResult` as the return value of
+    `transform`.
     In this case, you are free to override the `transform` and `fit_transform`
     methods containing boilerplate code.
     """

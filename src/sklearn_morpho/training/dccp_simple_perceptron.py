@@ -21,7 +21,8 @@ class SimplePerceptronDccpTrainer(DccpTrainer):
     """
     Simple perceptron trainer.
 
-    During training, the final parameters are implicitly embedded into one another.
+    During training, the final parameters are implicitly embedded into one
+    another.
     Some of them (like lambda) are only extracted once the training ends.
     This is not necessary for performance, but is there for readability and
     interpretability reasons once the estimator is trained.

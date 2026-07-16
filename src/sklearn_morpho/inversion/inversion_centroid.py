@@ -10,7 +10,8 @@ class CentroidInversion(InversionHeuristic):
     This heuristic performs an inversion when $c1-c0 \\cdot vector < 0$.
 
     Users may then provide an optimal placement of classes centroids, and if the
-    dataset is organized in the opposite manner then an inversion will take place.
+    dataset is organized in the opposite manner then an inversion will take
+    place.
     """
 
     def __init__(self, perfect_vector: np.ndarray) -> None:
