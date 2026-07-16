@@ -13,6 +13,6 @@ class InversionHeuristic(ABC):
     @abstractmethod
     def should_invert(self, X: np.ndarray, y: np.ndarray) -> bool:
         """
-        Returns whether, according to this heuristic, the two target classes should be
-        inverted to benefit the classifier.
+        Returns whether, according to this heuristic, the two target classes
+        should be inverted to benefit the classifier.
         """

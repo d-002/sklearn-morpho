@@ -27,7 +27,8 @@ class DEPDccpTrainer(DccpTrainer):
     """
     DEP trainer.
 
-    During training, the final parameters are implicitly embedded into one another.
+    During training, the final parameters are implicitly embedded into one
+    another.
     Some of them (like lambda) are only extracted once the training ends.
     This is not necessary for performance, but is there for readability and
     interpretability reasons once the estimator is trained.
@@ -50,13 +51,13 @@ class DEPDccpTrainer(DccpTrainer):
         Initialize the DEP trainer.
 
         - param `lambda_bounds`:
-          A pair of min and max values for lambda, to avoid solvers (especially dccp)
-          from failing to optimize.
-          To keep the constraints at the right convexity, the bounds must be inside
-          [0, 1].
+          A pair of min and max values for lambda, to avoid solvers (especially
+          dccp) from failing to optimize.
+          To keep the constraints at the right convexity, the bounds must be
+          inside [0, 1].
         - param `inversion_method`:
-          The heuristic to use to know whether to invert the target classes, as the
-          dataset's orientation might not always be favorable.
+          The heuristic to use to know whether to invert the target classes, as
+          the dataset's orientation might not always be favorable.
         - param `[others]`:
           See base class.
         """

@@ -54,8 +54,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
         Initialize the classifier, see class help for more.
 
         - param `latent_dims`:
-          The dimensions of the latent spaces used for the linear transformations
-          output.
+          The dimensions of the latent spaces used for the linear
+          transformations output.
         - param `margin`:
           Enforce a margin between the decision boundary and the data.
           May help with linearly separable datasets, but generally lower is more
@@ -65,20 +65,19 @@ class LDEP(ClassifierMixin, BaseEstimator):
           Must be a small positive number like 1e-6, or zero to disable penalty
           calculation altogether.
         - param `validation_radio`:
-          How much of the training set to dedicate to use as validation during fitting.
-          Must be between 0 and 1 (inclusive, exclusive), if set to exactly 0 then
-          incompatible stopping methods cannot be used (e.
-          g.
+          How much of the training set to dedicate to use as validation during
+          fitting. Must be between 0 and 1 (inclusive, exclusive), if set to
+          exactly 0 then incompatible stopping methods cannot be used (e.g.
           early stopping).
           Ignored when using the dccp library solver.
         - param `weighting_method`:
-          The weighting method to use: apply weights to the cost contribution of each
-          data point to help avoid outliers.
+          The weighting method to use: apply weights to the cost contribution of
+          each data point to help avoid outliers.
           If left to None, will use NoneWeightingMethod().
         - param `stopping_methods`:
           A list of stopping methods, must not be empty.
-          At each epoch, these methods will be sequentially asked whether the training
-          should stop.
+          At each epoch, these methods will be sequentially asked whether the
+          training should stop.
           In this case, epoch ends by rolling back to the epoch with the best
           validation cost.
 
@@ -95,12 +94,12 @@ class LDEP(ClassifierMixin, BaseEstimator):
           Ignored when using the dccp library solver.
         - param `solver`:
           The solver to use in cvxpy optimization.
-          If set to "dccp", will use the solver from the dccp library instead of the
-          customized DCA.
+          If set to "dccp", will use the solver from the dccp library instead of
+          the customized DCA.
         - param `verbose`:
           Whether to log extra information.
-          0: no logging, 1: basic logging / timing, 2: cvxpy solve() set to verbose
-          mode.
+          0: no logging, 1: basic logging / timing, 2: cvxpy solve() set to
+          verbose mode.
         - param `random_state`:
           A RandomState object or None to allow for seeded randomness.
         """
@@ -208,8 +207,8 @@ class LDEP(ClassifierMixin, BaseEstimator):
     def __sklearn_tags__(self) -> Tags:
         """
         Overriden method to allow check_estimator to not run accuracy tests.
-        These are designed for perceptrons with a linear decision boundary, which is not
-        the case for a morphological perceptron.
+        These are designed for perceptrons with a linear decision boundary,
+        which is not the case for a morphological perceptron.
         """
 
         tags = super().__sklearn_tags__()
