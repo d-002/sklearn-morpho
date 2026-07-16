@@ -3,8 +3,8 @@ from . import StoppingMethod
 
 class CostStoppingMethod(StoppingMethod):
     """
-Stopping method that triggers whenever the cost gets lower or equal to the
-parameter.
+    Stopping method that triggers whenever the cost gets lower or equal to the
+    parameter.
     """
 
     def __init__(self, cost_threshold: float = 1e-6) -> None:

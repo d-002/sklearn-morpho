@@ -23,18 +23,18 @@ from ..weighting import NoneSampleWeighting, SampleWeighting
 
 class DEP(ClassifierMixin, BaseEstimator):
     """
-Scikit-learn estimator wrapper around a DEP (Dilation-Erosion morphological
-Perceptron) for binary data classification.
+    Scikit-learn estimator wrapper around a DEP (Dilation-Erosion morphological
+    Perceptron) for binary data classification.
 
-The DEP's activation function is defined as:
+    The DEP's activation function is defined as:
 
-\\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
+    \\[ y = f(\\lambda \\tau_(x) + (1 - \\lambda) \\tau'_(x)) \\]
 
-Where $\\tau$ refers to the activation of a (max, +) morphological
-perceptron and $\\tau'$ to a (min, +) one.
+    Where $\\tau$ refers to the activation of a (max, +) morphological
+    perceptron and $\\tau'$ to a (min, +) one.
 
-$\\lambda$ is a real number between 0 and 1 to guarantee correct convexity,
-but in practice a smaller interval can be enforced to avoid imprecisions.
+    $\\lambda$ is a real number between 0 and 1 to guarantee correct convexity,
+    but in practice a smaller interval can be enforced to avoid imprecisions.
     """
 
     def __init__(
@@ -51,64 +51,64 @@ but in practice a smaller interval can be enforced to avoid imprecisions.
         random_state: np.random.RandomState | None = None,
     ) -> None:
         """
-Initialize the classifier, see class help for more.
+        Initialize the classifier, see class help for more.
 
-- param `lambda_bounds`:
-  A pair of min and max values for lambda, to avoid solvers (especially dccp)
-  from failing to optimize.
-  To keep the constraints at the right convexity, the bounds must be inside
-  [0, 1].
-- param `margin`:
-  Enforce a margin between the decision boundary and the data.
-  May help with linearly separable datasets, but generally lower is more
-  accurate.
-- param `penalty`:
-  A penalty to add to the weights squared and avoid them exploding.
-  Must be a small positive number like 1e-6, or zero to disable penalty
-  calculation altogether.
-- param `validation_radio`:
-  How much of the training set to dedicate to use as validation during fitting.
-  Must be between 0 and 1 (inclusive, exclusive), if set to exactly 0 then
-  incompatible stopping methods cannot be used (e.g. early stopping).
-  Ignored when using the dccp library solver.
-- param `weighting_method`:
-  The weighting method to use: apply weights to the cost contribution of each
-  data point to help avoid outliers.
-  If left to None, will use NoneWeightingMethod().
-- param `stopping_methods`:
-  A list of stopping methods, must not be empty.
-  At each epoch, these methods will be sequentially asked whether the training
-  should stop.
-  In this case, epoch ends by rolling back to the epoch with the best validation
-  cost.
+        - param `lambda_bounds`:
+          A pair of min and max values for lambda, to avoid solvers (especially dccp)
+          from failing to optimize.
+          To keep the constraints at the right convexity, the bounds must be inside
+          [0, 1].
+        - param `margin`:
+          Enforce a margin between the decision boundary and the data.
+          May help with linearly separable datasets, but generally lower is more
+          accurate.
+        - param `penalty`:
+          A penalty to add to the weights squared and avoid them exploding.
+          Must be a small positive number like 1e-6, or zero to disable penalty
+          calculation altogether.
+        - param `validation_radio`:
+          How much of the training set to dedicate to use as validation during fitting.
+          Must be between 0 and 1 (inclusive, exclusive), if set to exactly 0 then
+          incompatible stopping methods cannot be used (e.g. early stopping).
+          Ignored when using the dccp library solver.
+        - param `weighting_method`:
+          The weighting method to use: apply weights to the cost contribution of each
+          data point to help avoid outliers.
+          If left to None, will use NoneWeightingMethod().
+        - param `stopping_methods`:
+          A list of stopping methods, must not be empty.
+          At each epoch, these methods will be sequentially asked whether the training
+          should stop.
+          In this case, epoch ends by rolling back to the epoch with the best validation
+          cost.
 
-  If left to None, will use:
-  ```
-  [
-      CostStoppingMethod(),
-      EarlyStoppingMethod(),
-      EpochStoppingMethod(),
-      TrainStopStoppingMethod(),
-  ]
-  ```
+          If left to None, will use:
+          ```
+          [
+              CostStoppingMethod(),
+              EarlyStoppingMethod(),
+              EpochStoppingMethod(),
+              TrainStopStoppingMethod(),
+          ]
+          ```
 
-  Ignored when using the dccp library solver.
-- param `inversion_method`:
-  The heuristic to use to know whether to invert the target classes, as the
-  dataset's orientation might not always be favorable.
-  If left to None, will use a CentroidInversion optimizing for (1, 1, ..., 1).
-- param `solver`:
-  The solver to use in cvxpy optimization.
-  If set to "dccp", will use the solver from the dccp library instead of the
-  customized DCA.
-- param `verbose`:
-  Whether to log extra information.
+          Ignored when using the dccp library solver.
+        - param `inversion_method`:
+          The heuristic to use to know whether to invert the target classes, as the
+          dataset's orientation might not always be favorable.
+          If left to None, will use a CentroidInversion optimizing for (1, 1, ..., 1).
+        - param `solver`:
+          The solver to use in cvxpy optimization.
+          If set to "dccp", will use the solver from the dccp library instead of the
+          customized DCA.
+        - param `verbose`:
+          Whether to log extra information.
 
-  - 0: no logging
-  - 1: basic logging / timing
-  - 2: cvxpy solve() set to verbose mode.
-- param `random_state`:
-  A RandomState object or None to allow for seeded randomness.
+          - 0: no logging
+          - 1: basic logging / timing
+          - 2: cvxpy solve() set to verbose mode.
+        - param `random_state`:
+          A RandomState object or None to allow for seeded randomness.
         """
 
         self.lambda_bounds = lambda_bounds
@@ -124,12 +124,12 @@ Initialize the classifier, see class help for more.
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> DEP:
         """
-Fit the classifier, create attributes:
-- self.max_perceptron_
-- self.min_perceptron_
-- self.classes_ (unique labels generated from y)
+        Fit the classifier, create attributes:
+        - self.max_perceptron_
+        - self.min_perceptron_
+        - self.classes_ (unique labels generated from y)
 
-X and y must represent binary classifiable data.
+        X and y must represent binary classifiable data.
         """
 
         # input data validation
@@ -216,9 +216,9 @@ X and y must represent binary classifiable data.
 
     def __sklearn_tags__(self) -> Tags:
         """
-Overriden method to allow check_estimator to not run accuracy tests.
-These are designed for perceptrons with a linear decision boundary, which is not
-the case for a morphological perceptron.
+        Overriden method to allow check_estimator to not run accuracy tests.
+        These are designed for perceptrons with a linear decision boundary, which is not
+        the case for a morphological perceptron.
         """
 
         tags = super().__sklearn_tags__()

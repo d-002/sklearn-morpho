@@ -3,8 +3,8 @@ from . import StoppingMethod
 
 class EpochStoppingMethod(StoppingMethod):
     """
-Stopping method that triggers whenever the number of epochs gets greater or
-equal to the parameter.
+    Stopping method that triggers whenever the number of epochs gets greater or
+    equal to the parameter.
     """
 
     def __init__(self, max_epochs: int = 200) -> None:
