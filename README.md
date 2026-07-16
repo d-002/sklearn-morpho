@@ -7,6 +7,7 @@ Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morph
 ![AUR package](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)  
 ![Code quality](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/code_quality.yml?style=flat-square&label=code%20quality)
 ![Tests](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/tests.yml?style=flat-square&label=tests)
+[![Documentation](https://img.shields.io/badge/docs-pdoc-blue?style=flat-square)](https://d-002.github.io/sklearn-morpho/docs)
 
 ## Current features
 
