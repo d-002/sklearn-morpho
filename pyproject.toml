@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 [project]
 name = "sklearn-morpho"
 description = "Scikit-learn classifiers toolbox for morphological perceptrons"
-version = "0.2.3"
+version = "0.2.4"
 requires-python = ">=3.11"
 dependencies = [
     "cvxpy>=1.9.0,<2.0.0",
