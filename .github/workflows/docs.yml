@@ -1,11 +1,8 @@
-# TODO run on version deploy
-name: Deploy docs GitHub Pages
+name: Deploy docs to GitHub Pages
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "**" ]
+  release:
+    types: [ published ]
   workflow_dispatch:
 
 permissions:
@@ -14,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "deploy-docs"
   cancel-in-progress: true
 
 jobs:
