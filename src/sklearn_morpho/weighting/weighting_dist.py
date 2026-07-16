@@ -7,8 +7,8 @@ from . import SampleWeighting
 
 class DistSampleWeighting(SampleWeighting):
     """
-Weighting method that weights its inputs inversely proportionally to the
-distance to their class' centroid.
+    Weighting method that weights its inputs inversely proportionally to the
+    distance to their class' centroid.
     """
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> DistSampleWeighting:

@@ -19,12 +19,12 @@ class SavedState:
 
 class SimplePerceptronDccpTrainer(DccpTrainer):
     """
-Simple perceptron trainer.
+    Simple perceptron trainer.
 
-During training, the final parameters are implicitly embedded into one another.
-Some of them (like lambda) are only extracted once the training ends.
-This is not necessary for performance, but is there for readability and
-interpretability reasons once the estimator is trained.
+    During training, the final parameters are implicitly embedded into one another.
+    Some of them (like lambda) are only extracted once the training ends.
+    This is not necessary for performance, but is there for readability and
+    interpretability reasons once the estimator is trained.
     """
 
     def __init__(
@@ -41,15 +41,15 @@ interpretability reasons once the estimator is trained.
         random_state: np.random.RandomState,
     ) -> None:
         """
-Initialize the DEP trainer.
+        Initialize the DEP trainer.
 
-- param `kind`:
-  Whether the perceptron is dilation or erosion.
-- param `inversion_method`:
-  The method to use to know whether to invert the target classes, as the
-  dataset's orientation might not always be favorable.
-- param `[others]`:
-  See base class.
+        - param `kind`:
+          Whether the perceptron is dilation or erosion.
+        - param `inversion_method`:
+          The method to use to know whether to invert the target classes, as the
+          dataset's orientation might not always be favorable.
+        - param `[others]`:
+          See base class.
         """
 
         super().__init__(

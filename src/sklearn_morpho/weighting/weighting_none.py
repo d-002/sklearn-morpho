@@ -7,7 +7,7 @@ from . import SampleWeighting
 
 class NoneSampleWeighting(SampleWeighting):
     """
-Weighting method that does not weight its inputs.
+    Weighting method that does not weight its inputs.
     """
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> NoneSampleWeighting:
