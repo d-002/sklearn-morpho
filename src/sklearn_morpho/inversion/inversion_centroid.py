@@ -5,13 +5,12 @@ from .inversion_base import InversionHeuristic
 
 class CentroidInversion(InversionHeuristic):
     """
-    Let $c0$, $c1$ be the centroids of the negative and positive classes
-    respectively, and $vector$ the given initialization parameter.
-    This heuristic performs an inversion when $c1-c0 \\cdot vector < 0$.
+Let $c0$, $c1$ be the centroids of the negative and positive classes
+respectively, and $vector$ the given initialization parameter.
+This heuristic performs an inversion when $c1-c0 \\cdot vector < 0$.
 
-    Users may then provide an optimal placement of classes centroids, and if the
-    dataset is organized in the opposite manner then an inversion will take
-    place.
+Users may then provide an optimal placement of classes centroids, and if the
+dataset is organized in the opposite manner then an inversion will take place.
     """
 
     def __init__(self, perfect_vector: np.ndarray) -> None:
