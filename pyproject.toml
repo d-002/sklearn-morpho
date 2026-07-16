@@ -67,6 +67,16 @@ dependencies = [
     "scipy-stubs",
 ]
 
+# Docs environment
+
+[tool.hatch.envs.pdoc]
+features = [
+    "dccp"
+]
+dependencies = [
+    "pdoc"
+]
+
 # Matrix tests environment
 
 [tool.hatch.envs.test]
