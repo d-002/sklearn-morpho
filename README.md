@@ -8,6 +8,8 @@ Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morph
 ![Code quality](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/code_quality.yml?style=flat-square&label=code%20quality)
 ![Tests](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/tests.yml?style=flat-square&label=tests)
 [![Documentation](https://img.shields.io/badge/docs-pdoc-blue?style=flat-square)](https://d-002.github.io/sklearn-morpho/docs)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code coverage](https://codecov.io/gh/d-002/sklearn-morpho/branch/master/graph/badge.svg)](https://codecov.io/gh/d-002/sklearn-morpho)
 
 ## Current features
 
