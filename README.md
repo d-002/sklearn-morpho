@@ -19,8 +19,7 @@ Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morph
 
 File tree:
 
-- `src/sklearn_morpho`: contains the source code and a testsuite in its `tests`
-  subdirectory.
+- `src/sklearn_morpho`: contains the source code of the package.
 - `tests`: pytest testsuite.
 - `testing`: standalone files that use this library.
   They are used internally for testing, but they are not tests nor part of the
@@ -57,7 +56,7 @@ files.
 Please adhere to these rules when contributing.
 
 Regarding AI pull requests, they are generally discouraged as you should be able
-to understand and help maintaining any features you add to this repo.
+to understand and help maintain any features you might add to this repo.
 
 ## For Arch users
 
