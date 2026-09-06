@@ -38,13 +38,15 @@ Take a look at the Jupyter code examples in the
 
 ## Running the project
 
-Install Python 3 and hatch.
+Install Python >= 3.11 and uv.
 Then run one of these commands:
 
-- `hatch run jupyter lab` to run the Jupyter notebooks
-- `hatch run pytest` for tests
-- `hatch shell` to run testing files like `testing/display_boundary.py` in the
-  right environment.
+- `uv run --extra dccp jupyter lab` to run the Jupyter notebooks
+- `uv run --group test --extra dccp pytest` for tests
+- `uv run [file]` to run e.g. a testing files within the right environment.
+  Add `--extra dccp` to the command if you want to use the `dccp` optional
+  dependency.
+- `uv build` to package the library
 
 Special note for the estimators comparison testing files: they are split in two
 files to avoid training the estimators every time one wants to view the results.
