@@ -33,4 +33,4 @@ jobs:
 
       - name: Check coverage
         run: |
-          hatch run pytest --cov --cov-fail-under=90
+          hatch run pytest -n 5 --cov --cov-fail-under=90
