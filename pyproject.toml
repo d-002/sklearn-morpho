@@ -32,6 +32,7 @@ testpaths = ["tests"]
 
 # Dependency groups
 
+[dependency-groups]
 dev = [
     "jupyterlab>=4.5.0,<5.0.0", # for coding the MREs
     "matplotlib>=3.10.0,<4.0.0", # for files in testing
@@ -60,6 +61,7 @@ test = [
 venvPath = "."
 venv = ".venv"
 typeCheckingMode = "strict"
+stubPath = "typings"
 
 # Ruff
 
@@ -80,6 +82,7 @@ indent-style = "space"
 strict = true
 disallow_subclassing_any = false
 warn_unused_ignores = false
+mypy_path = "typings"
 
 [[tool.mypy.overrides]]
 module = ["sklearn.*", "cvxpy.*", "dccp.*", "joblib.*"]
