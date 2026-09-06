@@ -2,6 +2,8 @@
 
 Scikit-learn classifiers toolbox for morphological perceptrons.
 
+Docs: https://d-002.github.io/sklearn-morpho/docs
+
 ## Current features
 
 - Scikit-learn classifiers:
