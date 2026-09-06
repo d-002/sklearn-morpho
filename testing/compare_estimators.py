@@ -10,7 +10,6 @@ import signal
 import warnings
 from time import time
 from types import FrameType
-from typing import Any
 
 import numpy as np
 from scipy.sparse._csr import csr_matrix
@@ -69,7 +68,9 @@ estimators = {
 }
 
 
-def get_clean_openml(name: str, **kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
+def get_clean_openml(
+    name: str, **kwargs: str | bool | int
+) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
     kwargs.setdefault('version', 1)
     X, y = fetch_openml(name, return_X_y=True, **kwargs)
