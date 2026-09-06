@@ -11,7 +11,7 @@ Docs: https://d-002.github.io/sklearn-morpho/docs
 ![Tests](https://img.shields.io/github/actions/workflow/status/d-002/sklearn-morpho/tests.yml?style=flat-square&label=tests)
 [![Documentation](https://img.shields.io/badge/docs-pdoc-blue?style=flat-square)](https://d-002.github.io/sklearn-morpho/docs)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Code coverage](https://codecov.io/gh/d-002/sklearn-morpho/branch/master/graph/badge.svg?style=flat-square)](https://codecov.io/gh/d-002/sklearn-morpho)
+[![Code coverage](https://img.shields.io/codecov/c/github/d-002/sklearn-morpho/master?style=flat-square)](https://codecov.io/gh/d-002/sklearn-morpho)
 
 ## Current features
 
