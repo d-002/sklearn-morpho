@@ -22,7 +22,7 @@ from multiprocessing.managers import DictProxy
 from threading import Thread
 from time import sleep, time
 from types import FrameType
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -72,7 +72,9 @@ print(f'Comparison data will be outputted to: "{FILE}"')
 ## Set up datasets
 
 
-def get_clean_openml(name: str, **kwargs: Any) -> tuple[np.ndarray, np.ndarray]:
+def get_clean_openml(
+    name: str, **kwargs: str | bool | int
+) -> tuple[np.ndarray, np.ndarray]:
     kwargs.setdefault('as_frame', False)
     kwargs.setdefault('version', 1)
     X, y = fetch_openml(name, return_X_y=True, **kwargs)
@@ -175,7 +177,7 @@ for i, dataset_name in enumerate(datasets_names):
         case _:
             datasets[dataset_name] = get_clean_openml(
                 dataset_name,
-                **cast(Any, datasets_options.get(dataset_name, {})),
+                **datasets_options.get(dataset_name, {}),
             )
 print(' ' * LINE_SIZE)
 
