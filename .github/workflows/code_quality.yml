@@ -38,10 +38,10 @@ jobs:
         run: uv python install
 
       - name: Install dependencies
-        run: uv sync --extra dccp --group test
+        run: uv sync --extra dccp --group test --group mypy
 
       - name: Run mypy
-        run: uv run mypy src tests testing
+        run: uv run --frozen mypy src tests testing
 
   lint:
     name: Check for ${{ matrix.name }} errors
@@ -71,4 +71,4 @@ jobs:
         run: uv sync --extra dccp --group ruff
 
       - name: Run linter for ${{ matrix.name }} errors
-        run: uv run ${{ matrix.command }}
+        run: uv run --frozen ${{ matrix.command }}

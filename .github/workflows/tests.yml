@@ -34,4 +34,4 @@ jobs:
 
       - name: Check coverage
         run: |
-          uv run pytest -n 5 --cov --cov-fail-under=90
+          uv run --frozen pytest -n 5 --cov --cov-fail-under=90
