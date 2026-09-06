@@ -41,8 +41,6 @@ dependencies = [
     "matplotlib>=3.10.0,<4.0.0", # for files in testing
     "pandas>=3.0.0,<4.0.0", # for scikit-learn's check_estimator and openml datasets
     "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
-    "pytest>=9.0.0,<10.0.0",
-    "pytest-xdist>=3.8.0,<4.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
 ]
 
@@ -59,7 +57,6 @@ detached = true
 dependencies = [
     "matplotlib>=3.10.0,<4.0.0",
     "mypy",
-    "pytest>=9.0.0,<10.0.0",
     "scipy-stubs",
 ]
 
@@ -83,6 +80,7 @@ features = [
 dependencies = [
     "pandas>=3.0.0,<4.0.0",
     "pytest>=9.0.0,<10.0.0",
+    "pytest-xdist>=3.8.0,<4.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
 ]
 
