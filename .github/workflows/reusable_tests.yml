@@ -36,7 +36,7 @@ jobs:
       - name: Run tests with Hatch
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            hatch run test.py${{ matrix.python-version }}:pytest
+            hatch run test.py${{ matrix.python-version }}:pytest -n 5
           else
-            hatch run pytest
+            hatch run pytest -n 5
           fi
