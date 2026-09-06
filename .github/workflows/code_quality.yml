@@ -29,18 +29,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
         with:
-          python-version: "3.13"
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+          enable-cache: true
 
-      - name: Install Hatch
-        run: pip install -U pip hatch
+      - name: Set up Python with uv
+        run: uv python install
 
-      - name: Run mypy through hatch
-        run: hatch run mypy:mypy src tests testing
+      - name: Install dependencies
+        run: uv sync --extra dccp --group test
+
+      - name: Run mypy
+        run: uv run --extra dccp --group mypy mypy src tests testing
 
   lint:
     name: Check for ${{ matrix.name }} errors
@@ -50,23 +51,24 @@ jobs:
       matrix:
         include:
           - name: "generic linting"
-            command: "python -m ruff check"
+            command: "ruff format --check ."
           - name: "coding style"
-            command: "[ -z \"$(python -m ruff format | grep reformatted)\" ]"
+            command: "ruff check ."
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
         with:
-          python-version: "3.13"
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+          enable-cache: true
 
-      - name: Install linter
-        run: pip install -U pip ruff
+      - name: Set up Python with uv
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --extra dccp --group ruff
 
       - name: Run linter for ${{ matrix.name }} errors
-        run: ${{ matrix.command }}
+        run: uv run --extra dccp --group ruff ${{ matrix.command }}

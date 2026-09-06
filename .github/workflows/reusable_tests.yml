@@ -23,20 +23,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }} with uv
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install -U pip hatch mypy
+        run: uv sync --extra dccp --group test
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
-      - name: Run tests with Hatch
-        run: |
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            hatch run test.py${{ matrix.python-version }}:pytest -n 5
-          else
-            hatch run test.py3.13:pytest -n 5
-          fi
+      - name: Run tests
+        run: uv run --extra dccp --group test pytest -n 5

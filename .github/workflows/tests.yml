@@ -21,16 +21,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9.0.0
         with:
-          python-version: "3.13"
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+          enable-cache: true
+
+      - name: Set up Python with uv
+        run: uv python install
 
       - name: Install dependencies
-        run: pip install -U pip hatch coverage
+        run: uv sync --extra dccp --group test
 
       - name: Check coverage
         run: |
-          hatch run test.py3.13:pytest -n 5 --cov --cov-fail-under=90
+          uv run --extra dccp --group test pytest -n 5 --cov --cov-fail-under=90
