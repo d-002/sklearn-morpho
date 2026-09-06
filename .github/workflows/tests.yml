@@ -1,26 +1,21 @@
-name: Deploy package to PyPI
+name: Testsuite
 
 on:
-  release:
-    types: [ "published" ]
+  pull_request:
+    branches: [ "master" ]
   workflow_dispatch:
 
 concurrency:
-  group: "deploy-pypi"
+  group: "testsuite"
   cancel-in-progress: true
 
 jobs:
   test:
     uses: ./.github/workflows/reusable_tests.yml
 
-  deploy:
+  coverage:
+    name: Coverage test (ignore failed tests)
     runs-on: ubuntu-latest
-    environment: pypi
-    needs:
-      - test
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Checkout repository
@@ -33,11 +28,9 @@ jobs:
           cache: "pip"
           cache-dependency-path: "pyproject.toml"
 
-      - name: Install Hatch
-        run: pip install -U pip hatch
+      - name: Install dependencies
+        run: pip install -U pip hatch coverage
 
-      - name: Build package
-        run: hatch build
-
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Check coverage
+        run: |
+          hatch run pytest --cov --cov-fail-under=90
