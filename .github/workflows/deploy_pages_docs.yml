@@ -41,7 +41,7 @@ jobs:
 
       - name: Generate Python backend docs
         run: |
-          uv run --extra dccp --group pdoc pdoc -o docs src/sklearn_morpho
+          uv run pdoc -o docs src/sklearn_morpho
           mv docs dist
 
       - name: Setup Pages

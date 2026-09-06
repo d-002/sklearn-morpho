@@ -41,7 +41,7 @@ jobs:
         run: uv sync --extra dccp --group test
 
       - name: Run mypy
-        run: uv run --extra dccp --group mypy mypy src tests testing
+        run: uv run mypy src tests testing
 
   lint:
     name: Check for ${{ matrix.name }} errors
@@ -71,4 +71,4 @@ jobs:
         run: uv sync --extra dccp --group ruff
 
       - name: Run linter for ${{ matrix.name }} errors
-        run: uv run --extra dccp --group ruff ${{ matrix.command }}
+        run: uv run ${{ matrix.command }}
