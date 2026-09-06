@@ -30,65 +30,29 @@ dccp = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
-# Dev
+# Dependency groups
 
-[tool.hatch.envs.default]
-python = "3.13"
-path = ".venv" # for LSPs
-dependencies = [
-    "dccp>=1.1.1,<2.0.0",
+dev = [
     "jupyterlab>=4.5.0,<5.0.0", # for coding the MREs
     "matplotlib>=3.10.0,<4.0.0", # for files in testing
     "pandas>=3.0.0,<4.0.0", # for scikit-learn's check_estimator and openml datasets
     "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
 ]
-
-[tool.hatch.envs.default.env-vars]
-SCIPY_ARRAY_API = "1" # prevent skip warnings in check_estimator
-
-# Mypy environment
-
-[tool.hatch.envs.mypy]
-features = [
-    "dccp"
-]
-detached = true
-dependencies = [
+mypy = [
     "matplotlib>=3.10.0,<4.0.0",
     "mypy",
     "pytest>=9.0.0,<10.0.0",
     "scipy-stubs",
 ]
-
-# Docs environment
-
-[tool.hatch.envs.pdoc]
-features = [
-    "dccp"
+pdoc = [
+    "pdoc",
 ]
-dependencies = [
-    "pdoc"
-]
-
-# Matrix tests environment
-
-[tool.hatch.envs.test]
-template = "test" # break inheritance from default to ignore .venv
-features = [
-    "dccp",
-]
-dependencies = [
+test = [
     "pandas>=3.0.0,<4.0.0",
     "pytest>=9.0.0,<10.0.0",
     "pytest-xdist>=3.8.0,<4.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
 ]
-
-[tool.hatch.envs.test.env-vars]
-SCIPY_ARRAY_API = "1"
-
-[[tool.hatch.envs.test.matrix]]
-python = ["3.11", "3.12", "3.13", "3.14"]
 
 # Pyright
 
@@ -115,7 +79,6 @@ indent-style = "space"
 [tool.mypy]
 strict = true
 disallow_subclassing_any = false
-# since pyright tries to parse incorrectly typed modules
 warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
