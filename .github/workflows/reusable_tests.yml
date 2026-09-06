@@ -38,5 +38,5 @@ jobs:
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             hatch run test.py${{ matrix.python-version }}:pytest -n 5
           else
-            hatch run pytest -n 5
+            hatch run test.py3.13:pytest -n 5
           fi
