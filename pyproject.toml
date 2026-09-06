@@ -29,6 +29,9 @@ dccp = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+env = [
+    "SCIPY_ARRAY_API=1",
+]
 
 # Dependency groups
 
@@ -52,6 +55,7 @@ test = [
     "pandas>=3.0.5",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
+    "pytest-env>=1.7.0",
     "pytest-xdist>=3.8.0",
 ]
 ruff = [
