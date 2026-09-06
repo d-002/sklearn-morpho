@@ -2,6 +2,8 @@
 
 Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
 
+Docs: https://d-002.github.io/sklearn-morpho/docs
+
 [![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)](https://pypi.org/project/sklearn-morpho/)
 ![Supported Python version](https://img.shields.io/pypi/pyversions/sklearn-morpho?style=flat-square)
 [![AUR package](https://img.shields.io/aur/version/python-sklearn-morpho?style=flat-square)](https://aur.archlinux.org/packages/python-sklearn-morpho)
