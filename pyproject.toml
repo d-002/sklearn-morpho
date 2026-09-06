@@ -6,9 +6,9 @@ description = "Scikit-learn classifiers toolbox for morphological perceptrons"
 version = "0.2.4"
 requires-python = ">=3.11"
 dependencies = [
-    "cvxpy>=1.9.0,<2.0.0",
-    "numpy>=2.0.0,<3.0.0",
-    "scikit-learn>=1.8.0,<2.0.0",
+    "cvxpy>=1.9.2",
+    "numpy>=2.4.6",
+    "scikit-learn>=1.9.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.11",
@@ -34,25 +34,25 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
-    "jupyterlab>=4.5.0,<5.0.0", # for coding the MREs
-    "matplotlib>=3.10.0,<4.0.0", # for files in testing
-    "pandas>=3.0.0,<4.0.0", # for scikit-learn's check_estimator and openml datasets
-    "pyqt6>=6.11.0,<7.0.0", # for matplotlib display on some devices
+    "jupyterlab>=4.6.3", # for coding the MREs
+    "matplotlib>=3.11.1", # for files in testing
+    "pandas>=3.0.5", # for scikit-learn's check_estimator and datasets
+    "pyqt6>=6.11.0", # for matplotlib display on some devices
 ]
 mypy = [
-    "matplotlib>=3.10.0,<4.0.0",
-    "mypy",
-    "pytest>=9.0.0,<10.0.0",
-    "scipy-stubs",
+    "matplotlib>=3.11.1",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "scipy-stubs>=1.17.1.5",
 ]
 pdoc = [
-    "pdoc",
+    "pdoc>=16.0.0",
 ]
 test = [
-    "pandas>=3.0.0,<4.0.0",
-    "pytest>=9.0.0,<10.0.0",
-    "pytest-xdist>=3.8.0,<4.0.0",
-    "pytest-cov>=7.1.0,<8.0.0",
+    "pandas>=3.0.5",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
 ]
 
 # Pyright
