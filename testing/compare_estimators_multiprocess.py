@@ -128,7 +128,7 @@ datasets_names = [
 # - chess (nonexistent)
 # - internet-advertisements (internally referring to a nonexistent dataset)
 
-datasets_options = {
+datasets_options: dict[str, dict[str, bool | int]] = {
     'australian': {'version': 4},
     'Breast_Cancer_Wisconsin': {'as_frame': True},
     'cylinder-bands': {'version': 6},
