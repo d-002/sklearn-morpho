@@ -47,7 +47,7 @@ for name, (X, y) in datasets.items():
     y = np.array(['red', 'blue'])[y]
     pos_label = np.unique(y)[1]
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.33, random_state=random_state
+        X, y, test_size=0.3, random_state=random_state
     )
 
     X_train, X_test = cast(np.ndarray, X_train), cast(np.ndarray, X_test)
