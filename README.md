@@ -17,6 +17,7 @@ Docs: https://d-002.github.io/sklearn-morpho/docs
 
 - Scikit-learn classifiers:
   - Linear Dilation-Erosion Perceptron (l-DEP)
+  - Reduced Dilation-Erosion Perceptron (r-DEP)
   - Dilation-Erosion Perceptron (DEP)
   - Simple Dilation and Erosion Morphological Perceptrons
 - Modular wrapper for DCCP optimization tasks with `cvxpy`
