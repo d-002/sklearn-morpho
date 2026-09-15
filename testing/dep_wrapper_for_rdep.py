@@ -1,13 +1,17 @@
-import numpy as np
-from typing import cast, Protocol
-from sklearn_morpho import DEP
-from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
-from sklearn.inspection import DecisionBoundaryDisplay
-from sklearn.datasets import make_moons
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
+from __future__ import annotations
+
+from typing import Protocol, cast
+
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+from sklearn.datasets import make_moons
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
+
+from sklearn_morpho import DEP
 
 
 class FitMixin(Protocol):
@@ -19,12 +23,12 @@ class EnsembleTransform(TransformerMixin, BaseEstimator):
     def __init__(self, estimators: list[FitMixin]) -> None:
         self.estimators = estimators
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> EnsembleTransform:
         for e in self.estimators:
             e.fit(X, y)
         return self
 
-    def transform(self, X):
+    def transform(self, X: np.ndarray) -> np.ndarray:
         return np.vstack(
             [estimator.decision_function(X) for estimator in self.estimators]
         ).T
