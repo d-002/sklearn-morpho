@@ -219,9 +219,7 @@ class DEP(ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self) -> Tags:
         """
-        Overriden method to allow check_estimator to not run accuracy tests.
-        These are designed for perceptrons with a linear decision boundary,
-        which is not the case for a morphological perceptron.
+        Overriden method to tell check_estimator this is a binary classifier.
         """
 
         tags = super().__sklearn_tags__()

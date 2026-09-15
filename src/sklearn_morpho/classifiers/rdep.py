@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
+from sklearn.utils import Tags
 from sklearn.utils.validation import check_is_fitted
 
 from ..inversion import CentroidInversion, InversionHeuristic
@@ -51,7 +52,7 @@ class EnsembleTransform(TransformerMixin, BaseEstimator):
         ).T
 
 
-class RDEP(BaseEstimator, ClassifierMixin):
+class RDEP(ClassifierMixin, BaseEstimator):
     """
     Scikit-learn estimator wrapper around a r-DEP (Reduced Dilation-Erosion
     morphological Perceptron) for binary data classification.
@@ -217,3 +218,12 @@ class RDEP(BaseEstimator, ClassifierMixin):
         check_is_fitted(self)
         res: np.ndarray = self.pipeline_.predict(X)
         return res
+
+    def __sklearn_tags__(self) -> Tags:
+        """
+        Overriden method to tell check_estimator this is a binary classifier.
+        """
+
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_class = False
+        return tags
