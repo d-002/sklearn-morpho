@@ -7,7 +7,8 @@ from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import SVC
 from sklearn.utils import Tags
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.multiclass import unique_labels
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ..inversion import CentroidInversion, InversionHeuristic
 from ..stopping import (
@@ -82,10 +83,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
     def __init__(
         self,
-        preprocessing_estimators: list[FitMixin] = [
-            SVC(kernel='rbf'),
-            SVC(kernel='linear'),
-        ],
+        preprocessing_estimators: list[FitMixin] | None = None,
         lambda_bounds: tuple[float, float] = (1e-3, 1 - 1e-3),
         margin: float = 0.0,
         penalty: float = 0.0,
@@ -100,6 +98,16 @@ class RDEP(ClassifierMixin, BaseEstimator):
         """
         Initialize the classifier, see help(DEP) for more.
 
+        - param `preprocessing_estimators`:
+          The list of preprocessing estimators to use before the DEP stage.
+
+          If left to None, will use:
+          ```
+          [
+              SVC(kernel='rbf'),
+              SVC(kernel='linear'),
+          ]
+          ```
         - param `lambda_bounds`:
           A pair of min and max values for lambda, to avoid solvers (especially
           dccp) from failing to optimize.
@@ -180,13 +188,28 @@ class RDEP(ClassifierMixin, BaseEstimator):
         - self.ensemble_: preprocessing transformation
         - self.dep_: inner DEP
         - self.pipeline_: complete pipeline forming the r-DEP logic
+        - self.classes_: forwarded from the inner DEP
         """
 
-        # Do not check data integrity, this will already be done in the child
-        # estimators
+        # data integrity checks
+        _, y_ = validate_data(self, X, y)  # type: ignore
+        n_classes = len(unique_labels(y_))
+        if n_classes != 2:
+            raise ValueError(
+                'Only binary classification is supported but '
+                f'got {n_classes} class(es).'
+            )
+
+        if self.preprocessing_estimators is None:
+            preprocessing_estimators: list[FitMixin] = [
+                SVC(kernel='rbf'),
+                SVC(kernel='linear'),
+            ]
+        else:
+            preprocessing_estimators = self.preprocessing_estimators
 
         # initialize estimators
-        self.ensemble_ = EnsembleTransform(self.preprocessing_estimators)
+        self.ensemble_ = EnsembleTransform(preprocessing_estimators)
         self.dep_ = DEP(
             self.lambda_bounds,
             self.margin,
@@ -206,6 +229,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
         # fit estimators
         self.pipeline_.fit(X, y)
+        self.classes_ = self.pipeline_.classes_
 
         return self
 
