@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import Literal, cast, Protocol
+from typing import Literal, Protocol, cast
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 from sklearn.utils import Tags, check_random_state
 from sklearn.utils.multiclass import unique_labels
-from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import check_is_fitted, validate_data
-from sklearn.svm import SVC
 
 from ..inversion import CentroidInversion, InversionHeuristic
 from ..stopping import (
@@ -23,6 +23,7 @@ from ..training.dccp_dep import DEPDccpTrainer
 from ..weighting import NoneSampleWeighting, SampleWeighting
 from .dep import DEP
 
+
 class FitMixin(Protocol):
     """
     Simple class used as an interface for duck typing to be able to cleanly type
@@ -31,6 +32,7 @@ class FitMixin(Protocol):
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> ClassifierMixin: ...
     def decision_function(self, X: np.ndarray) -> np.ndarray: ...
+
 
 class EnsembleTransform(TransformerMixin, BaseEstimator):
     """
@@ -41,15 +43,16 @@ class EnsembleTransform(TransformerMixin, BaseEstimator):
     def __init__(self, estimators: list[FitMixin]) -> None:
         self.estimators = estimators
 
-    def fit(self, X, y) -> EnsembleTransform:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> EnsembleTransform:
         for e in self.estimators:
             e.fit(X, y)
         return self
 
-    def transform(self, X) -> np.ndarray:
+    def transform(self, X: np.ndarray) -> np.ndarray:
         return np.vstack(
             [estimator.decision_function(X) for estimator in self.estimators]
         ).T
+
 
 class RDEP(BaseEstimator, ClassifierMixin):
     """
@@ -81,8 +84,10 @@ class RDEP(BaseEstimator, ClassifierMixin):
 
     def __init__(
         self,
-        preprocessing_estimators: list[FitMixin] = [SVC(kernel='rbf'),
-                                                        SVC(kernel='linear')],
+        preprocessing_estimators: list[FitMixin] = [
+            SVC(kernel='rbf'),
+            SVC(kernel='linear'),
+        ],
         lambda_bounds: tuple[float, float] = (1e-3, 1 - 1e-3),
         margin: float = 0.0,
         penalty: float = 0.0,
