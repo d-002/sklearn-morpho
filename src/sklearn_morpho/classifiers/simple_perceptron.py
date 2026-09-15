@@ -209,8 +209,9 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self) -> Tags:
         """
-        Overriden method to allow check_estimator to not run accuracy tests.
-        These are designed for perceptrons with a linear decision boundary,
+        Overriden method to allow check_estimator that it this in a binary
+        classifier, as well as not run accuracy checks.
+        The latter are designed for perceptrons with a linear decision boundary,
         which is not the case for a morphological perceptron.
         """
 
