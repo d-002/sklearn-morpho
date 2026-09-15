@@ -100,6 +100,7 @@ class RDEP(ClassifierMixin, BaseEstimator):
 
         - param `preprocessing_estimators`:
           The list of preprocessing estimators to use before the DEP stage.
+          Cannot be empty.
 
           If left to None, will use:
           ```
@@ -207,6 +208,8 @@ class RDEP(ClassifierMixin, BaseEstimator):
             ]
         else:
             preprocessing_estimators = self.preprocessing_estimators
+            if not preprocessing_estimators:
+                raise ValueError('preprocessing_estimators cannot be empty')
 
         # initialize estimators
         self.ensemble_ = EnsembleTransform(preprocessing_estimators)
