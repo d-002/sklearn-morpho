@@ -5,11 +5,8 @@ from typing import Literal, Protocol, cast
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.utils import Tags, check_random_state
-from sklearn.utils.multiclass import unique_labels
-from sklearn.utils.validation import check_is_fitted, validate_data
+from sklearn.utils.validation import check_is_fitted
 
 from ..inversion import CentroidInversion, InversionHeuristic
 from ..stopping import (
