@@ -51,7 +51,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         random_state: np.random.RandomState | None = None,
     ) -> None:
         """
-        Initialize the classifier, see class help for more.
+        Initialize the classifier, see help(LDEP) for more.
 
         - param `latent_dims`:
           The dimensions of the latent spaces used for the linear
@@ -122,7 +122,7 @@ class LDEP(ClassifierMixin, BaseEstimator):
         - self.lambda_
         - self.max_matrix_
         - self.min_matrix_
-        - self.classes_ (unique labels generated from y)
+        - self.classes_: unique labels generated from y
 
         X and y must represent binary classifiable data.
         """

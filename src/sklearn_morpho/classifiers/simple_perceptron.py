@@ -48,7 +48,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
         random_state: np.random.RandomState | None = None,
     ) -> None:
         """
-        Initialize the classifier, see class help for more.
+        Initialize the classifier, see help(MorphoPerceptron) for more.
 
         - param `kind`:
           Whether the perceptron is dilation or erosion.
@@ -119,7 +119,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
         """
         Fit the classifier, create attributes:
         - self.weights
-        - self.classes_ (unique labels generated from y)
+        - self.classes_: unique labels generated from y
 
         X and y must represent binary classifiable data.
         """

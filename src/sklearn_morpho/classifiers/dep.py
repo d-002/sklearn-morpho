@@ -51,7 +51,7 @@ class DEP(ClassifierMixin, BaseEstimator):
         random_state: np.random.RandomState | None = None,
     ) -> None:
         """
-        Initialize the classifier, see class help for more.
+        Initialize the classifier, see help(DEP) for more.
 
         - param `lambda_bounds`:
           A pair of min and max values for lambda, to avoid solvers (especially
@@ -130,7 +130,7 @@ class DEP(ClassifierMixin, BaseEstimator):
         Fit the classifier, create attributes:
         - self.max_perceptron_
         - self.min_perceptron_
-        - self.classes_ (unique labels generated from y)
+        - self.classes_: unique labels generated from y
 
         X and y must represent binary classifiable data.
         """
