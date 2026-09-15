@@ -3,7 +3,7 @@
 [project]
 name = "sklearn-morpho"
 description = "Scikit-learn classifiers toolbox for morphological perceptrons"
-version = "0.2.4"
+version = "0.3.0"
 requires-python = ">=3.11"
 dependencies = [
     "cvxpy>=1.9.2",
