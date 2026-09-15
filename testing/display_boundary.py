@@ -7,7 +7,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 
-from sklearn_morpho.classifiers import LDEP
+from sklearn_morpho.classifiers import RDEP
 
 """
 Create and train a perceptron with cvxpy and DCCP for multiple datasets,
@@ -33,7 +33,7 @@ datasets = {
     ),
 }
 
-Estimator = LDEP
+Estimator = RDEP
 
 
 def colorize(y_real: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
