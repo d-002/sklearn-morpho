@@ -16,28 +16,36 @@ def test_init() -> None:
 
 
 def test_train_noverif() -> None:
-    dep = RDEP()
+    rdep = RDEP()
 
     X, y = friendly_dataset()
-    dep.fit(X, y)
+    rdep.fit(X, y)
 
 
 def test_train_degenerate_dataset() -> None:
-    dep = RDEP()
+    rdep = RDEP()
 
     X, y = np.zeros((2, 1)), np.arange(2)
     with pytest.raises(ValueError):
-        dep.fit(X, y)
+        rdep.fit(X, y)
+
+
+def test_train_no_estimators() -> None:
+    rdep = RDEP([])
+
+    X, y = friendly_dataset()
+    with pytest.raises(ValueError):
+        rdep.fit(X, y)
 
 
 def test_train() -> None:
     X, y = friendly_dataset()
 
     for solver in [None, SOLVER_DCCP]:
-        dep = RDEP(solver=solver)
-        dep.fit(X, y)
+        rdep = RDEP(solver=solver)
+        rdep.fit(X, y)
 
-        assert f1_score(y, dep.predict(X)) >= 0.8
+        assert f1_score(y, rdep.predict(X)) >= 0.8
 
 
 def test_train_override_preprocessing() -> None:
@@ -46,7 +54,7 @@ def test_train_override_preprocessing() -> None:
     estimators = [SVC()]
 
     for solver in [None, SOLVER_DCCP]:
-        dep = RDEP(estimators, solver=solver)
-        dep.fit(X, y)
+        rdep = RDEP(estimators, solver=solver)
+        rdep.fit(X, y)
 
-        assert f1_score(y, dep.predict(X)) >= 0.8
+        assert f1_score(y, rdep.predict(X)) >= 0.8
