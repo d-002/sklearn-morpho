@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 from friendly_dataset import friendly_dataset
 from sklearn.metrics import f1_score
+from sklearn.svm import SVC
 
 from sklearn_morpho import RDEP
-from sklearn.svm import SVC
 from sklearn_morpho.inversion import NoInversion
 from sklearn_morpho.stopping import EpochStoppingMethod, StoppingMethod
 from sklearn_morpho.training import SOLVER_DCCP
