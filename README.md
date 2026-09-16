@@ -1,8 +1,18 @@
 # sklearn-morpho
 
+<!--
+Keywords:
+mathematical morphology, unified Python library, PyPI package, dilation erosion
+morphological perceptron, scikit-learn, machine learning, binary classification
+-->
+
 Scikit-learn classifiers toolbox for [morphological perceptrons](#what-are-morphological-perceptrons).
 
-Docs: https://d-002.github.io/sklearn-morpho/docs
+This package is available on [PyPI](https://pypi.org/project/sklearn-morpho/)
+and the [Arch User Repository (AUR)](https://aur.archlinux.org/packages/python-sklearn-morpho)
+(see shields below).
+
+Docs: [d-002.github.io/sklearn-morpho/docs](https://d-002.github.io/sklearn-morpho/docs)
 
 [![PyPI package](https://img.shields.io/pypi/v/sklearn-morpho?style=flat-square)](https://pypi.org/project/sklearn-morpho/)
 ![Supported Python version](https://img.shields.io/pypi/pyversions/sklearn-morpho?style=flat-square)
