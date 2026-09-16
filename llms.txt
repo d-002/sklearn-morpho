@@ -1,0 +1,26 @@
+# sklearn-morpho
+
+> Unified Python library for mathematical morphology classifiers in scikit-learn.
+
+## Core Features
+- Implements Morphological Perceptron classifiers: l-DEP, r-DEP, DEP, and basic Dilation/Erosion units.
+- Built-in scikit-learn compatible Estimators and Transformers API.
+- Integrated DCCP (Discipline Convex-Concave Programming) solver support via `cvxpy` (https://pypi.org/project/cvxpy/) and an optional `dccp` (https://pypi.org/project/dccp/) Python module.
+
+## Key Documentation & Links
+- [Documentation](https://d-002.github.io/sklearn-morpho/docs): Main API reference and usage guides.
+- [PyPI Package](https://pypi.org/project/sklearn-morpho/): Official releases and installation parameters.
+- [Jupyter Examples](https://github.com/d-002/sklearn-morpho/tree/master/MREs): Minimal reproducible examples.
+
+## Minimal Code Example
+
+```python
+from sklearn.datasets import make_moons
+from sklearn_morpho.classifiers.ldep import LDEP
+
+X, y = make_moons()
+
+ldep = LDEP()
+ldep.fit(X, y)
+predictions = ldep.predict(X)
+```
