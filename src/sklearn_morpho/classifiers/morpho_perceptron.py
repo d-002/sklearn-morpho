@@ -17,7 +17,7 @@ from ..stopping import (
     StoppingMethod,
     TrainStopStoppingMethod,
 )
-from ..training.dccp_simple_perceptron import SimplePerceptronDccpTrainer
+from ..training.dccp_morpho_perceptron import SimplePerceptronDccpTrainer
 from ..utils.perceptron_kind import Kind
 from ..weighting import NoneSampleWeighting, SampleWeighting
 
@@ -36,7 +36,7 @@ class MorphoPerceptron(ClassifierMixin, BaseEstimator):
 
     def __init__(
         self,
-        kind: Kind | Literal['max', 'min'],
+        kind: Kind | Literal['max', 'min'] = 'max',
         margin: float = 0.0,
         penalty: float = 0.0,
         validation_ratio: float = 0.3,
