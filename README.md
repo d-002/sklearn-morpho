@@ -47,6 +47,10 @@ File tree:
 Take a look at the Jupyter code examples in the
 [MREs](https://github.com/d-002/sklearn-morpho/tree/master/MREs) directory.
 
+You can also run some files in the `testing` subdirectory, like
+`compare_estimators.py` followed by `compare_estimators_show.py` to run an
+extensive comparison between different estimators on OpenML datasets.
+
 ## Running the project
 
 Install Python >= 3.11 and uv.
