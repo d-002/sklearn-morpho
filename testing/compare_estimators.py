@@ -5,9 +5,11 @@ averaged from multiple datasets.
 Estimators selection inspired by arxiv/2011.06512
 """
 
+from __future__ import annotations
+
 import json
+import multiprocessing as mp
 import warnings
-from concurrent.futures import ProcessPoolExecutor, TimeoutError
 from time import time
 from types import FrameType
 
@@ -138,25 +140,34 @@ scores: dict[str, dict[str, list[float]]] = {}
 times: dict[str, dict[str, list[float]]] = {}
 
 
+# future improvement: use `type` syntax if no longer supporting Python 3.11
 def train_pair(
-    estimator: BaseEstimator, X: np.ndarray, y: np.ndarray
-) -> tuple[list[float], list[float]]:
-    scores: list[float] = []
-    times: list[float] = []
+    queue: mp.Queue[tuple[list[float], list[float]] | Exception],
+    estimator: BaseEstimator,
+    X: np.ndarray,
+    y: np.ndarray,
+) -> None:
+    try:
+        scores: list[float] = []
+        times: list[float] = []
 
-    for i_train, i_test in skf.split(X, y):
-        X_train, X_test = X[i_train], X[i_test]
-        y_train, y_test = y[i_train], y[i_test]
+        for i_train, i_test in skf.split(X, y):
+            X_train, X_test = X[i_train], X[i_test]
+            y_train, y_test = y[i_train], y[i_test]
 
-        t0 = time()
-        estimator.fit(X_train, y_train)
-        t1 = time()
+            t0 = time()
+            estimator.fit(X_train, y_train)
+            t1 = time()
 
-        score = f1_score(y_train, estimator.predict(X_train), average='micro')
-        scores.append(score)
-        times.append(t1 - t0)
+            score = f1_score(
+                y_train, estimator.predict(X_train), average='micro'
+            )
+            scores.append(score)
+            times.append(t1 - t0)
 
-    return scores, times
+        queue.put((scores, times))
+    except Exception as e:
+        queue.put(e)
 
 
 def save_data() -> None:
@@ -193,20 +204,29 @@ for dataset_name in datasets_names:
 
         # run in a different process to avoid signals being ignored in the C/C++
         # solver layers
-        with ProcessPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(train_pair, estimator, X, y)
+        queue: mp.Queue[tuple[list[float], list[float]] | Exception] = (
+            mp.Queue()
+        )
+        proc = mp.Process(target=train_pair, args=(queue, estimator, X, y))
 
-            t0 = time()  # for timeout error message calculation
-            try:
-                scores_pair, times_pair = future.result(
-                    timeout=timeout * n_folds
-                )
-                scores[dataset_name][estimator_name] = scores_pair
-                times[dataset_name][estimator_name] = times_pair
-            except TimeoutError:
-                warnings.warn(
-                    f'{estimator_name} timed out after {time() - t0}s.'
-                )
+        t0 = time()  # for timeout error message calculation
+        proc.start()
+        proc.join(timeout=timeout * n_folds)
+
+        if proc.is_alive():
+            warnings.warn(
+                f'{estimator_name} timed out after {time() - t0}s, killing.'
+            )
+            proc.kill()
+            proc.join()
+        else:
+            if not queue.empty():
+                res = queue.get()
+                if isinstance(res, Exception):
+                    raise res  # re-raise exception if worker crashed
+                else:
+                    scores[dataset_name][estimator_name] = res[0]
+                    times[dataset_name][estimator_name] = res[1]
 
     save_data()
 
