@@ -6,10 +6,10 @@ Estimators selection inspired by arxiv/2011.06512
 """
 
 import json
-import signal
 import warnings
 from time import time
 from types import FrameType
+from concurrent.futures import ProcessPoolExecutor, TimeoutError
 
 import numpy as np
 from scipy.sparse._csr import csr_matrix
@@ -137,15 +137,23 @@ scores: dict[str, dict[str, list[float]]] = {}
 times: dict[str, dict[str, list[float]]] = {}
 
 
-class TimeoutException(Exception):
-    pass
+def train_pair(estimator, X, y):
+    scores = []
+    times = []
 
+    for i_train, i_test in skf.split(X, y):
+        X_train, X_test = X[i_train], X[i_test]
+        y_train, y_test = y[i_train], y[i_test]
 
-def timeout_handler(signum: int, frame: FrameType | None) -> None:
-    raise TimeoutException('Timed out')
+        t0 = time()
+        estimator.fit(X_train, y_train)
+        t1 = time()
 
+        score = f1_score(y_train, estimator.predict(X_train), average='micro')
+        scores.append(score)
+        times.append(t1 - t0)
 
-signal.signal(signal.SIGALRM, timeout_handler)
+    return scores, times
 
 
 def save_data() -> None:
@@ -174,34 +182,28 @@ for dataset_name in datasets_names:
 
     for estimator_name, estimator in estimators.items():
         print(f'  - Estimator {estimator_name}...')
-        scores[dataset_name][estimator_name] = []
-        times[dataset_name][estimator_name] = []
 
         estimator = make_pipeline(
             SimpleImputer(strategy='mean'),  # remove NaNs
             estimator,
         )
 
-        for i_train, i_test in skf.split(X, y):
-            X_train, X_test = X[i_train], X[i_test]
-            y_train, y_test = y[i_train], y[i_test]
+        # run in a different process to avoid signals being ignored in the C/C++
+        # solver layers
+        with ProcessPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(train_pair, estimator, X, y)
 
-            signal.alarm(timeout)
-            t0 = time()
+            t0 = time()  # for timeout error message calculation
             try:
-                estimator.fit(X_train, y_train)
-            except TimeoutException:
-                warnings.warn(f'{estimator_name} timed out after {timeout}s.')
-                break
-
-            t1 = time()
-            signal.alarm(0)
-
-            score = f1_score(
-                y_train, estimator.predict(X_train), average='micro'
-            )
-            scores[dataset_name][estimator_name].append(score)
-            times[dataset_name][estimator_name].append(t1 - t0)
+                scores_pair, times_pair = future.result(
+                    timeout=timeout * n_folds
+                )
+                scores[dataset_name][estimator_name] = scores_pair
+                times[dataset_name][estimator_name] = times_pair
+            except TimeoutError:
+                warnings.warn(
+                    f'{estimator_name} timed out after {time() - t0}s.'
+                )
 
     save_data()
 
