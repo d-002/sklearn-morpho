@@ -37,7 +37,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
-from sklearn_morpho import DEP, LDEP, MorphoPerceptron
+from sklearn_morpho import DEP, LDEP, RDEP, MorphoPerceptron
 from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.utils import Kind
 
@@ -142,6 +142,10 @@ estimators = {
     'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
     'DCCP l-DEP': OneVsRestClassifier(
         LDEP(solver=SOLVER_DCCP, random_state=random_state)
+    ),
+    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
+    'DCCP r-DEP': OneVsRestClassifier(
+        RDEP(solver=SOLVER_DCCP, random_state=random_state)
     ),
     'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
     'DCCP DEP': OneVsRestClassifier(
