@@ -7,12 +7,13 @@ Estimators selection inspired by arxiv/2011.06512
 
 import json
 import warnings
+from concurrent.futures import ProcessPoolExecutor, TimeoutError
 from time import time
 from types import FrameType
-from concurrent.futures import ProcessPoolExecutor, TimeoutError
 
 import numpy as np
 from scipy.sparse._csr import csr_matrix
+from sklearn import BaseEstimator
 from sklearn.datasets import fetch_openml, load_breast_cancer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
@@ -137,9 +138,11 @@ scores: dict[str, dict[str, list[float]]] = {}
 times: dict[str, dict[str, list[float]]] = {}
 
 
-def train_pair(estimator, X, y):
-    scores = []
-    times = []
+def train_pair(
+    estimator: BaseEstimator, X: np.ndarray, y: np.ndarray
+) -> tuple[list[float], list[float]]:
+    scores: list[float] = []
+    times: list[float] = []
 
     for i_train, i_test in skf.split(X, y):
         X_train, X_test = X[i_train], X[i_test]
