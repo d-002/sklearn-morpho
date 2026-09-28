@@ -13,7 +13,7 @@ from types import FrameType
 
 import numpy as np
 from scipy.sparse._csr import csr_matrix
-from sklearn import BaseEstimator
+from sklearn.base import BaseEstimator
 from sklearn.datasets import fetch_openml, load_breast_cancer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
