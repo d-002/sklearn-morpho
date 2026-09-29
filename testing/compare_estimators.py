@@ -20,7 +20,6 @@ from sklearn.datasets import fetch_openml, load_breast_cancer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
@@ -40,33 +39,19 @@ random_state = np.random.RandomState()
 print(f'Random state: {random_state}')
 
 estimators = {
-    'l-DEP': OneVsRestClassifier(LDEP(random_state=random_state)),
-    'DCCP l-DEP': OneVsRestClassifier(
-        LDEP(solver=SOLVER_DCCP, random_state=random_state)
+    'l-DEP': LDEP(random_state=random_state),
+    'DCCP l-DEP': LDEP(solver=SOLVER_DCCP, random_state=random_state),
+    'r-DEP': RDEP(random_state=random_state),
+    'DCCP r-DEP': RDEP(solver=SOLVER_DCCP, random_state=random_state),
+    'DEP': DEP(random_state=random_state),
+    'DCCP DEP': DEP(solver=SOLVER_DCCP, random_state=random_state),
+    'Morpho_max': MorphoPerceptron(kind=Kind.MAX, random_state=random_state),
+    'DCCP Morpho_max': MorphoPerceptron(
+        kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state
     ),
-    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
-    'DCCP r-DEP': OneVsRestClassifier(
-        RDEP(solver=SOLVER_DCCP, random_state=random_state)
-    ),
-    'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
-    'DCCP DEP': OneVsRestClassifier(
-        DEP(solver=SOLVER_DCCP, random_state=random_state)
-    ),
-    'Morpho_max': OneVsRestClassifier(
-        MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
-    ),
-    'DCCP Morpho_max': OneVsRestClassifier(
-        MorphoPerceptron(
-            kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state
-        )
-    ),
-    'Morpho_min': OneVsRestClassifier(
-        MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
-    ),
-    'DCCP Morpho_min': OneVsRestClassifier(
-        MorphoPerceptron(
-            kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state
-        )
+    'Morpho_min': MorphoPerceptron(kind=Kind.MIN, random_state=random_state),
+    'DCCP Morpho_min': MorphoPerceptron(
+        kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
@@ -102,26 +87,26 @@ datasets_names = [
     'banknote-authentication',
     'blood-transfusion-service-center',
     'breast-cancer',
-    # 'chess',
+    # 'chess', # non-binary dataset
     'colic',
     'credit-approval',
     'credit-g',
     'cylinder-bands',
     'diabetes',
-    # 'eeg-eye-state',
+    'eeg-eye-state',
     'haberman',
     'hill-valley',
     'ilpd',
-    # 'internet-advertisements',
+    # 'internet-advertisements', # dataset not found
     'ionosphere',
     'mofn-3-7-10',
     'monks-problems-2',
     'mushroom',
     'phoneme',
-    # 'PhishingWebsites',
-    # 'sick',
+    'PhishingWebsites',
+    'sick',
     'sonar',
-    # 'spambase',
+    'spambase',
     'steel-plates-fault',
     'thoracic-surgery',
     'tic-tac-toe',

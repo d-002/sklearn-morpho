@@ -22,8 +22,9 @@ estimators_set: set[str] = set()
 for results in scores.values():
     estimators_set = estimators_set.union(set(results.keys()))
 # sort heuristic to make it look nicer: use suffixes
-estimators_names = sorted(estimators_set, key=lambda name: name[::-1],
-                          reverse=True)
+estimators_names = sorted(
+    estimators_set, key=lambda name: name[::-1], reverse=True
+)
 
 # display summary table in console
 
@@ -51,8 +52,7 @@ for name, data_source, best_func, worst_func in params:
             else:
                 arr = np.array(res)
                 avg = np.average(arr)
-                std = arr.std()
-                dataset_res.append((avg, std))
+                dataset_res.append((np.average(arr), arr.std()))
 
         best = best_func([res[0] for res in dataset_res if res is not None])
         worst = worst_func([res[0] for res in dataset_res if res is not None])
