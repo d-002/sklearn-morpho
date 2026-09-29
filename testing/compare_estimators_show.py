@@ -16,15 +16,16 @@ times = data['times']
 
 n_folds = data['n_folds']
 
-# display summary table in console
 datasets_names = list(scores.keys())
-estimators_names = list(scores[datasets_names[0]].keys())
+# because of timeouts, check all the datasets to get the list of estimators
+estimators_set: set[str] = set()
+for results in scores.values():
+    estimators_set = estimators_set.union(set(results.keys()))
+# sort heuristic to make it look nicer: use suffixes
+estimators_names = sorted(estimators_set, key=lambda name: name[::-1],
+                          reverse=True)
 
-for dataset_name in datasets_names:
-    for estimator_name in estimators_names:
-        for data_source in (scores, times):
-            arr = data_source[dataset_name][estimator_name]
-            data_source[dataset_name][estimator_name] = np.array(arr)
+# display summary table in console
 
 print()
 params = (
@@ -34,27 +35,36 @@ params = (
 for name, data_source, best_func, worst_func in params:
     headers = ''
     for estimator_name in estimators_names:
-        headers += f' | {estimator_name:<16}'
+        headers += f' | {estimator_name:<15}'
     header = f'{name:>35}' + headers
     print(header)
     print('=' * len(header))
     for dataset_name in datasets_names:
         line = ''
 
-        dataset_res = []  # list of (avg, std)
+        dataset_res: list[tuple[float, float] | None] = []  # list of (avg, std)
         for estimator_name in estimators_names:
-            res = data_source[dataset_name][estimator_name]
+            res = data_source[dataset_name].get(estimator_name)
 
-            avg = np.average(res)
-            std = res.std()
-            dataset_res.append((avg, std, len(res)))
+            if res is None:
+                dataset_res.append(None)
+            else:
+                arr = np.array(res)
+                avg = np.average(arr)
+                std = arr.std()
+                dataset_res.append((avg, std))
 
-        best = best_func([avg for avg, _, _ in dataset_res])
-        worst = worst_func([avg for avg, _, _ in dataset_res])
-        for i, (avg, std, length) in enumerate(dataset_res):
-            fail = '' if length == 5 else f' ({5 - length}F)'
-            chunk = f'{avg:.2f}±{std:.2f}{fail}'
-            chunk = f'{chunk:<16}'
+        best = best_func([res[0] for res in dataset_res if res is not None])
+        worst = worst_func([res[0] for res in dataset_res if res is not None])
+        for i, res in enumerate(dataset_res):
+            if res is None:
+                fail = f'TIMEOUT'
+                chunk = ''
+            else:
+                fail = ''
+                avg, std = res
+                chunk = f'{avg:.2f}±{std:.2f}{fail}'
+            chunk = f'{chunk:<15}'
             if i == best:
                 chunk = f'\033[32m{chunk}\033[m'
             if i == worst:
@@ -72,14 +82,14 @@ for estimator_name in estimators_names:
         [
             score
             for dataset_name in datasets_names
-            for score in scores[dataset_name][estimator_name]
+            for score in scores[dataset_name].get(estimator_name, [])
         ]
     )
     estimators_times[estimator_name] = np.array(
         [
             time
             for dataset_name in datasets_names
-            for time in times[dataset_name][estimator_name]
+            for time in times[dataset_name].get(estimator_name, [])
         ]
     )
 

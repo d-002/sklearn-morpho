@@ -154,8 +154,18 @@ estimators = {
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
+    'DCCP Morpho_max': OneVsRestClassifier(
+        MorphoPerceptron(
+            kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state
+        )
+    ),
     'Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
+    ),
+    'DCCP Morpho_min': OneVsRestClassifier(
+        MorphoPerceptron(
+            kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state
+        )
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),

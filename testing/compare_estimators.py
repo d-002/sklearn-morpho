@@ -55,7 +55,7 @@ estimators = {
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
-    'Morpho_max_DCCP': OneVsRestClassifier(
+    'DCCP Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(
             kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state
         )
@@ -63,7 +63,7 @@ estimators = {
     'Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
     ),
-    'Morpho_min_DCCP': OneVsRestClassifier(
+    'DCCP Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(
             kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state
         )
