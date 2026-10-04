@@ -145,7 +145,7 @@ def train_pair(
             t1 = time()
 
             score = f1_score(
-                y_test, estimator.predict(X_test), average='micro'
+                y_test, estimator.predict(X_test)
             )
             scores.append(score)
             times.append(t1 - t0)

@@ -100,6 +100,7 @@ datasets_names = [
     'banknote-authentication',
     'blood-transfusion-service-center',
     'breast-cancer',
+    # 'chess', # non-binary dataset
     'colic',
     'credit-approval',
     'credit-g',
@@ -109,6 +110,7 @@ datasets_names = [
     'haberman',
     'hill-valley',
     'ilpd',
+    # 'internet-advertisements', # dataset not found
     'ionosphere',
     'mofn-3-7-10',
     'monks-problems-2',
@@ -246,7 +248,7 @@ def worker(dataset_name: str, estimator_name: str) -> None:
             estimator.fit(X_train, y_train)
             t1 = time()
 
-            score = f1_score(y_test, estimator.predict(X_test), average='micro')
+            score = f1_score(y_test, estimator.predict(X_test))
             score_arr.append(score)
             time_arr.append(t1 - t0)
 
@@ -254,7 +256,8 @@ def worker(dataset_name: str, estimator_name: str) -> None:
             temp[estimator_name][1] = (i + 1) / n_folds
             progress_states[dataset_name] = temp
         except TimeoutException:
-            break
+            signal.alarm(0)
+            return
 
     for data_source, value in (
         (scores, score_arr),
