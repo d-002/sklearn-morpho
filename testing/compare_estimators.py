@@ -208,7 +208,10 @@ for dataset_name in datasets_names:
             if not queue.empty():
                 res = queue.get()
                 if isinstance(res, Exception):
-                    raise res  # re-raise exception if worker crashed
+                    # TEMPORARY write failures to a file, TODO remove
+                    with open('ERROR_LOG.txt', 'a') as f:
+                        f.write(f'res\n')
+                    #raise res  # re-raise exception if worker crashed
                 else:
                     scores[dataset_name][estimator_name] = res[0]
                     times[dataset_name][estimator_name] = res[1]
