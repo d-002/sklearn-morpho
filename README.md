@@ -68,16 +68,7 @@ files to avoid training the estimators every time one wants to view the results.
 
 ## Contributing
 
-As the project is open source, any help is greatly appreciated!
-
-To keep code clean, this repository uses a CI/CD pipeline with tests and an
-enforced coding style, which can all be found in the project's configuration
-files.
-
-Please adhere to these rules when contributing.
-
-Regarding AI pull requests, they are generally discouraged as you should be able
-to understand and help maintain any features you might add to this repo.
+See the CONTRIBUTING.md file.
 
 ## For Arch users
 
