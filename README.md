@@ -47,6 +47,10 @@ File tree:
 Take a look at the Jupyter code examples in the
 [MREs](https://github.com/d-002/sklearn-morpho/tree/master/MREs) directory.
 
+You can also run some files in the `testing` subdirectory, like
+`compare_estimators.py` followed by `compare_estimators_show.py` to run an
+extensive comparison between different estimators on OpenML datasets.
+
 ## Running the project
 
 Install Python >= 3.11 and uv.
@@ -64,16 +68,7 @@ files to avoid training the estimators every time one wants to view the results.
 
 ## Contributing
 
-As the project is open source, any help is greatly appreciated!
-
-To keep code clean, this repository uses a CI/CD pipeline with tests and an
-enforced coding style, which can all be found in the project's configuration
-files.
-
-Please adhere to these rules when contributing.
-
-Regarding AI pull requests, they are generally discouraged as you should be able
-to understand and help maintain any features you might add to this repo.
+See the CONTRIBUTING.md file.
 
 ## For Arch users
 

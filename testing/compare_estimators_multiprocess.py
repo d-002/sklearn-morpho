@@ -37,7 +37,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.svm import SVC, LinearSVC
 
-from sklearn_morpho import DEP, LDEP, MorphoPerceptron
+from sklearn_morpho import DEP, LDEP, RDEP, MorphoPerceptron
 from sklearn_morpho.training import SOLVER_DCCP
 from sklearn_morpho.utils import Kind
 
@@ -100,6 +100,7 @@ datasets_names = [
     'banknote-authentication',
     'blood-transfusion-service-center',
     'breast-cancer',
+    # 'chess', # non-binary dataset
     'colic',
     'credit-approval',
     'credit-g',
@@ -109,6 +110,7 @@ datasets_names = [
     'haberman',
     'hill-valley',
     'ilpd',
+    # 'internet-advertisements', # dataset not found
     'ionosphere',
     'mofn-3-7-10',
     'monks-problems-2',
@@ -143,6 +145,10 @@ estimators = {
     'DCCP l-DEP': OneVsRestClassifier(
         LDEP(solver=SOLVER_DCCP, random_state=random_state)
     ),
+    'r-DEP': OneVsRestClassifier(RDEP(random_state=random_state)),
+    'DCCP r-DEP': OneVsRestClassifier(
+        RDEP(solver=SOLVER_DCCP, random_state=random_state)
+    ),
     'DEP': OneVsRestClassifier(DEP(random_state=random_state)),
     'DCCP DEP': OneVsRestClassifier(
         DEP(solver=SOLVER_DCCP, random_state=random_state)
@@ -150,8 +156,18 @@ estimators = {
     'Morpho_max': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MAX, random_state=random_state)
     ),
+    'DCCP Morpho_max': OneVsRestClassifier(
+        MorphoPerceptron(
+            kind=Kind.MAX, solver=SOLVER_DCCP, random_state=random_state
+        )
+    ),
     'Morpho_min': OneVsRestClassifier(
         MorphoPerceptron(kind=Kind.MIN, random_state=random_state)
+    ),
+    'DCCP Morpho_min': OneVsRestClassifier(
+        MorphoPerceptron(
+            kind=Kind.MIN, solver=SOLVER_DCCP, random_state=random_state
+        )
     ),
     'Linear SVC': LinearSVC(random_state=random_state),
     'RBF SVC': SVC(kernel='rbf', random_state=random_state),
@@ -232,7 +248,7 @@ def worker(dataset_name: str, estimator_name: str) -> None:
             estimator.fit(X_train, y_train)
             t1 = time()
 
-            score = f1_score(y_test, estimator.predict(X_test), average='micro')
+            score = f1_score(y_test, estimator.predict(X_test))
             score_arr.append(score)
             time_arr.append(t1 - t0)
 
@@ -240,7 +256,8 @@ def worker(dataset_name: str, estimator_name: str) -> None:
             temp[estimator_name][1] = (i + 1) / n_folds
             progress_states[dataset_name] = temp
         except TimeoutException:
-            break
+            signal.alarm(0)
+            return
 
     for data_source, value in (
         (scores, score_arr),
